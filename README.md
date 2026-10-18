@@ -35,6 +35,10 @@ Progress is stored on the phone. The seed in seed.js loads only on first launch.
 
 Export progress on the home screen produces a JSON backup. Import progress merges a backup into the phone, keeping the newer record for each card. Use it before clearing browser data or moving to a new phone.
 
+## Badges
+
+Each section carries a badge: a radio tower with one, two or three signal arcs. Bronze means every card in the section has been seen, silver that every card has been answered correctly at least once, and gold that every card is mastered. A rung, once earned, stays, along with the day it was earned, but the badge dims while the section's current standing is below its best rung. Badges travel with Export and Import.
+
 ## Updating
 
 After changing any file, raise the VERSION string at the top of sw.js (for example, hamdrill-v2). Phones pick up the new copy the next time the app opens online.

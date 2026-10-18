@@ -17,12 +17,14 @@
 :root{
   --bg:#EDF0F2;--panel:#FFFFFF;--ink:#18232E;--muted:#56636F;--line:#CBD3DA;
   --amber:#B8730F;--amber-bg:#FBF0DD;--ok:#22744A;--ok-bg:#E2F2E8;--bad:#A93434;--bad-bg:#F8E3E3;
+  --none:#B9C2CA;--bronze:#A8632B;--silver:#7F8B97;--gold:#C8930E;
   color-scheme:light;box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#11171D;--panel:#1A222A;--ink:#E3E8ED;--muted:#9AA7B3;--line:#2D3842;
   --amber:#E9A33E;--amber-bg:#33270F;--ok:#5CC48A;--ok-bg:#163223;--bad:#EE7B7B;--bad-bg:#3A1B1B;
+  --none:#4A5661;--bronze:#C9864A;--silver:#CFD7DF;--gold:#EBC04E;
   color-scheme:dark}}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -39,7 +41,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .reach{color:var(--muted);font-size:15px;margin:0 0 14px}
 .decks{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--line)}
 .decks li{border-bottom:1px solid var(--line)}
-.row{font:inherit;color:inherit;background:none;border:0;width:100%;text-align:left;display:grid;grid-template-columns:76px 1fr auto;gap:2px 12px;align-items:center;padding:12px 2px;cursor:pointer}
+.row{font:inherit;color:inherit;background:none;border:0;width:100%;text-align:left;display:grid;grid-template-columns:104px 1fr auto;gap:2px 10px;align-items:center;padding:12px 2px;cursor:pointer}
 .row .code{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500;font-size:34px;line-height:1;color:var(--amber);grid-row:span 2}
 .row .nm{font-weight:700;font-size:17px;line-height:1.25}
 .row .meta{font-size:14px;color:var(--muted);grid-column:2}
@@ -50,6 +52,21 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .meter i{display:block;height:100%}
 .meter .m{background:var(--ok)}.meter .s{background:var(--amber)}
 .untouched .code{color:var(--muted)}
+.row .code{display:flex;align-items:center;gap:5px}
+.row .code.long{font-size:28px}
+.row.badged .code{color:var(--muted)}
+/* badges: a tower with one, two or three signal arcs for bronze, silver, gold */
+.badge{display:block;flex:none}
+.badge .ring{fill:var(--panel);stroke:currentColor;stroke-width:3}
+.badge.t0{color:var(--none)}.badge.t0 .ring{stroke-dasharray:4 3}.badge.t0 .tw{stroke-dasharray:3 2.5}
+.badge.t1{color:var(--bronze)}.badge.t2{color:var(--silver)}.badge.t3{color:var(--gold)}
+.badge.lapsed{opacity:.45}
+.sash{list-style:none;display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;margin:22px 0 0;padding:14px 8px 10px;background:var(--panel);border-radius:12px}
+.sash li{text-align:center}
+.sash .badge{margin:0 auto}
+.sash b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;line-height:1.2;margin-top:3px}
+.sash .lapsed+b{color:var(--muted)}
+.sash-cap{font-size:14px;color:var(--muted);margin:8px 0 0}
 .section-gap{margin-top:8px}
 /* drill */
 .groups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
@@ -111,6 +128,14 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+ <g id="tower" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M20 66 L32 30 L44 66"/><path d="M32 30 V22"/><path d="M27.4 44 H36.6 M24.6 52 H39.4 M22 60 H42"/><path d="M18 66 H46"/></g>
+ <path id="towerx" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M27.4 44 L39.4 52 M36.6 44 L24.6 52 M24.6 52 L42 60 M39.4 52 L22 60"/>
+ <path id="arc1" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M26 25 A7 7 0 0 1 38 25"/>
+ <path id="arc2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M21.6 28 A12 12 0 0 1 42.4 28"/>
+ <path id="arc3" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M17.3 30.5 A17 17 0 0 1 46.7 30.5"/>
+</defs></svg>
 <main id="app"></main>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <script src="data.js"></script>
@@ -146,12 +171,36 @@ function record(id,k,ok){
   else if(r.fail===t){r.lv=0;r.due=t+1}
   else if(r.last!==t){r.lv=Math.min(r.lv+1,IV.length-1);r.due=t+IV[r.lv]}
   r.last=t;r.n=(r.n||0)+1;if(!ok)r.w=(r.w||0)+1;r.ts=Date.now();s[k]=r;saveSrs(id);
+  if(ok)awardBadges(DECK[id]);
 }
 function stats(d){const ids=itemIds(d),t=dayNum();
   return{total:ids.length,due:ids.filter(k=>isDue(d.id,k)).length,seen:ids.filter(k=>isSeen(d.id,k)).length,
     mastered:ids.filter(k=>isMastered(d.id,k)).length,tomorrow:ids.filter(k=>{const r=srsOf(d.id)[k];return r&&r.due===t+1}).length}}
 /* An unseen card counts as due, so untouched decks would swamp the home count. Home counts reviews only. */
 const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
+
+/* ---------- badges ----------
+   Three rungs per deck, judged on every card: bronze = all seen, silver = all answered correctly at least
+   once (no card sitting at level 0), gold = all mastered. A rung, once earned, is kept with the day it was
+   earned; the badge dims while the deck's current standing is below its best rung. */
+const TIER=["","Bronze","Silver","Gold"],TIER_WHY=["","every card seen","every card answered correctly","every card mastered"];
+const BADGES=get("badges",{});
+const saveBadges=()=>put("badges",BADGES);
+function tierNow(d){const s=srsOf(d.id);let t=3;for(const k of itemIds(d)){const r=s[k];if(!r)return 0;if(r.lv<1)t=Math.min(t,1);else if(r.lv<MASTER)t=Math.min(t,2)}return t}
+const tierEarned=d=>{const b=BADGES[d.id]||{};return b[3]?3:b[2]?2:b[1]?1:0};
+function awardBadges(d,quiet){
+  const now=tierNow(d),b=BADGES[d.id]||(BADGES[d.id]={});let top=0;
+  for(let t=1;t<=now;t++)if(!b[t]){b[t]=dayNum();top=t}
+  if(top){saveBadges();if(!quiet)toast(`${TIER[top]} badge: ${d.code} ${d.name}. ${TIER_WHY[top][0].toUpperCase()+TIER_WHY[top].slice(1)}.`)}
+  return top;
+}
+function mergeBadges(src){if(!src)return;for(const id in src){if(!DECK[id])continue;const b=BADGES[id]||(BADGES[id]={});for(const t of [1,2,3]){const v=src[id][t];if(v&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
+DECKS.forEach(d=>awardBadges(d,true));
+function badgeSvg(tier,size,{lapsed=false,full=false}={}){
+  const arcs=['','<use href="#arc1"/>','<use href="#arc1"/><use href="#arc2"/>','<use href="#arc1"/><use href="#arc2"/><use href="#arc3"/>'][tier];
+  return `<svg class="badge t${tier}${lapsed?" lapsed":""}" width="${size}" height="${size}" viewBox="0 0 64 76" aria-hidden="true"><circle class="ring" cx="32" cy="42" r="30"/><use class="tw" href="#tower"/>${full?'<use class="tw" href="#towerx"/>':""}${arcs}</svg>`;
+}
+const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{lapsed:e>0&&tierNow(d)<e,full})};
 
 /* Shuffle and basics choices persist; Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
 const prefs=Object.assign({shuffleQ:true,shuffleA:false,basics:false},get("prefs",{}));prefs.dueOnly=true;
@@ -185,8 +234,9 @@ function home(){
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
     const meta=d.exam?`${d.exam} on the exam. ${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} questions, not started.`}`
       :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}, not started.`}`;
-    return `<li><button class="row${s.seen?"":" untouched"}" data-go="${d.id}">
-      <span class="code">${d.code}</span><span class="nm">${esc(d.name)}</span>
+    const earned=tierEarned(d);
+    return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
+      <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}</span><span class="nm">${esc(d.name)}</span>
       <span class="due${due?"":" zero"}">${due||"–"}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
       <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button></li>`};
@@ -198,16 +248,23 @@ function home(){
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
+  <ul class="sash" aria-label="Section badges">${DECKS.map(d=>`<li>${deckBadge(d,44,true)}<b>${d.code}</b></li>`).join("")}</ul>
+  <p class="sash-cap">${sashCaption()}</p>
   <div class="foot">
     <p>Progress is saved on this phone. Back it up now and then, or before switching phones.</p>
     <p><button class="linkbtn" id="exp">Export progress</button> &nbsp; <button class="linkbtn" id="imp">Import progress</button></p>
-    <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
+    <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. A section earns bronze when every card has been seen, silver when every card has been answered correctly, and gold when every card is mastered; a badge dims if the section slips below the rung it earned. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{location.hash=b.dataset.go});
   $("exp").onclick=exportProgress;$("imp").onclick=()=>$("importFile").click();
 }
+function sashCaption(){
+  const c=[0,0,0,0];DECKS.forEach(d=>c[tierEarned(d)]++);
+  const parts=[3,2,1].filter(t=>c[t]).map(t=>`${c[t]} ${TIER[t].toLowerCase()}`);
+  return parts.length?`${parts.join(", ")} of ${DECKS.length} sections.`:"No badges yet. Bronze comes when every card in a section has been seen once.";
+}
 function exportProgress(){
-  const data={app:"hamdrill",version:1,exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)]))};
+  const data={app:"hamdrill",version:2,exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const d=new Date(),name=`ham-drill-progress-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const file=new File([blob],name,{type:"application/json"});
@@ -217,7 +274,7 @@ function exportProgress(){
 $("importFile").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||d.app!=="hamdrill"||!d.decks)throw 0;
-    const n=importDecks(d.decks);toast(`Imported progress for ${n} decks.`);route()}
+    const n=importDecks(d.decks);mergeBadges(d.badges);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} decks.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
 };
 
