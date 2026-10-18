@@ -44,8 +44,8 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .reach{color:var(--muted);font-size:15px;margin:0 0 14px}
 .plan{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:15px}
 .plan p{margin:0}.plan p+p{margin-top:6px}
-.plan .num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:30px;line-height:1;color:var(--amber);margin-right:4px}
-.plan .pass{color:var(--ok)}.plan .short{color:var(--bad)}
+.plan b{font-weight:700}
+.plan .pass b{color:var(--ok)}.plan .short b{color:var(--bad)}
 .plan .muted{color:var(--muted);font-size:14px}
 .plan a,.plan .linkbtn{color:var(--muted);font-size:14px}
 .plan .set{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
@@ -74,17 +74,24 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .badge.t0{color:var(--none)}.badge.t0 .ring{stroke-dasharray:4 3}.badge.t0 .tw{stroke-dasharray:3 2.5}
 .badge.t1{color:var(--bronze)}.badge.t2{color:var(--silver)}.badge.t3{color:var(--gold)}
 .badge.lapsed{opacity:.45}
-.sash{list-style:none;display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;margin:22px 0 0;padding:14px 8px 10px;background:var(--panel);border-radius:12px}
+.sashbox{margin:22px 0 0;padding:14px 8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.sash{list-style:none;display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;margin:0;padding:0}
 .sash li{text-align:center}
 .sash .badge{margin:0 auto}
 .sash b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;line-height:1.2;margin-top:3px}
 .sash .lapsed+b{color:var(--muted)}
-.sash-cap{font-size:14px;color:var(--muted);margin:8px 0 0}
+.sash-cap{font-size:14px;color:var(--muted);margin:10px 6px 0;text-align:center}
 .section-gap{margin-top:8px}
 /* drill */
 .groups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chip{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.optsbox{margin:0 0 12px}
+.optsbox summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none;display:inline-flex;align-items:center;gap:6px}
+.optsbox summary::-webkit-details-marker{display:none}
+.optsbox summary::before{content:"";width:0;height:0;border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
+.optsbox[open] summary::before{transform:rotate(90deg)}
+.optsbox .opts{margin:10px 0 2px}
 .opts{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:15px;color:var(--muted);margin-bottom:14px}
 .opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .opts input{width:18px;height:18px;accent-color:var(--amber)}
@@ -93,10 +100,10 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:16px}
 .bar span{display:block;height:100%;background:var(--amber);width:0;transition:width .25s}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
-.qid{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500;font-size:44px;line-height:1;color:var(--amber);margin:0 0 2px;letter-spacing:.02em}
+.qid{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;letter-spacing:.04em;color:var(--amber);margin-right:6px}
 .topic{font-size:14px;color:var(--muted);margin:0 0 12px}
 .fig{background:var(--amber-bg);border-radius:8px;padding:8px 12px;font-size:15px;margin:0 0 12px}
-.q{font-size:19px;font-weight:700;margin:0 0 14px}
+.q{font-size:21px;font-weight:700;line-height:1.35;margin:0 0 16px}
 .ans{display:flex;flex-direction:column;gap:8px}
 .ans button{font:inherit;text-align:left;display:flex;gap:10px;align-items:flex-start;width:100%;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer}
 .ans button b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:19px;min-width:16px;line-height:1.35}
@@ -138,6 +145,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .tools{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px;margin:0 0 14px}
 .tools a,.tools .linkbtn{font-size:15px;color:var(--muted)}
 .study-link{display:block;font-size:14px;color:var(--muted);padding:0 2px 12px 104px;margin-top:-6px}
+.row .due.zero{color:var(--line)}
 .study-link a{color:inherit}
 .only{font-size:15px;color:var(--muted);margin:0 0 14px}
 .only a{color:inherit}
@@ -167,9 +175,14 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .defn{margin:0 0 6px}.hook{margin:0;color:var(--muted);font-size:15px}
 /* footer */
 .foot{font-size:14px;color:var(--muted);margin-top:28px}
+.foot .links{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline}
+.foot .links a{color:inherit}
+.about h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:24px;color:var(--amber);margin:22px 0 4px}
+.about p{margin:0 0 10px}
+.about a{color:inherit}
 .foot p{margin:0 0 8px}
 .linkbtn{font:inherit;font-size:14px;background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;max-width:90vw;pointer-events:none}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);box-shadow:0 4px 18px rgba(0,0,0,.25);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;max-width:90vw;pointer-events:none}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){.bar span{transition:none}}
 </style>
@@ -205,7 +218,7 @@ const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
 function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
-const APP_VERSION="6";
+const APP_VERSION="7";
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
@@ -281,6 +294,7 @@ function route(){
   const m=h.match(/^([a-z0-9]+)\/(study|p)(?:\/([a-z0-9_-]+))?$/);
   if(h==="due")drill({mixed:true});
   else if(h==="study")study(null);
+  else if(h==="about")about();
   else if(m&&DECK[m[1]]&&m[2]==="study")study(DECK[m[1]]);
   else if(m&&DECK[m[1]]&&m[2]==="p"&&DECK[m[1]].P&&DECK[m[1]].P[m[3]])drill({deck:DECK[m[1]],primer:m[3]});
   else if(h==="symbols")symbols();
@@ -301,6 +315,7 @@ function home(){
   const poolSeen=POOL.reduce((a,d)=>a+stats(d).seen,0),poolTotal=POOL.reduce((a,d)=>a+stats(d).total,0);
   const untouched=POOL.filter(d=>stats(d).seen===0);
   const untouchedQs=untouched.reduce((a,d)=>a+d.exam,0);
+  let hinted=false;
   const row=([d,due,s])=>{
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
     const meta=d.exam?`${d.exam} on the exam. ${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} questions, not started.`}`
@@ -308,30 +323,22 @@ function home(){
     const earned=tierEarned(d);
     return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
       <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
-      <span class="due${due?"":" zero"}">${due||"–"}<small>${due?"due":""}</small></span>
+      <span class="due${due?"":" zero"}">${due||""}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
-      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&(d.P||d.S)?`<span class="study-link">New here? <a href="#${d.id}/study">Read the ${d.code} basics first</a>.</span>`:""}</li>`};
+      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S)&&(hinted=true)?`<span class="study-link">New to a section? <a href="#${d.id}/study">Read the ${d.code} basics first</a>; every section has a study page.</span>`:""}</li>`};
   app.innerHTML=`
   <p class="over">Amateur Radio Service</p>
   <h1>Technician Class Operator License</h1>
-  <p class="sub">Drills for the 2026-2030 question pool, worded as on the exam, with spaced review.</p>
-  <ul class="facts" aria-label="License facts"><li>FCC license class <b>Technician</b></li><li>Exam <b>Element 2</b></li><li>FCC radio service code <b>HA</b></li></ul>
   <div class="today"><b>${totalDue}</b><span>${totalDue===1?"card":"cards"} due today</span></div>
   <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}</p>
   ${planBlock()}
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
-  <ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
-  <p class="sash-cap">${sashCaption()}</p>
+  <div class="sashbox"><ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
+  <p class="sash-cap">${sashCaption()}</p></div>
   <div class="foot">
-    <p>Progress is saved on this phone. Back it up now and then, or before switching phones.</p>
-    <p><button class="linkbtn" id="exp">Export progress</button> &nbsp; <button class="linkbtn" id="imp">Import progress</button></p>
-    <p>Every section has a study page with its basics; the <a href="#study" style="color:inherit">whole guide</a> is one page you can print.</p>
-    <p>When you want to test yourself under exam conditions, take practice exams at <a href="https://hamstudy.org/" style="color:inherit">HamStudy.org</a>. This app is for learning the pool; that one is for finding out whether you're ready.</p>
-    <p>The estimated score weighs each section by how many exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards you've got right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction.</p>
-    <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. A section earns bronze when every card has been seen, silver when every card has been answered correctly, and gold when every card is mastered; a badge dims if the section slips below the rung it earned. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
-    <p>Version ${APP_VERSION}.</p>
+    <p class="links"><button class="linkbtn" id="exp">Export progress</button><button class="linkbtn" id="imp">Import progress</button><a href="#study">Study guide</a><a href="#about">About</a><span>Version ${APP_VERSION}</span></p>
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{location.hash=b.dataset.go});
   $("exp").onclick=exportProgress;$("imp").onclick=()=>$("importFile").click();
@@ -342,11 +349,11 @@ function home(){
 }
 function planBlock(){
   const e=estimate(),D=daysToExam(),pass=e.lo>=26;
-  const est=prefs.showEst?`<p><span class="num ${pass?"pass":e.hi<26?"short":""}">${e.lo===e.hi?e.lo:`${e.lo}&ndash;${e.hi}`}</span> of 35 is where you'd likely land today. Pass is 26.${e.gain.length?` Most room to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
+  const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of 35</b> today; pass is 26.${e.gain.length?` Most room to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
     :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
   let date;
   if(EXAM.day!=null){
-    date=D>0?`<p><span class="num">${D}</span> ${D===1?"day":"days"} until your exam on ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="clearDate">Change</button></p>`
+    date=D>0?`<p>Exam in <b>${D} ${D===1?"day":"days"}</b>, ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="clearDate">Change</button></p>`
       :D===0?`<p>Exam day. Good luck. <button class="linkbtn" id="clearDate">Clear date</button></p>`
       :`<p class="muted">Your exam date (${dayLabel(EXAM.day)}) has passed. <button class="linkbtn" id="clearDate">Clear it</button></p>`;
     if(D!=null&&D>0&&prefs.showDate!==false)date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get your FRN before test day</a></p>`;
@@ -412,6 +419,30 @@ function study(deck){
   $("print").onclick=()=>window.print();
 }
 
+/* ---------- about ---------- */
+function about(){
+  $("app").innerHTML=`<div class="about">
+  <button class="back" id="back">&larr; All decks</button>
+  <p class="over">Amateur Radio Service</p><h1>About these drills</h1>
+  <p>Drills for the 2026-2030 Technician question pool, worded as on the exam, with spaced review. FCC license class Technician, exam Element 2, radio service code HA.</p>
+  <h2>How review works</h2>
+  <p>A card comes back after one day, then three, then seven, then longer. Three correct answers on separate days marks it mastered. A miss sends it back to the start. Nothing is scheduled past your exam date if you set one, and inside the last week every card comes back at least once more.</p>
+  <h2>Badges</h2>
+  <p>A section earns bronze when every card has been seen, silver when every card has been answered correctly at least once, and gold when every card is mastered. A rung, once earned, stays; the badge dims while the section's current standing is below its best rung.</p>
+  <h2>The estimated score</h2>
+  <p>Each section is weighed by how many of the 35 exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards answered right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction. Hide it from the home screen if it's unwelcome.</p>
+  <h2>Study pages</h2>
+  <p>Every section has a study page with its basics in pool order; the <a href="#study">whole guide</a> is one page you can print. The same text appears before each group of questions when Basics first is on, and under Explain this more.</p>
+  <h2>Testing yourself</h2>
+  <p>This app is for learning the pool. For practice exams under exam conditions, use <a href="https://hamstudy.org/" target="_blank" rel="noopener">HamStudy.org</a>. When you're ready, find a session through <a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy</a> or the <a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL</a>, and get your <a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">FCC Registration Number</a> before test day.</p>
+  <h2>Your progress</h2>
+  <p>Progress is saved on this phone and nowhere else. Export progress on the home screen makes a backup file; import it on a new phone. Do that before clearing browser data or switching phones.</p>
+  <h2>Credits</h2>
+  <p>Pool text from the <a href="https://ncvec.org" target="_blank" rel="noopener">NCVEC</a>; the pool is public domain. Version ${APP_VERSION}.</p>
+  </div>`;
+  $("back").onclick=goHome;
+}
+
 /* ---------- question drills ---------- */
 function drill({deck,mixed,primer}){
   const app=$("app");prefs.dueOnly=!primer;
@@ -424,17 +455,17 @@ function drill({deck,mixed,primer}){
     deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your 35 exam questions.`;
   const chips=mixed||primer?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
   app.innerHTML=`<button class="back" id="back">&larr; All decks</button>
-  <h1>${title}</h1><p class="sub">${sub}</p>
+  <h1>${title}</h1>${mixed?`<p class="sub">${sub}</p>`:""}
   ${primer?`<p class="only">Drilling the ${deck.Q.filter(q=>deck.CON[q[0]]===primer).length} questions under <b>${esc(deck.P[primer][0])}</b>, due or not. <a href="#${deck.id}/study">Back to the ${deck.code} study page</a>.</p>`:""}
   ${!mixed&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
   ${!mixed&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
   ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
-  <div class="opts">
+  <details class="optsbox"><summary id="optsum"></summary><div class="opts">
     <label><input type="checkbox" id="shuffleQ"> Shuffle questions</label>
     <label><input type="checkbox" id="shuffleA"> Shuffle answers</label>
     ${mixed?"":`<label><input type="checkbox" id="basics"> Basics first</label>`}
     ${mixed?"":`<label><input type="checkbox" id="dueOnly"> Due today</label>`}
-  </div>
+  </div></details>
   <p class="srs" id="srsline"></p>
   <div class="status"><span id="pos"></span><span id="score"></span></div>
   <div class="bar"><span id="fill"></span></div>
@@ -442,7 +473,9 @@ function drill({deck,mixed,primer}){
   ${mixed?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
   $("back").onclick=goHome;
   const opt=k=>mixed&&k==="basics"?false:mixed&&k==="dueOnly"?true:prefs[k];
-  ["shuffleQ","shuffleA","basics","dueOnly"].forEach(k=>{const el=$(k);if(!el)return;el.checked=prefs[k];el.onchange=()=>{prefs[k]=el.checked;savePrefs();k==="shuffleA"?render():start()}});
+  const optSummary=()=>{const on=[];if(opt("dueOnly"))on.push("due today");if(opt("shuffleQ"))on.push("shuffled");if(opt("shuffleA"))on.push("answers shuffled");if(opt("basics"))on.push("basics first");$("optsum").textContent="Options: "+(on.length?on.join(", "):"none")};
+  ["shuffleQ","shuffleA","basics","dueOnly"].forEach(k=>{const el=$(k);if(!el)return;el.checked=prefs[k];el.onchange=()=>{prefs[k]=el.checked;savePrefs();optSummary();k==="shuffleA"?render():start()}});
+  optSummary();
   if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
   if($("reset"))$("reset").onclick=function(){if(this.dataset.armed){SRS[deck.id]={};saveSrs(deck.id);delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all "+deck.code+" progress"}};
 
@@ -485,7 +518,7 @@ function drill({deck,mixed,primer}){
     const [id,text,opts,ans,note,fig]=q;
     const hasAll=opts.some(o=>/^All these/.test(o));
     const order=opt("shuffleA")&&!hasAll?shuffle([0,1,2,3]):[0,1,2,3];
-    c.innerHTML=`<p class="qid">${id}</p><p class="topic">${esc(d.G[grpOf(d,id)]||d.name)}</p>
+    c.innerHTML=`<p class="topic"><span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}</p>
       ${fig?`<p class="fig">Uses figure ${fig} from the pool.</p>`:""}
       <p class="q">${text}</p><div class="ans" id="ans"></div><div id="after"></div>`;
     order.forEach((oi,pos)=>{const b=document.createElement("button");b.innerHTML=`<b>${"ABCD"[pos]}</b><span>${opts[oi]}</span>`;b.dataset.oi=oi;b.onclick=()=>pick(oi);$("ans").appendChild(b)});

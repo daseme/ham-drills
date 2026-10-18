@@ -38,6 +38,10 @@ Progress is stored on the phone and nowhere else. The app asks the browser to ke
 
 Export progress on the home screen produces a JSON backup. Import progress merges a backup into the phone, keeping the newer record for each card. Use it before clearing browser data or moving to a new phone.
 
+## Screens
+
+Home: title, the count of cards due today, a short plan card (estimated score and exam date, both optional), the review button, the section list, the badge sash, and a one-line footer with Export, Import, Study guide, About and the version. The explanatory text lives on the About page at #about. On the drill screen the group chips stay visible; shuffle, Basics first and Due today sit behind an Options line that reports the current settings. The question text leads the card; the pool ID is a small label beside the topic.
+
 ## Exam date and estimate
 
 Both optional. The home screen shows an estimated exam score as a range: each section's exam count weighted by how far along its cards are (mastered near full credit, answered-right-once partial, unseen a guess). Hide it with the link beside it. Set an exam date and intervals are capped so nothing is scheduled past the exam; inside the last week every card comes back at least once more. The date block links to the HamStudy and ARRL session finders and to the FCC page on getting an FRN, which first-time applicants need before test day. The date travels with Export and Import.
