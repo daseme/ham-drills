@@ -160,7 +160,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .foot{font-size:14px;color:var(--muted);margin-top:28px}
 .foot p{margin:0 0 8px}
 .linkbtn{font:inherit;font-size:14px;background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;max-width:90vw}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;max-width:90vw;pointer-events:none}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){.bar span{transition:none}}
 </style>
@@ -196,7 +196,7 @@ const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
 function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
-const APP_VERSION="4";
+const APP_VERSION="5";
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
@@ -244,6 +244,7 @@ const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{la
 const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false},get("prefs",{}));prefs.dueOnly=true;
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
+const goHome=()=>{if(location.hash)location.hash="";else home()};
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
 
 /* ---------- router ---------- */
@@ -355,7 +356,7 @@ function study(deck){
   <p class="tools">${deck?`<a href="#${deck.id}">Drill ${deck.code}</a><a href="#study">Whole guide</a>`:""}<button class="linkbtn" id="print">Print</button></p>
   ${decks.map(d=>studySection(d,{solo:!!deck})).join("")}
   </div>`;
-  $("back").onclick=()=>{location.hash=""};
+  $("back").onclick=goHome;
   $("print").onclick=()=>window.print();
 }
 
@@ -387,7 +388,7 @@ function drill({deck,mixed,primer}){
   <div class="bar"><span id="fill"></span></div>
   <div class="card" id="card" aria-live="polite"></div>
   ${mixed?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
-  $("back").onclick=()=>{location.hash=""};
+  $("back").onclick=goHome;
   const opt=k=>mixed&&k==="basics"?false:mixed&&k==="dueOnly"?true:prefs[k];
   ["shuffleQ","shuffleA","basics","dueOnly"].forEach(k=>{const el=$(k);if(!el)return;el.checked=prefs[k];el.onchange=()=>{prefs[k]=el.checked;savePrefs();k==="shuffleA"?render():start()}});
   if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
@@ -421,7 +422,7 @@ function drill({deck,mixed,primer}){
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try. The exam pass mark is 74%.</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=()=>{location.hash=""};$("again").onclick=start;return;
+      $("home").onclick=goHome;$("again").onclick=start;return;
     }
     const {d,q}=items[i];
     if(opt("basics")&&deck.CON[q[0]]&&deck.CON[q[0]]!==shown){
@@ -473,7 +474,7 @@ function symbols(){
   <div class="bar"><span id="fill"></span></div>
   <div class="card" id="card" aria-live="polite"></div>
   <p class="foot"><button class="linkbtn" id="reset">Reset symbol progress</button></p>`;
-  $("back").onclick=()=>{location.hash=""};
+  $("back").onclick=goHome;
   $("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;savePrefs();start()};
   $("modes").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{mode=b.dataset.v;$("modes").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
   $("reset").onclick=function(){if(this.dataset.armed){SRS.symbols={};saveSrs("symbols");delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all symbol progress"}};
@@ -489,7 +490,7 @@ function symbols(){
     if(i>=items.length){const left=S.filter(due).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=()=>{location.hash=""};$("again").onclick=start;return}
+      $("home").onclick=goHome;$("again").onclick=start;return}
     const {s,m}=items[i],opts=choices(s);
     if(m==="name"){c.innerHTML=`<p class="prompt">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans"></div><div id="after"></div>`;
       opts.forEach(o=>{const b=document.createElement("button");b.textContent=o.n;b.dataset.n=o.n;b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}

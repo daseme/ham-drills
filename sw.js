@@ -1,5 +1,5 @@
 /* Bump VERSION whenever any file changes, so phones pick up the new copy. */
-const VERSION="hamdrill-v4";
+const VERSION="hamdrill-v5";
 const FILES=["./","index.html","data.js","manifest.webmanifest",
   "icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png",
   "fonts/atkinson-hyperlegible-latin-400-normal.woff2","fonts/atkinson-hyperlegible-latin-700-normal.woff2",
