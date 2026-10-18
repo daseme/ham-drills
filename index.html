@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Technician drills</title>
+<meta name="theme-color" content="#EDF0F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11171D" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-style:normal;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:700;font-style:normal;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:500;font-style:normal;font-display:swap;src:url(fonts/barlow-condensed-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:600;font-style:normal;font-display:swap;src:url(fonts/barlow-condensed-latin-600-normal.woff2) format("woff2")}
+:root{
+  --bg:#EDF0F2;--panel:#FFFFFF;--ink:#18232E;--muted:#56636F;--line:#CBD3DA;
+  --amber:#B8730F;--amber-bg:#FBF0DD;--ok:#22744A;--ok-bg:#E2F2E8;--bad:#A93434;--bad-bg:#F8E3E3;
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#11171D;--panel:#1A222A;--ink:#E3E8ED;--muted:#9AA7B3;--line:#2D3842;
+  --amber:#E9A33E;--amber-bg:#33270F;--ok:#5CC48A;--ok-bg:#163223;--bad:#EE7B7B;--bad-bg:#3A1B1B;
+  color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,"Segoe UI",Roboto,sans-serif;font-size:17px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
+.cond{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:34px;line-height:1.05;margin:4px 0 6px;letter-spacing:.01em}
+.sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+.back{font:inherit;font-size:15px;background:none;border:0;padding:6px 0;margin:0 0 4px;color:var(--muted);cursor:pointer}
+/* home */
+.today{display:flex;align-items:baseline;gap:12px;margin:6px 0 4px}
+.today b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:72px;line-height:.9;color:var(--amber)}
+.today span{font-size:17px}
+.reach{color:var(--muted);font-size:15px;margin:0 0 14px}
+.decks{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--line)}
+.decks li{border-bottom:1px solid var(--line)}
+.row{font:inherit;color:inherit;background:none;border:0;width:100%;text-align:left;display:grid;grid-template-columns:76px 1fr auto;gap:2px 12px;align-items:center;padding:12px 2px;cursor:pointer}
+.row .code{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500;font-size:34px;line-height:1;color:var(--amber);grid-row:span 2}
+.row .nm{font-weight:700;font-size:17px;line-height:1.25}
+.row .meta{font-size:14px;color:var(--muted);grid-column:2}
+.row .due{grid-row:span 2;grid-column:3;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:26px;line-height:1;text-align:right;min-width:44px}
+.row .due small{display:block;font-family:"Atkinson Hyperlegible",system-ui,sans-serif;font-weight:400;font-size:12px;color:var(--muted)}
+.row .due.zero{color:var(--muted)}
+.meter{grid-column:2/4;height:4px;border-radius:2px;background:var(--line);overflow:hidden;display:flex;margin-top:6px}
+.meter i{display:block;height:100%}
+.meter .m{background:var(--ok)}.meter .s{background:var(--amber)}
+.untouched .code{color:var(--muted)}
+.section-gap{margin-top:8px}
+/* drill */
+.groups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.opts{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:15px;color:var(--muted);margin-bottom:14px}
+.opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.opts input{width:18px;height:18px;accent-color:var(--amber)}
+.srs{font-size:15px;margin:0 0 10px}
+.status{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px;color:var(--muted);margin-bottom:6px}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.bar span{display:block;height:100%;background:var(--amber);width:0;transition:width .25s}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
+.qid{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500;font-size:44px;line-height:1;color:var(--amber);margin:0 0 2px;letter-spacing:.02em}
+.topic{font-size:14px;color:var(--muted);margin:0 0 12px}
+.fig{background:var(--amber-bg);border-radius:8px;padding:8px 12px;font-size:15px;margin:0 0 12px}
+.q{font-size:19px;font-weight:700;margin:0 0 14px}
+.ans{display:flex;flex-direction:column;gap:8px}
+.ans button{font:inherit;text-align:left;display:flex;gap:10px;align-items:flex-start;width:100%;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer}
+.ans button b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:19px;min-width:16px;line-height:1.35}
+.ans button:disabled{cursor:default}
+.ans button.right{background:var(--ok-bg);border-color:var(--ok)}
+.ans button.wrong{background:var(--bad-bg);border-color:var(--bad)}
+.note{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);font-size:16px}
+.note strong.ok{color:var(--ok)}.note strong.no{color:var(--bad)}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:700;border-radius:10px;padding:11px 18px;cursor:pointer;border:1px solid var(--ink);background:var(--ink);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.explain{margin-top:14px;border-left:3px solid var(--amber);padding:2px 0 2px 14px}
+.explain p{margin:0 0 10px;font-size:16px}
+.explain details{margin-top:6px;font-size:15px}
+.explain summary{cursor:pointer;color:var(--muted)}
+.explain details p{font-size:15px;margin:8px 0 0}
+.fx{background:var(--amber-bg);border-radius:10px;padding:10px 14px;margin:12px 0 0}
+.fx .eq{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:26px;margin:0}
+.fx .leg{margin:6px 0 0;padding-left:18px;font-size:15px}.fx .leg li{margin:2px 0}
+.cheat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;font-size:15px}
+.cheat summary{cursor:pointer;font-weight:700}.cheat p{margin:8px 0 0}
+.ptitle{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:32px;line-height:1.1;color:var(--amber);margin:0 0 8px}
+.primer p{margin:0 0 10px}
+.end h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:56px;line-height:1;margin:0;color:var(--amber)}
+.end p{margin:6px 0 0}
+/* symbols */
+.prompt{font-size:15px;color:var(--muted);margin:0 0 6px}
+.name{font-size:22px;font-weight:700;margin:0 0 14px}
+.big{display:flex;justify-content:center;margin:6px 0 16px}
+.big svg{width:min(100%,260px);height:auto;color:var(--ink)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tiles button{justify-content:center;padding:14px 8px}
+.tiles svg{width:100%;max-width:150px;height:auto;color:var(--ink)}
+.defn{margin:0 0 6px}.hook{margin:0;color:var(--muted);font-size:15px}
+/* footer */
+.foot{font-size:14px;color:var(--muted);margin-top:28px}
+.foot p{margin:0 0 8px}
+.linkbtn{font:inherit;font-size:14px;background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;max-width:90vw}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.bar span{transition:none}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<script src="data.js"></script>
+<script src="seed.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const IV=[0,1,3,7,16,35],MASTER=3;
+const dayNum=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000)};
+const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+const DECK=Object.fromEntries(DECKS.map(d=>[d.id,d]));
+const POOL=DECKS.filter(d=>d.exam>0);
+
+/* ---------- storage ---------- */
+const NS="hamdrill:";
+const get=(k,f)=>{try{const v=localStorage.getItem(NS+k);return v==null?f:JSON.parse(v)}catch(e){return f}};
+const put=(k,v)=>{try{localStorage.setItem(NS+k,JSON.stringify(v))}catch(e){toast("Couldn't save progress on this device.")}};
+const SRS={};
+const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
+const saveSrs=id=>put("srs:"+id,SRS[id]);
+function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
+function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
+if(window.SEED&&!get("seeded",null)){importDecks(SEED.decks);put("seeded",SEED.exported)}
+
+const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
+const isDue=(id,k)=>{const r=srsOf(id)[k];return !r||r.due<=dayNum()};
+const isMastered=(id,k)=>{const r=srsOf(id)[k];return !!r&&r.lv>=MASTER};
+const isSeen=(id,k)=>!!srsOf(id)[k];
+function record(id,k,ok){
+  const s=srsOf(id),t=dayNum(),r={...(s[k]||{lv:0,due:t,last:null,fail:null})};
+  if(!ok){r.lv=0;r.due=t;r.fail=t}
+  else if(r.fail===t){r.lv=0;r.due=t+1}
+  else if(r.last!==t){r.lv=Math.min(r.lv+1,IV.length-1);r.due=t+IV[r.lv]}
+  r.last=t;r.n=(r.n||0)+1;if(!ok)r.w=(r.w||0)+1;r.ts=Date.now();s[k]=r;saveSrs(id);
+}
+function stats(d){const ids=itemIds(d),t=dayNum();
+  return{total:ids.length,due:ids.filter(k=>isDue(d.id,k)).length,seen:ids.filter(k=>isSeen(d.id,k)).length,
+    mastered:ids.filter(k=>isMastered(d.id,k)).length,tomorrow:ids.filter(k=>{const r=srsOf(d.id)[k];return r&&r.due===t+1}).length}}
+/* An unseen card counts as due, so untouched decks would swamp the home count. Home counts reviews only. */
+const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
+
+/* Shuffle and basics choices persist; Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
+const prefs=Object.assign({shuffleQ:true,shuffleA:false,basics:false},get("prefs",{}));prefs.dueOnly=true;
+const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
+
+function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+
+/* ---------- router ---------- */
+function route(){
+  const h=location.hash.slice(1);
+  if(h==="due")drill({mixed:true});
+  else if(h==="symbols")symbols();
+  else if(DECK[h])drill({deck:DECK[h]});
+  else home();
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+let lastDay=dayNum();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dayNum()!==lastDay){lastDay=dayNum();if(!location.hash)home()}});
+
+/* ---------- home ---------- */
+function home(){
+  const app=$("app");
+  const reviews=DECKS.map(d=>[d,reviewsDue(d),stats(d)]);
+  const totalDue=reviews.reduce((a,[,n])=>a+n,0);
+  const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0);
+  const poolSeen=POOL.reduce((a,d)=>a+stats(d).seen,0),poolTotal=POOL.reduce((a,d)=>a+stats(d).total,0);
+  const untouched=POOL.filter(d=>stats(d).seen===0);
+  const untouchedQs=untouched.reduce((a,d)=>a+d.exam,0);
+  const row=([d,due,s])=>{
+    const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
+    const meta=d.exam?`${d.exam} on the exam. ${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} questions, not started.`}`
+      :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}, not started.`}`;
+    return `<li><button class="row${s.seen?"":" untouched"}" data-go="${d.id}">
+      <span class="code">${d.code}</span><span class="nm">${esc(d.name)}</span>
+      <span class="due${due?"":" zero"}">${due||"–"}<small>${due?"due":""}</small></span>
+      <span class="meta">${meta}</span>
+      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button></li>`};
+  app.innerHTML=`
+  <h1>Technician drills</h1>
+  <p class="sub">The 2026-2030 Technician pool, worded as on the exam, with spaced review.</p>
+  <div class="today"><b>${totalDue}</b><span>${totalDue===1?"card":"cards"} due today</span></div>
+  <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}</p>
+  ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
+  <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
+  <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
+  <div class="foot">
+    <p>Progress is saved on this phone. Back it up now and then, or before switching phones.</p>
+    <p><button class="linkbtn" id="exp">Export progress</button> &nbsp; <button class="linkbtn" id="imp">Import progress</button></p>
+    <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
+  </div>`;
+  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{location.hash=b.dataset.go});
+  $("exp").onclick=exportProgress;$("imp").onclick=()=>$("importFile").click();
+}
+function exportProgress(){
+  const data={app:"hamdrill",version:1,exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)]))};
+  const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  const d=new Date(),name=`ham-drill-progress-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  const file=new File([blob],name,{type:"application/json"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:"Ham drill progress"}).catch(()=>{});return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+$("importFile").onchange=async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{const d=JSON.parse(await f.text());if(!d||d.app!=="hamdrill"||!d.decks)throw 0;
+    const n=importDecks(d.decks);toast(`Imported progress for ${n} decks.`);route()}
+  catch(err){toast("That file isn't a drill progress export.")}
+};
+
+/* ---------- question drills ---------- */
+function drill({deck,mixed}){
+  const app=$("app");prefs.dueOnly=true;
+  const decks=mixed?POOL:[deck];
+  const all=decks.flatMap(d=>d.Q.map(q=>({d,q})));
+  const grpOf=(d,id)=>d.id==="math"?(["T5B","T5C","T5D"].includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
+  let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
+  const title=mixed?"Everything due":deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
+  const sub=mixed?"Every pool question due today, mixed across sections. Math and symbols stay in their own decks.":
+    deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your 35 exam questions.`;
+  const chips=mixed?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
+  app.innerHTML=`<button class="back" id="back">&larr; All decks</button>
+  <h1>${title}</h1><p class="sub">${sub}</p>
+  ${!mixed&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
+  ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
+  <div class="opts">
+    <label><input type="checkbox" id="shuffleQ"> Shuffle questions</label>
+    <label><input type="checkbox" id="shuffleA"> Shuffle answers</label>
+    ${mixed?"":`<label><input type="checkbox" id="basics"> Basics first</label>`}
+    ${mixed?"":`<label><input type="checkbox" id="dueOnly"> Due today</label>`}
+  </div>
+  <p class="srs" id="srsline"></p>
+  <div class="status"><span id="pos"></span><span id="score"></span></div>
+  <div class="bar"><span id="fill"></span></div>
+  <div class="card" id="card" aria-live="polite"></div>
+  ${mixed?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
+  $("back").onclick=()=>{location.hash=""};
+  const opt=k=>mixed&&k==="basics"?false:mixed&&k==="dueOnly"?true:prefs[k];
+  ["shuffleQ","shuffleA","basics","dueOnly"].forEach(k=>{const el=$(k);if(!el)return;el.checked=prefs[k];el.onchange=()=>{prefs[k]=el.checked;savePrefs();k==="shuffleA"?render():start()}});
+  if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
+  if($("reset"))$("reset").onclick=function(){if(this.dataset.armed){SRS[deck.id]={};saveSrs(deck.id);delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all "+deck.code+" progress"}};
+
+  const inGroup=()=>all.filter(x=>group==="all"||grpOf(x.d,x.q[0])===group);
+  const due=x=>mixed?(isSeen(x.d.id,x.q[0])&&isDue(x.d.id,x.q[0])):isDue(x.d.id,x.q[0]);
+  function srsLine(){
+    const g=inGroup(),t=dayNum();
+    const n=g.filter(due).length,m=g.filter(x=>isMastered(x.d.id,x.q[0])).length,tom=g.filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
+    $("srsline").textContent=mixed?`${n} due today${tom?`, ${tom} coming up tomorrow`:""}.`:`${n} due today, ${m} of ${g.length} mastered${tom?`, ${tom} coming up tomorrow`:""}.`;
+  }
+  function start(){
+    let pool=inGroup();
+    if(opt("dueOnly"))pool=pool.filter(due);
+    items=opt("shuffleQ")?shuffle(pool):pool;
+    if(opt("basics")){const ord=Object.keys(deck.P);items=ord.flatMap(k=>items.filter(x=>deck.CON[x.q[0]]===k)).concat(items.filter(x=>!deck.CON[x.q[0]]))}
+    shown=null;i=0;done=0;fr=0;fd=0;render();
+  }
+  function status(){
+    srsLine();
+    $("pos").textContent=items.length?`Question ${Math.min(i+1,items.length)} of ${items.length}`:"";
+    $("score").textContent=fd?`${fr} of ${fd} right first try`:"";
+    $("fill").style.width=items.length?(done/items.length*100)+"%":"0";
+  }
+  function render(){
+    status();const c=$("card");
+    if(!items.length){c.innerHTML=opt("dueOnly")?`<p class="q">Nothing is due here today.</p><p>Spacing works best when cards rest. Come back tomorrow, or turn off Due today to practice anyway.</p>`:`<p class="q">No questions match.</p>`;return}
+    if(i>=items.length){
+      const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
+      const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try. The exam pass mark is 74%.</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
+      <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
+      $("home").onclick=()=>{location.hash=""};$("again").onclick=start;return;
+    }
+    const {d,q}=items[i];
+    if(opt("basics")&&deck.CON[q[0]]&&deck.CON[q[0]]!==shown){
+      const k=deck.CON[q[0]],[t,b]=deck.P[k];let n=0;while(i+n<items.length&&deck.CON[items[i+n].q[0]]===k)n++;
+      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}.</p><div class="actions"><button class="btn" id="go">Show the question</button></div>`;
+      $("go").onclick=()=>{shown=k;render()};$("go").focus({preventScroll:true});return;
+    }
+    const [id,text,opts,ans,note,fig]=q;
+    const hasAll=opts.some(o=>/^All these/.test(o));
+    const order=opt("shuffleA")&&!hasAll?shuffle([0,1,2,3]):[0,1,2,3];
+    c.innerHTML=`<p class="qid">${id}</p><p class="topic">${esc(d.G[grpOf(d,id)]||d.name)}</p>
+      ${fig?`<p class="fig">Uses figure ${fig} from the pool.</p>`:""}
+      <p class="q">${text}</p><div class="ans" id="ans"></div><div id="after"></div>`;
+    order.forEach((oi,pos)=>{const b=document.createElement("button");b.innerHTML=`<b>${"ABCD"[pos]}</b><span>${opts[oi]}</span>`;b.dataset.oi=oi;b.onclick=()=>pick(oi);$("ans").appendChild(b)});
+    $("ans").firstChild.focus({preventScroll:true});
+  }
+  function pick(oi){
+    const {d,q}=items[i],[id,,,ans,note]=q,ok=oi===ans;
+    [...$("ans").children].forEach(b=>{b.disabled=true;const v=+b.dataset.oi;if(v===ans)b.classList.add("right");else if(v===oi)b.classList.add("wrong")});
+    done++;if(!items[i].re){fd++;if(ok)fr++}
+    record(d.id,id,ok);
+    if(!ok&&opt("dueOnly")){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
+    status();
+    const F=d.F&&d.F[id],ex=EXPLAIN[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
+    $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</strong> ${note}</p>
+      ${F?`<div class="fx"><p class="eq">${F[0]}</p><ul class="leg">${F[1].map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
+      <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
+      <div class="explain" id="exbox" hidden>${ex?ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""):""}
+      ${pr?`<details><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
+    $("next").onclick=()=>{i++;render()};
+    if($("more"))$("more").onclick=function(){const box=$("exbox"),open=box.hidden;box.hidden=!open;this.setAttribute("aria-expanded",open);this.textContent=open?"Hide explanation":"Explain this more"};
+    $("next").focus({preventScroll:true});
+  }
+  start();
+}
+
+/* ---------- symbol drill ---------- */
+function symbols(){
+  const d=DECK.symbols,S=d.S,app=$("app");prefs.dueOnly=true;
+  const SW='stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  const svg=s=>`<svg viewBox="0 0 120 60" role="img" aria-label="Schematic symbol"><g ${SW}>${s.d}</g></svg>`;
+  let mode="name",items=[],i=0,done=0,fr=0,fd=0;
+  app.innerHTML=`<button class="back" id="back">&larr; All decks</button>
+  <h1>Symbol drill</h1><p class="sub">Twenty-one symbols drawn to match the three pool figures, plus the look-alikes the pool uses as wrong answers.</p>
+  <div class="groups" id="modes" role="group" aria-label="Drill mode">${[["name","Name the symbol"],["find","Find the symbol"],["mix","Mixed"]].map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===mode}">${l}</button>`).join("")}</div>
+  <div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>
+  <p class="srs" id="srsline"></p>
+  <div class="status"><span id="pos"></span><span id="score"></span></div>
+  <div class="bar"><span id="fill"></span></div>
+  <div class="card" id="card" aria-live="polite"></div>
+  <p class="foot"><button class="linkbtn" id="reset">Reset symbol progress</button></p>`;
+  $("back").onclick=()=>{location.hash=""};
+  $("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;savePrefs();start()};
+  $("modes").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{mode=b.dataset.v;$("modes").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
+  $("reset").onclick=function(){if(this.dataset.armed){SRS.symbols={};saveSrs("symbols");delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all symbol progress"}};
+  const due=s=>isDue("symbols",s.n);
+  const tomorrow=()=>S.filter(s=>{const r=srsOf("symbols")[s.n];return r&&r.due===dayNum()+1}).length;
+  function srsLine(){$("srsline").textContent=`${S.filter(due).length} due today, ${S.filter(s=>isMastered("symbols",s.n)).length} of ${S.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}.`}
+  function choices(s){const same=shuffle(S.filter(x=>x!==s&&x.f===s.f)),rest=shuffle(S.filter(x=>x!==s&&x.f!==s.f));return shuffle([s,...same.concat(rest).slice(0,3)])}
+  function start(){const pool=prefs.dueOnly?S.filter(due):S;items=shuffle(pool).map(s=>({s,m:mode==="mix"?(Math.random()<.5?"name":"find"):mode}));i=0;done=0;fr=0;fd=0;render()}
+  function status(){srsLine();$("pos").textContent=items.length?`Symbol ${Math.min(i+1,items.length)} of ${items.length}`:"";$("score").textContent=fd?`${fr} of ${fd} right first try`:"";$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
+  function render(){
+    status();const c=$("card");
+    if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
+    if(i>=items.length){const left=S.filter(due).length;
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
+      <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
+      $("home").onclick=()=>{location.hash=""};$("again").onclick=start;return}
+    const {s,m}=items[i],opts=choices(s);
+    if(m==="name"){c.innerHTML=`<p class="prompt">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans"></div><div id="after"></div>`;
+      opts.forEach(o=>{const b=document.createElement("button");b.textContent=o.n;b.dataset.n=o.n;b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}
+    else{c.innerHTML=`<p class="prompt">Tap the symbol for</p><p class="name">${esc(s.n)}</p><div class="ans tiles" id="ans"></div><div id="after"></div>`;
+      opts.forEach((o,k)=>{const b=document.createElement("button");b.innerHTML=svg(o);b.dataset.n=o.n;b.setAttribute("aria-label","Option "+"ABCD"[k]);b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}
+    $("ans").firstChild.focus({preventScroll:true});
+  }
+  function pick(o,s){
+    const ok=o===s;
+    [...$("ans").children].forEach(b=>{b.disabled=true;if(b.dataset.n===s.n)b.classList.add("right");else if(b.dataset.n===o.n)b.classList.add("wrong")});
+    done++;if(!items[i].re){fd++;if(ok)fr++}record("symbols",s.n,ok);
+    if(!ok&&prefs.dueOnly)items.splice(Math.min(i+4,items.length),0,{...items[i],re:1});
+    status();
+    $("after").innerHTML=`<div class="note"><p class="defn"><strong class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</strong> <b>${esc(s.n)}</b>: ${s.def}</p><p class="hook">How to spot it: ${s.t}</p></div><div class="actions"><button class="btn" id="next">${i+1<items.length?"Next symbol":"See results"}</button></div>`;
+    $("next").onclick=()=>{i++;render()};$("next").focus({preventScroll:true});
+  }
+  start();
+}
+
+route();
+if("serviceWorker" in navigator&&location.protocol!=="file:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
