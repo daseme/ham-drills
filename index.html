@@ -32,7 +32,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperl
 main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
 .cond{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
 h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:34px;line-height:1.05;margin:4px 0 6px;letter-spacing:.01em}
-.sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+.sub{color:var(--muted);margin:0 0 8px;font-size:15px}
+.over{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin:14px 0 0}
+.facts{list-style:none;margin:0 0 18px;padding:0;color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;gap:2px 14px}
+.facts b{font-weight:400;color:var(--ink)}
 .back{font:inherit;font-size:15px;background:none;border:0;padding:6px 0;margin:0 0 4px;color:var(--muted);cursor:pointer}
 /* home */
 .today{display:flex;align-items:baseline;gap:12px;margin:6px 0 4px}
@@ -242,8 +245,10 @@ function home(){
       <span class="meta">${meta}</span>
       <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button></li>`};
   app.innerHTML=`
-  <h1>Technician drills</h1>
-  <p class="sub">The 2026-2030 Technician pool, worded as on the exam, with spaced review.</p>
+  <p class="over">Amateur Radio Service</p>
+  <h1>Technician Class Operator License</h1>
+  <p class="sub">Drills for the 2026-2030 question pool, worded as on the exam, with spaced review.</p>
+  <ul class="facts" aria-label="License facts"><li>FCC license class <b>Technician</b></li><li>Exam <b>Element 2</b></li><li>FCC radio service code <b>HA</b></li></ul>
   <div class="today"><b>${totalDue}</b><span>${totalDue===1?"card":"cards"} due today</span></div>
   <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}</p>
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
