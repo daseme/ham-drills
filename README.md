@@ -2,13 +2,14 @@
 
 A single offline web app holding all 12 Technician drills: T1 through T0, electronics math, and schematic symbols. Every question has a prewritten "Explain this more" panel, so the app makes no network calls once installed.
 
+The live copy is at https://daseme.github.io/ham-technicians-drills/.
+
 ## What's in the folder
 
 | File | Purpose |
 |---|---|
 | index.html | The app |
 | data.js | All 409 pool questions, primers, formulas, symbols and explanations |
-| seed.js | Your progress as of October 18, 2026, loaded on first launch |
 | sw.js | Service worker; caches everything for offline use |
 | manifest.webmanifest, icons/ | Home-screen install |
 | fonts/ | Bundled typefaces, so nothing loads from Google |
@@ -29,9 +30,11 @@ To try it on a Windows PC first, open a terminal in this folder and run `python 
 2. Tap the three-dot menu, then Add to Home screen (or Install app).
 3. Launch it from the new icon. It opens full screen and works with no signal.
 
+On an iPhone, open the address in Safari, tap Share, then Add to Home Screen. Use the home-screen icon rather than a bookmark: Safari clears saved data for ordinary websites after a week without a visit, and that would wipe progress.
+
 ## Progress
 
-Progress is stored on the phone. The seed in seed.js loads only on first launch. After that, use the app rather than the old Claude artifacts, since the two don't sync.
+Progress is stored on the phone and nowhere else. The app asks the browser to keep its storage through cleanups, but Export progress is the only real backup.
 
 Export progress on the home screen produces a JSON backup. Import progress merges a backup into the phone, keeping the newer record for each card. Use it before clearing browser data or moving to a new phone.
 
@@ -39,6 +42,12 @@ Export progress on the home screen produces a JSON backup. Import progress merge
 
 Each section carries a badge: a radio tower with one, two or three signal arcs. Bronze means every card in the section has been seen, silver that every card has been answered correctly at least once, and gold that every card is mastered. A rung, once earned, stays, along with the day it was earned, but the badge dims while the section's current standing is below its best rung. Badges travel with Export and Import.
 
+## Testing yourself
+
+This app teaches the pool. For practice exams under exam conditions, use HamStudy.org; the footer links to it.
+
 ## Updating
 
-After changing any file, raise the VERSION string at the top of sw.js (for example, hamdrill-v2). Phones pick up the new copy the next time the app opens online.
+After changing any file, raise the VERSION string at the top of sw.js and APP_VERSION in index.html together (for example, hamdrill-v4 and "4"). Phones fetch the new copy the next time the app opens online and show a notice; the new version runs on the following launch. The footer shows the version a phone is running.
+
+Files in private/ are ignored by git; keep personal progress exports there.

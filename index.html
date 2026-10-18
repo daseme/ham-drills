@@ -57,6 +57,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .row.badged .code{color:var(--muted)}
 /* badges: a tower with one, two or three signal arcs for bronze, silver, gold */
 .badge{display:block;flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .badge .ring{fill:var(--panel);stroke:currentColor;stroke-width:3}
 .badge.t0{color:var(--none)}.badge.t0 .ring{stroke-dasharray:4 3}.badge.t0 .tw{stroke-dasharray:3 2.5}
 .badge.t1{color:var(--bronze)}.badge.t2{color:var(--silver)}.badge.t3{color:var(--gold)}
@@ -139,7 +140,6 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 <main id="app"></main>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <script src="data.js"></script>
-<script src="seed.js"></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -159,7 +159,8 @@ const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
 function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
-if(window.SEED&&!get("seeded",null)){importDecks(SEED.decks);put("seeded",SEED.exported)}
+const APP_VERSION="3";
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
 const isDue=(id,k)=>{const r=srsOf(id)[k];return !r||r.due<=dayNum()};
@@ -203,7 +204,7 @@ function badgeSvg(tier,size,{lapsed=false,full=false}={}){
 const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{lapsed:e>0&&tierNow(d)<e,full})};
 
 /* Shuffle and basics choices persist; Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
-const prefs=Object.assign({shuffleQ:true,shuffleA:false,basics:false},get("prefs",{}));prefs.dueOnly=true;
+const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false},get("prefs",{}));prefs.dueOnly=true;
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
@@ -236,7 +237,7 @@ function home(){
       :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}, not started.`}`;
     const earned=tierEarned(d);
     return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
-      <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}</span><span class="nm">${esc(d.name)}</span>
+      <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
       <span class="due${due?"":" zero"}">${due||"–"}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
       <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button></li>`};
@@ -248,12 +249,14 @@ function home(){
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
-  <ul class="sash" aria-label="Section badges">${DECKS.map(d=>`<li>${deckBadge(d,44,true)}<b>${d.code}</b></li>`).join("")}</ul>
+  <ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
   <p class="sash-cap">${sashCaption()}</p>
   <div class="foot">
     <p>Progress is saved on this phone. Back it up now and then, or before switching phones.</p>
     <p><button class="linkbtn" id="exp">Export progress</button> &nbsp; <button class="linkbtn" id="imp">Import progress</button></p>
+    <p>When you want to test yourself under exam conditions, take practice exams at <a href="https://hamstudy.org/" style="color:inherit">HamStudy.org</a>. This app is for learning the pool; that one is for finding out whether you're ready.</p>
     <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. A section earns bronze when every card has been seen, silver when every card has been answered correctly, and gold when every card is mastered; a badge dims if the section slips below the rung it earned. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
+    <p>Version ${APP_VERSION}.</p>
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{location.hash=b.dataset.go});
   $("exp").onclick=exportProgress;$("imp").onclick=()=>$("importFile").click();
@@ -427,7 +430,11 @@ function symbols(){
 }
 
 route();
-if("serviceWorker" in navigator&&location.protocol!=="file:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+if("serviceWorker" in navigator&&location.protocol!=="file:"){
+  const had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had)toast("Updated. Close and reopen the app to use the new version.")});
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
 </script>
 </body>
 </html>
