@@ -38,6 +38,10 @@ Progress is stored on the phone and nowhere else. The app asks the browser to ke
 
 Export progress on the home screen produces a JSON backup. Import progress merges a backup into the phone, keeping the newer record for each card. Use it before clearing browser data or moving to a new phone.
 
+## Study pages
+
+Every section has a study page with its basics in pool order, each primer naming the questions it covers and offering to drill just those. Open one from the section's drill screen, or from the home screen for a section not yet started. The whole guide at #study is one page built for printing. The primers are the same text that Basics first shows before each group of questions and that the explanation panel draws on; they live once, in data.js.
+
 ## Badges
 
 Each section carries a badge: a radio tower with one, two or three signal arcs. Bronze means every card in the section has been seen, silver that every card has been answered correctly at least once, and gold that every card is mastered. A rung, once earned, stays, along with the day it was earned, but the badge dims while the section's current standing is below its best rung. Badges travel with Export and Import.

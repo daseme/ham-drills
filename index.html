@@ -109,6 +109,40 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .fx .leg{margin:6px 0 0;padding-left:18px;font-size:15px}.fx .leg li{margin:2px 0}
 .cheat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;font-size:15px}
 .cheat summary{cursor:pointer;font-weight:700}.cheat p{margin:8px 0 0}
+.study h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:28px;line-height:1.1;color:var(--amber);margin:26px 0 6px}
+.study h2:first-of-type{margin-top:10px}
+.study .cover{font-size:14px;color:var(--muted);margin:4px 0 0}
+.study .cover a{color:inherit}
+.study .cover b{font-weight:400;color:var(--ink)}
+.study .sec{margin:34px 0 0;padding-top:18px;border-top:1px solid var(--line)}
+.study .sec:first-of-type{margin-top:0;padding-top:0;border-top:0}
+.study .sec h1{margin-top:0}
+.study .gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.study .gallery div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px}
+.study .gallery svg{width:100%;height:auto;color:var(--ink);display:block;margin-bottom:4px}
+.study .gallery b{display:block;font-size:16px}
+.study .gallery p{margin:4px 0 0;color:var(--muted)}
+.study .cheat{margin-top:12px}
+.study .cheat summary{display:none}
+.study .cheat p{margin:0 0 8px}
+.study .cheat p:first-of-type{margin-top:0}
+.tools{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px;margin:0 0 14px}
+.tools a,.tools .linkbtn{font-size:15px;color:var(--muted)}
+.study-link{display:block;font-size:14px;color:var(--muted);padding:0 2px 12px 104px;margin-top:-6px}
+.study-link a{color:inherit}
+.only{font-size:15px;color:var(--muted);margin:0 0 14px}
+.only a{color:inherit}
+@media print{
+  body{background:#fff;color:#000;font-size:12pt}
+  .back,.tools,.actions,.btn,.linkbtn,.foot,.toast{display:none!important}
+  .study .cover a{text-decoration:none}
+  .study .sec{break-before:page;border-top:0;margin-top:0;padding-top:0}
+  .study .sec:first-of-type{break-before:auto}
+  .study h2{break-after:avoid}.study .gallery div,.study .primer p{break-inside:avoid}
+  .study .cover a{display:none}
+  .study .cheat,.study .gallery div{border-color:#999}
+  a[href]::after{content:none}
+}
 .ptitle{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:32px;line-height:1.1;color:var(--amber);margin:0 0 8px}
 .primer p{margin:0 0 10px}
 .end h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:56px;line-height:1;margin:0;color:var(--amber)}
@@ -162,7 +196,7 @@ const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
 function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
-const APP_VERSION="3";
+const APP_VERSION="4";
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
@@ -215,7 +249,11 @@ function toast(msg){const t=document.createElement("div");t.className="toast";t.
 /* ---------- router ---------- */
 function route(){
   const h=location.hash.slice(1);
+  const m=h.match(/^([a-z0-9]+)\/(study|p)(?:\/([a-z0-9_-]+))?$/);
   if(h==="due")drill({mixed:true});
+  else if(h==="study")study(null);
+  else if(m&&DECK[m[1]]&&m[2]==="study")study(DECK[m[1]]);
+  else if(m&&DECK[m[1]]&&m[2]==="p"&&DECK[m[1]].P&&DECK[m[1]].P[m[3]])drill({deck:DECK[m[1]],primer:m[3]});
   else if(h==="symbols")symbols();
   else if(DECK[h])drill({deck:DECK[h]});
   else home();
@@ -243,7 +281,7 @@ function home(){
       <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
       <span class="due${due?"":" zero"}">${due||"–"}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
-      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button></li>`};
+      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&(d.P||d.S)?`<span class="study-link">New here? <a href="#${d.id}/study">Read the ${d.code} basics first</a>.</span>`:""}</li>`};
   app.innerHTML=`
   <p class="over">Amateur Radio Service</p>
   <h1>Technician Class Operator License</h1>
@@ -259,6 +297,7 @@ function home(){
   <div class="foot">
     <p>Progress is saved on this phone. Back it up now and then, or before switching phones.</p>
     <p><button class="linkbtn" id="exp">Export progress</button> &nbsp; <button class="linkbtn" id="imp">Import progress</button></p>
+    <p>Every section has a study page with its basics; the <a href="#study" style="color:inherit">whole guide</a> is one page you can print.</p>
     <p>When you want to test yourself under exam conditions, take practice exams at <a href="https://hamstudy.org/" style="color:inherit">HamStudy.org</a>. This app is for learning the pool; that one is for finding out whether you're ready.</p>
     <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. A section earns bronze when every card has been seen, silver when every card has been answered correctly, and gold when every card is mastered; a badge dims if the section slips below the rung it earned. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
     <p>Version ${APP_VERSION}.</p>
@@ -286,9 +325,43 @@ $("importFile").onchange=async e=>{
   catch(err){toast("That file isn't a drill progress export.")}
 };
 
+/* ---------- study pages ----------
+   One source, three views: the primers in data.js feed the Basics-first cards, the explanation panel
+   and these pages. A page per deck, or every deck at once for printing. */
+const SYM_SW='stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+function studySection(d,{solo}){
+  const h=solo?"h1":"h1";
+  let body="";
+  if(d.S){
+    body=`<p class="sub">${d.S.length} symbols that appear on the exam. The hook under each is how to spot it.</p>
+    <div class="gallery">${d.S.map(s=>`<div><svg viewBox="0 0 120 60" role="img" aria-label="${esc(s.n)}"><g ${SYM_SW}>${s.d}</g></svg><b>${esc(s.n)}</b>${esc(s.def)}<p>${esc(s.t)}</p></div>`).join("")}</div>`;
+  }else{
+    const cov={};for(const q of d.Q){const k=d.CON&&d.CON[q[0]];if(k)(cov[k]=cov[k]||[]).push(q[0])}
+    const intro=d.exam?`${d.code} supplies ${d.exam} of the 35 exam questions, drawn from ${d.Q.length} in the pool.`:`${d.Q.length} questions, with the formulas they rest on.`;
+    body=`<p class="sub">${intro}</p>
+    ${d.cheat?`<details class="cheat" open><summary>Formulas</summary>${d.cheat}</details>`:""}
+    ${Object.keys(d.P||{}).map(k=>{const [t,b]=d.P[k],ids=cov[k]||[];
+      return `<h2>${t}</h2><div class="primer">${b}</div>
+      <p class="cover">Covers <b>${ids.length===1?ids[0]:`${ids.length} questions, ${ids[0]} to ${ids[ids.length-1]}`}</b>${ids.length?` <a href="#${d.id}/p/${k}">&middot; Drill these</a>`:""}</p>`}).join("")}`;
+  }
+  return `<section class="sec"><${h}>${d.id==="math"||d.id==="symbols"?esc(d.name):`${d.code}: ${esc(d.name)}`}</${h}>${body}</section>`;
+}
+function study(deck){
+  const app=$("app");
+  const decks=deck?[deck]:DECKS;
+  app.innerHTML=`<div class="study">
+  <button class="back" id="back">&larr; ${deck?"All decks":"All decks"}</button>
+  ${deck?"":`<p class="over">Amateur Radio Service</p><h1>Technician study guide</h1><p class="sub">The basics behind every section of the 2026-2030 pool, in pool order. Print this page for a paper copy.</p>`}
+  <p class="tools">${deck?`<a href="#${deck.id}">Drill ${deck.code}</a><a href="#study">Whole guide</a>`:""}<button class="linkbtn" id="print">Print</button></p>
+  ${decks.map(d=>studySection(d,{solo:!!deck})).join("")}
+  </div>`;
+  $("back").onclick=()=>{location.hash=""};
+  $("print").onclick=()=>window.print();
+}
+
 /* ---------- question drills ---------- */
-function drill({deck,mixed}){
-  const app=$("app");prefs.dueOnly=true;
+function drill({deck,mixed,primer}){
+  const app=$("app");prefs.dueOnly=!primer;
   const decks=mixed?POOL:[deck];
   const all=decks.flatMap(d=>d.Q.map(q=>({d,q})));
   const grpOf=(d,id)=>d.id==="math"?(["T5B","T5C","T5D"].includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
@@ -296,10 +369,12 @@ function drill({deck,mixed}){
   const title=mixed?"Everything due":deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
   const sub=mixed?"Every pool question due today, mixed across sections. Math and symbols stay in their own decks.":
     deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your 35 exam questions.`;
-  const chips=mixed?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
+  const chips=mixed||primer?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
   app.innerHTML=`<button class="back" id="back">&larr; All decks</button>
   <h1>${title}</h1><p class="sub">${sub}</p>
+  ${primer?`<p class="only">Drilling the ${deck.Q.filter(q=>deck.CON[q[0]]===primer).length} questions under <b>${esc(deck.P[primer][0])}</b>, due or not. <a href="#${deck.id}/study">Back to the ${deck.code} study page</a>.</p>`:""}
   ${!mixed&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
+  ${!mixed&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
   ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
   <div class="opts">
     <label><input type="checkbox" id="shuffleQ"> Shuffle questions</label>
@@ -318,7 +393,7 @@ function drill({deck,mixed}){
   if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
   if($("reset"))$("reset").onclick=function(){if(this.dataset.armed){SRS[deck.id]={};saveSrs(deck.id);delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all "+deck.code+" progress"}};
 
-  const inGroup=()=>all.filter(x=>group==="all"||grpOf(x.d,x.q[0])===group);
+  const inGroup=()=>all.filter(x=>primer?deck.CON[x.q[0]]===primer:(group==="all"||grpOf(x.d,x.q[0])===group));
   const due=x=>mixed?(isSeen(x.d.id,x.q[0])&&isDue(x.d.id,x.q[0])):isDue(x.d.id,x.q[0]);
   function srsLine(){
     const g=inGroup(),t=dayNum();
@@ -351,7 +426,7 @@ function drill({deck,mixed}){
     const {d,q}=items[i];
     if(opt("basics")&&deck.CON[q[0]]&&deck.CON[q[0]]!==shown){
       const k=deck.CON[q[0]],[t,b]=deck.P[k];let n=0;while(i+n<items.length&&deck.CON[items[i+n].q[0]]===k)n++;
-      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}.</p><div class="actions"><button class="btn" id="go">Show the question</button></div>`;
+      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}. <a href="#${deck.id}/study" style="color:inherit">Read all of ${deck.code}'s basics</a>.</p><div class="actions"><button class="btn" id="go">Show the question</button></div>`;
       $("go").onclick=()=>{shown=k;render()};$("go").focus({preventScroll:true});return;
     }
     const [id,text,opts,ans,note,fig]=q;
