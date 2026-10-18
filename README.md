@@ -38,6 +38,10 @@ Progress is stored on the phone and nowhere else. The app asks the browser to ke
 
 Export progress on the home screen produces a JSON backup. Import progress merges a backup into the phone, keeping the newer record for each card. Use it before clearing browser data or moving to a new phone.
 
+## Exam date and estimate
+
+Both optional. The home screen shows an estimated exam score as a range: each section's exam count weighted by how far along its cards are (mastered near full credit, answered-right-once partial, unseen a guess). Hide it with the link beside it. Set an exam date and intervals are capped so nothing is scheduled past the exam; inside the last week every card comes back at least once more. The date block links to the HamStudy and ARRL session finders and to the FCC page on getting an FRN, which first-time applicants need before test day. The date travels with Export and Import.
+
 ## Study pages
 
 Every section has a study page with its basics in pool order, each primer naming the questions it covers and offering to drill just those. Open one from the section's drill screen, or from the home screen for a section not yet started. The whole guide at #study is one page built for printing. The primers are the same text that Basics first shows before each group of questions and that the explanation panel draws on; they live once, in data.js.

@@ -42,6 +42,15 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .today b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:72px;line-height:.9;color:var(--amber)}
 .today span{font-size:17px}
 .reach{color:var(--muted);font-size:15px;margin:0 0 14px}
+.plan{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:15px}
+.plan p{margin:0}.plan p+p{margin-top:6px}
+.plan .num{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:30px;line-height:1;color:var(--amber);margin-right:4px}
+.plan .pass{color:var(--ok)}.plan .short{color:var(--bad)}
+.plan .muted{color:var(--muted);font-size:14px}
+.plan a,.plan .linkbtn{color:var(--muted);font-size:14px}
+.plan .set{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
+.plan input[type=date]{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color-scheme:inherit}
+.plan .links{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px}
 .decks{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--line)}
 .decks li{border-bottom:1px solid var(--line)}
 .row{font:inherit;color:inherit;background:none;border:0;width:100%;text-align:left;display:grid;grid-template-columns:104px 1fr auto;gap:2px 10px;align-items:center;padding:12px 2px;cursor:pointer}
@@ -196,7 +205,7 @@ const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
 function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
-const APP_VERSION="5";
+const APP_VERSION="6";
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
@@ -207,7 +216,7 @@ function record(id,k,ok){
   const s=srsOf(id),t=dayNum(),r={...(s[k]||{lv:0,due:t,last:null,fail:null})};
   if(!ok){r.lv=0;r.due=t;r.fail=t}
   else if(r.fail===t){r.lv=0;r.due=t+1}
-  else if(r.last!==t){r.lv=Math.min(r.lv+1,IV.length-1);r.due=t+IV[r.lv]}
+  else if(r.last!==t){r.lv=Math.min(r.lv+1,IV.length-1);r.due=t+capInterval(IV[r.lv],t)}
   r.last=t;r.n=(r.n||0)+1;if(!ok)r.w=(r.w||0)+1;r.ts=Date.now();s[k]=r;saveSrs(id);
   if(ok)awardBadges(DECK[id]);
 }
@@ -216,6 +225,25 @@ function stats(d){const ids=itemIds(d),t=dayNum();
     mastered:ids.filter(k=>isMastered(d.id,k)).length,tomorrow:ids.filter(k=>{const r=srsOf(d.id)[k];return r&&r.due===t+1}).length}}
 /* An unseen card counts as due, so untouched decks would swamp the home count. Home counts reviews only. */
 const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
+
+/* ---------- exam date (optional) ----------
+   With a date set, intervals are capped so nothing is scheduled past the exam, and inside the last week
+   a card comes back at least once more. Without a date, intervals are the plain IV table. */
+const EXAM={day:get("examDay",null)};
+const daysToExam=(t=dayNum())=>EXAM.day==null?null:EXAM.day-t;
+function capInterval(iv,t){const D=daysToExam(t);if(D==null||D<=0)return iv;let cap=Math.max(1,D-1);if(D<=7)cap=Math.min(cap,Math.max(1,Math.floor(D/2)));return Math.min(iv,cap)}
+function setExamDay(day){EXAM.day=day;if(day==null)localStorage.removeItem(NS+"examDay");else put("examDay",day)}
+const isoToDay=iso=>{const [y,m,d]=iso.split("-").map(Number);return Math.floor(Date.UTC(y,m-1,d)/86400000)};
+const dayToIso=day=>new Date(day*86400000).toISOString().slice(0,10);
+const dayLabel=day=>new Date(day*86400000).toLocaleDateString(undefined,{timeZone:"UTC",weekday:"short",month:"short",day:"numeric"});
+
+/* ---------- estimated score ----------
+   Expected correct per section = its exam count times a weighted share of cards by state. Two weightings
+   give a low and a high. Math and symbols are not exam sections; their questions already sit in T5 etc. */
+const EST_W={lo:{m:.9,k:.55,s:.35,u:.25},hi:{m:1,k:.85,s:.65,u:.25}};
+function sectionShare(d,w){const srs=srsOf(d.id);let acc=0;for(const k of itemIds(d)){const r=srs[k];acc+=!r?w.u:r.lv>=MASTER?w.m:r.lv>=1?w.k:w.s}return acc/itemIds(d).length}
+function estimate(){let lo=0,hi=0;const gain=[];for(const d of POOL){const l=d.exam*sectionShare(d,EST_W.lo),h=d.exam*sectionShare(d,EST_W.hi);lo+=l;hi+=h;gain.push([d,d.exam-(l+h)/2])}
+  gain.sort((a,b)=>b[1]-a[1]);return{lo:Math.round(lo),hi:Math.round(hi),gain:gain.filter(g=>g[1]>=0.75).slice(0,2).map(g=>g[0].code)}}
 
 /* ---------- badges ----------
    Three rungs per deck, judged on every card: bronze = all seen, silver = all answered correctly at least
@@ -241,7 +269,7 @@ function badgeSvg(tier,size,{lapsed=false,full=false}={}){
 const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{lapsed:e>0&&tierNow(d)<e,full})};
 
 /* Shuffle and basics choices persist; Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
-const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false},get("prefs",{}));prefs.dueOnly=true;
+const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false,showEst:true,showDate:false},get("prefs",{}));prefs.dueOnly=true;
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
 const goHome=()=>{if(location.hash)location.hash="";else home()};
@@ -290,6 +318,7 @@ function home(){
   <ul class="facts" aria-label="License facts"><li>FCC license class <b>Technician</b></li><li>Exam <b>Element 2</b></li><li>FCC radio service code <b>HA</b></li></ul>
   <div class="today"><b>${totalDue}</b><span>${totalDue===1?"card":"cards"} due today</span></div>
   <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}</p>
+  ${planBlock()}
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
@@ -300,11 +329,34 @@ function home(){
     <p><button class="linkbtn" id="exp">Export progress</button> &nbsp; <button class="linkbtn" id="imp">Import progress</button></p>
     <p>Every section has a study page with its basics; the <a href="#study" style="color:inherit">whole guide</a> is one page you can print.</p>
     <p>When you want to test yourself under exam conditions, take practice exams at <a href="https://hamstudy.org/" style="color:inherit">HamStudy.org</a>. This app is for learning the pool; that one is for finding out whether you're ready.</p>
+    <p>The estimated score weighs each section by how many exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards you've got right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction.</p>
     <p>A card comes back after one day, then three, then seven. Three correct answers on separate days marks it mastered. A section earns bronze when every card has been seen, silver when every card has been answered correctly, and gold when every card is mastered; a badge dims if the section slips below the rung it earned. Pool text from the <a href="https://ncvec.org" style="color:inherit">NCVEC</a>; the pool is public domain.</p>
     <p>Version ${APP_VERSION}.</p>
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{location.hash=b.dataset.go});
   $("exp").onclick=exportProgress;$("imp").onclick=()=>$("importFile").click();
+  if($("setDate"))$("setDate").onclick=()=>{prefs.showDate=true;savePrefs();home()};
+  if($("examDate")){$("examDate").onchange=e=>{if(e.target.value){setExamDay(isoToDay(e.target.value));home()}}}
+  if($("clearDate"))$("clearDate").onclick=()=>{setExamDay(null);prefs.showDate=false;savePrefs();home()};
+  if($("hideEst"))$("hideEst").onclick=()=>{prefs.showEst=!prefs.showEst;savePrefs();home()};
+}
+function planBlock(){
+  const e=estimate(),D=daysToExam(),pass=e.lo>=26;
+  const est=prefs.showEst?`<p><span class="num ${pass?"pass":e.hi<26?"short":""}">${e.lo===e.hi?e.lo:`${e.lo}&ndash;${e.hi}`}</span> of 35 is where you'd likely land today. Pass is 26.${e.gain.length?` Most room to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
+    :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
+  let date;
+  if(EXAM.day!=null){
+    date=D>0?`<p><span class="num">${D}</span> ${D===1?"day":"days"} until your exam on ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="clearDate">Change</button></p>`
+      :D===0?`<p>Exam day. Good luck. <button class="linkbtn" id="clearDate">Clear date</button></p>`
+      :`<p class="muted">Your exam date (${dayLabel(EXAM.day)}) has passed. <button class="linkbtn" id="clearDate">Clear it</button></p>`;
+    if(D!=null&&D>0&&prefs.showDate!==false)date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get your FRN before test day</a></p>`;
+  }else if(prefs.showDate){
+    date=`<div class="set"><label for="examDate">Exam date</label><input type="date" id="examDate" min="${dayToIso(dayNum())}"><button class="linkbtn" id="clearDate">Never mind</button></div>
+    <p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy session finder</a><a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL session finder</a></p>`;
+  }else{
+    date=`<p class="muted">Have a test date? <button class="linkbtn" id="setDate">Set it</button> and reviews will tighten toward it.</p>`;
+  }
+  return `<div class="plan">${est}${date}</div>`;
 }
 function sashCaption(){
   const c=[0,0,0,0];DECKS.forEach(d=>c[tierEarned(d)]++);
@@ -312,7 +364,7 @@ function sashCaption(){
   return parts.length?`${parts.join(", ")} of ${DECKS.length} sections.`:"No badges yet. Bronze comes when every card in a section has been seen once.";
 }
 function exportProgress(){
-  const data={app:"hamdrill",version:2,exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES};
+  const data={app:"hamdrill",version:2,exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const d=new Date(),name=`ham-drill-progress-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const file=new File([blob],name,{type:"application/json"});
@@ -322,7 +374,7 @@ function exportProgress(){
 $("importFile").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||d.app!=="hamdrill"||!d.decks)throw 0;
-    const n=importDecks(d.decks);mergeBadges(d.badges);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} decks.`);route()}
+    const n=importDecks(d.decks);mergeBadges(d.badges);if(d.examDay!=null&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} decks.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
 };
 
