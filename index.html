@@ -17,14 +17,14 @@
 :root{
   --bg:#EDF0F2;--panel:#FFFFFF;--ink:#18232E;--muted:#56636F;--line:#CBD3DA;
   --amber:#B8730F;--amber-bg:#FBF0DD;--ok:#22744A;--ok-bg:#E2F2E8;--bad:#A93434;--bad-bg:#F8E3E3;
-  --none:#B9C2CA;--bronze:#A8632B;--silver:#7F8B97;--gold:#C8930E;
+  --none:#B9C2CA;--bronze:#A8632B;--silver:#4A80A8;--gold:#C8930E;
   color-scheme:light;box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#11171D;--panel:#1A222A;--ink:#E3E8ED;--muted:#9AA7B3;--line:#2D3842;
   --amber:#E9A33E;--amber-bg:#33270F;--ok:#5CC48A;--ok-bg:#163223;--bad:#EE7B7B;--bad-bg:#3A1B1B;
-  --none:#4A5661;--bronze:#C9864A;--silver:#CFD7DF;--gold:#EBC04E;
+  --none:#4A5661;--bronze:#C9864A;--silver:#7FB6E0;--gold:#EBC04E;
   color-scheme:dark}}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -67,7 +67,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .row .code{display:flex;align-items:center;gap:5px}
 .row .code.long{font-size:28px}
 .row.badged .code{color:var(--muted)}
-/* badges: a tower with one, two or three signal arcs for bronze, silver, gold */
+/* badges: a tower with one, two or three signal arcs for bronze, silver, gold; gold also broadcasts two waves out past the ring */
 .badge{display:block;flex:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .badge .ring{fill:var(--panel);stroke:currentColor;stroke-width:3}
@@ -195,6 +195,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
  <path id="arc1" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M26 25 A7 7 0 0 1 38 25"/>
  <path id="arc2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M21.6 28 A12 12 0 0 1 42.4 28"/>
  <path id="arc3" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M17.3 30.5 A17 17 0 0 1 46.7 30.5"/>
+ <path id="waves" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M22.1 9.4 A16 16 0 0 1 41.9 9.4 M17.9 6.4 A21 21 0 0 1 46.1 6.4"/>
 </defs></svg>
 <main id="app"></main>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -276,8 +277,8 @@ function awardBadges(d,quiet){
 function mergeBadges(src){if(!src)return;for(const id in src){if(!DECK[id])continue;const b=BADGES[id]||(BADGES[id]={});for(const t of [1,2,3]){const v=src[id][t];if(v&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
 DECKS.forEach(d=>awardBadges(d,true));
 function badgeSvg(tier,size,{lapsed=false,full=false}={}){
-  const arcs=['','<use href="#arc1"/>','<use href="#arc1"/><use href="#arc2"/>','<use href="#arc1"/><use href="#arc2"/><use href="#arc3"/>'][tier];
-  return `<svg class="badge t${tier}${lapsed?" lapsed":""}" width="${size}" height="${size}" viewBox="0 0 64 76" aria-hidden="true"><circle class="ring" cx="32" cy="42" r="30"/><use class="tw" href="#tower"/>${full?'<use class="tw" href="#towerx"/>':""}${arcs}</svg>`;
+  const arcs=['','<use href="#arc1"/>','<use href="#arc1"/><use href="#arc2"/>','<use href="#arc1"/><use href="#arc2"/><use href="#arc3"/><use href="#waves"/>'][tier];
+  return `<svg class="badge t${tier}${lapsed?" lapsed":""}" width="${size}" height="${size}" viewBox="0 -4 64 80" aria-hidden="true"><circle class="ring" cx="32" cy="42" r="30"/><use class="tw" href="#tower"/>${full?'<use class="tw" href="#towerx"/>':""}${arcs}</svg>`;
 }
 const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{lapsed:e>0&&tierNow(d)<e,full})};
 
@@ -322,7 +323,7 @@ function home(){
       :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}, not started.`}`;
     const earned=tierEarned(d);
     return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
-      <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
+      <span class="code${d.code.length>2?" long":""}">${deckBadge(d,34)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
       <span class="due${due?"":" zero"}">${due||""}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
       <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S)&&(hinted=true)?`<span class="study-link">New to a section? <a href="#${d.id}/study">Read the ${d.code} basics first</a>; every section has a study page.</span>`:""}</li>`};
@@ -335,7 +336,7 @@ function home(){
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
-  <div class="sashbox"><ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
+  <div class="sashbox"><ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,46,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
   <p class="sash-cap">${sashCaption()}</p></div>
   <div class="foot">
     <p class="links"><button class="linkbtn" id="exp">Export progress</button><button class="linkbtn" id="imp">Import progress</button><a href="#study">Study guide</a><a href="#about">About</a><span>Version ${APP_VERSION}</span></p>
