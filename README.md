@@ -60,6 +60,6 @@ This app teaches the pool. For practice exams under exam conditions, use HamStud
 
 ## Updating
 
-After changing any file, raise APP_VERSION in version.js (for example, from "11" to "12"); the footer and the service-worker cache key both read it. Phones fetch the new copy the next time the app opens online and show a notice; the new version runs on the following launch. The footer shows the version a phone is running.
+After changing any file, raise APP_VERSION in version.js (for example, from "11" to "12"); the footer and the service-worker cache key both read it. Phones fetch the new copy the next time the app opens online and switch to it at the next safe moment: right away if the home screen is showing, otherwise on the next return home or when the app goes to the background. A short notice names the new version. The footer shows the version a phone is running.
 
 Files in private/ are ignored by git; keep personal progress exports there.

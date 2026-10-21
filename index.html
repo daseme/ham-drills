@@ -43,6 +43,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .today span{font-size:17px}
 .reach{color:var(--muted);font-size:15px;margin:0 0 14px}
 .plan{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:15px}
+.actions+.plan{margin-top:16px}
 .plan p{margin:0}.plan p+p{margin-top:6px}
 .plan b{font-weight:700}
 .plan .pass b{color:var(--ok)}.plan .short b{color:var(--bad)}
@@ -99,7 +100,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .status{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px;color:var(--muted);margin-bottom:6px}
 .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:16px}
 .bar span{display:block;height:100%;background:var(--amber);width:0;transition:width .25s}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
+.card{scroll-margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
 .qid{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;letter-spacing:.04em;color:var(--amber);margin-right:6px}
 .topic{font-size:14px;color:var(--muted);margin:0 0 12px}
 .fig{background:var(--amber-bg);border-radius:8px;padding:8px 12px;font-size:15px;margin:0 0 12px}
@@ -204,7 +205,8 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
  <path id="arc3" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M21.0 33.0 A15.5 15.5 0 0 1 16.6 20.4 M43.0 33.0 A15.5 15.5 0 0 0 47.4 20.4"/>
 </defs></svg>
 <main id="app"></main>
-<input type="file" id="importFile" accept="application/json,.json" hidden>
+<!-- No accept filter: some Android pickers grey out a backup that came back through Drive or email under another file type. The import checks the contents instead. -->
+<input type="file" id="importFile" hidden>
 <script src="version.js"></script>
 <script src="data.js"></script>
 <script>
@@ -250,6 +252,7 @@ const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
    With a date set, intervals are capped so nothing is scheduled past the exam, and inside the last week
    a card comes back at least once more. Without a date, intervals are the plain IV table. */
 const EXAM={day:get("examDay",null)};
+let editingDate=false;
 const daysToExam=(t=dayNum())=>EXAM.day==null?null:EXAM.day-t;
 function capInterval(iv,t){const D=daysToExam(t);if(D==null||D<=0)return iv;let cap=Math.max(1,D-1);if(D<=7)cap=Math.min(cap,Math.max(1,Math.floor(D/2)));return Math.min(iv,cap)}
 function setExamDay(day){EXAM.day=day;if(day==null)localStorage.removeItem(NS+"examDay");else put("examDay",day)}
@@ -292,8 +295,17 @@ const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{la
 const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false,showEst:true,showDate:false},get("prefs",{}));prefs.dueOnly=true;
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
-const goHome=()=>{if(location.hash)history.pushState(null,"",location.pathname+location.search);home();window.scrollTo(0,0)};
-function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+/* In-app moves push a history entry carrying its depth from home, so the phone's Back button retraces them and
+   "All sections" returns by going back, not by stacking a new home entry on top. */
+const depth=()=>(history.state&&history.state.d)||0;
+const go=h=>{history.pushState({d:depth()+1},"","#"+h);route()};
+const goHome=()=>{const d=depth();if(d>0){history.go(-d);if(updateReady)return}else if(location.hash)history.replaceState(null,"",location.pathname+location.search);home();window.scrollTo(0,0)};
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();go(a.getAttribute("href").slice(1))});
+function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60))}
+/* After a long explanation the page can sit scrolled below the card's top; bring the next question's start into view. */
+const keepInView=el=>{if(el.getBoundingClientRect().top<0)el.scrollIntoView({block:"start"})};
+/* Set when a new version has taken over; the page reloads at the next safe moment (home, or the app going to the background). */
+let updateReady=false;
 
 /* ---------- router ---------- */
 function route(){
@@ -310,18 +322,25 @@ function route(){
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",route);
+/* Opened straight at a screen (a bookmark, say): put home beneath it, so Back lands on home rather than closing the app. */
+if(location.hash&&history.state==null){const h=location.hash;history.replaceState(null,"",location.pathname+location.search);history.pushState({d:1},"",h)}
 let lastDay=dayNum();
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&dayNum()!==lastDay){lastDay=dayNum();if(!location.hash)home()}});
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){if(updateReady)location.reload();return}
+  if(dayNum()!==lastDay){lastDay=dayNum();if(!location.hash)home()}});
 
 /* ---------- home ---------- */
 function home(){
+  if(updateReady){location.reload();return}
   const app=$("app");
   const reviews=DECKS.map(d=>[d,reviewsDue(d),stats(d)]);
   const totalDue=reviews.reduce((a,[,n])=>a+n,0);
-  const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0);
+  const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0),otherDue=totalDue-poolDue;
   const poolSeen=POOL.reduce((a,d)=>a+stats(d).seen,0),poolTotal=POOL.reduce((a,d)=>a+stats(d).total,0);
   const untouched=POOL.filter(d=>stats(d).seen===0);
   const untouchedQs=untouched.reduce((a,d)=>a+d.exam,0);
+  /* With nothing due, offer the first section that still has unseen questions, so the screen never dead-ends. */
+  const next=POOL.find(d=>{const s=stats(d);return s.seen<s.total});
   let hinted=false;
   const row=([d,due,s])=>{
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
@@ -336,10 +355,12 @@ function home(){
   app.innerHTML=`
   <p class="over">Amateur Radio Service</p>
   <h1>Technician Class Operator License</h1>
-  <div class="today"><b>${totalDue}</b><span>${totalDue===1?"card":"cards"} due today</span></div>
-  <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}</p>
+  ${poolSeen?`<div class="today"><b>${poolDue}</b><span>${poolDue===1?"question":"questions"} due today</span></div>
+  <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}${otherDue?` Math and Symbols have ${otherDue} more due; open them below.`:""}</p>`
+  :`<p class="reach">New here? The pool's ${poolTotal} questions come in ten sections, T1 to T0. Start with the first; after each answer you'll see why it's right.</p>`}
+  ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due question":`Review all ${poolDue} due questions`}</button></div>`
+  :next?`<div class="actions"><button class="btn" data-go="${next.id}">${stats(next).seen?"Keep going with":"Start with"} ${next.code}: ${esc(next.name)}</button></div>`:""}
   ${planBlock()}
-  ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due pool question":`Review all ${poolDue} due pool questions`}</button></div>`:""}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
   <div class="sashbox"><ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
@@ -347,11 +368,20 @@ function home(){
   <div class="foot">
     <p class="links"><button class="linkbtn" id="exp">Export progress</button><button class="linkbtn" id="imp">Import progress</button><a href="#study">Study guide</a><a href="#about">About</a><span>Version ${APP_VERSION}</span></p>
   </div>`;
-  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{location.hash=b.dataset.go});
+  app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
   $("exp").onclick=exportProgress;$("imp").onclick=()=>$("importFile").click();
   if($("setDate"))$("setDate").onclick=()=>{prefs.showDate=true;savePrefs();home()};
-  if($("examDate")){$("examDate").onchange=e=>{if(e.target.value){setExamDay(isoToDay(e.target.value));home()}}}
-  if($("clearDate"))$("clearDate").onclick=()=>{setExamDay(null);prefs.showDate=false;savePrefs();home()};
+  if($("changeDate"))$("changeDate").onclick=()=>{editingDate=true;home()};
+  if($("cancelDate"))$("cancelDate").onclick=()=>{if(editingDate)editingDate=false;else{prefs.showDate=false;savePrefs()}home()};
+  /* A typed date fires change at every keystroke that forms a valid date (year 0002, 0020...), so only a date
+     from today to two years out is taken; anything else waits for more typing. */
+  if($("examDate"))$("examDate").onchange=e=>{
+    const v=e.target.value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return;
+    const day=isoToDay(v),t=dayNum();
+    if(day<t){if(+v.slice(0,4)>=new Date().getFullYear())toast("Pick today or a later date.");return}
+    if(day>t+730)return;
+    setExamDay(day);editingDate=false;prefs.showDate=true;savePrefs();home()};
+  if($("clearDate"))$("clearDate").onclick=()=>{setExamDay(null);editingDate=false;prefs.showDate=false;savePrefs();home()};
   if($("hideEst"))$("hideEst").onclick=()=>{prefs.showEst=!prefs.showEst;savePrefs();home()};
 }
 function planBlock(){
@@ -359,14 +389,14 @@ function planBlock(){
   const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of 35</b> today; pass is 26.${e.gain.length?` Most room to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
     :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
   let date;
-  if(EXAM.day!=null){
-    date=D>0?`<p>Exam in <b>${D} ${D===1?"day":"days"}</b>, ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="clearDate">Change</button></p>`
+  if(editingDate||(EXAM.day==null&&prefs.showDate)){
+    date=`<div class="set"><label for="examDate">Exam date</label><input type="date" id="examDate" min="${dayToIso(dayNum())}"${EXAM.day!=null?` value="${dayToIso(EXAM.day)}"`:""}><button class="linkbtn" id="cancelDate">Never mind</button>${EXAM.day!=null?`<button class="linkbtn" id="clearDate">Remove the date</button>`:""}</div>
+    <p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy session finder</a><a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL session finder</a></p>`;
+  }else if(EXAM.day!=null){
+    date=D>0?`<p>Exam in <b>${D} ${D===1?"day":"days"}</b>, ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="changeDate">Change</button></p>`
       :D===0?`<p>Exam day. Good luck. <button class="linkbtn" id="clearDate">Clear date</button></p>`
       :`<p class="muted">Your exam date (${dayLabel(EXAM.day)}) has passed. <button class="linkbtn" id="clearDate">Clear it</button></p>`;
     if(D!=null&&D>0&&prefs.showDate!==false)date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get your FRN before test day</a></p>`;
-  }else if(prefs.showDate){
-    date=`<div class="set"><label for="examDate">Exam date</label><input type="date" id="examDate" min="${dayToIso(dayNum())}"><button class="linkbtn" id="clearDate">Never mind</button></div>
-    <p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy session finder</a><a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL session finder</a></p>`;
   }else{
     date=`<p class="muted">Have a test date? <button class="linkbtn" id="setDate">Set it</button> and reviews will tighten toward it.</p>`;
   }
@@ -382,13 +412,20 @@ function exportProgress(){
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const d=new Date(),name=`ham-drill-progress-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const file=new File([blob],name,{type:"application/json"});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],title:"Ham drill progress"}).catch(()=>{});return}
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  const download=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    toast(`Backup saved as ${name}, usually in your Downloads folder.`)};
+  /* Phones offer the share sheet (Drive, email, Files). If sharing fails for any reason but the person backing out, download instead. */
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:"Ham drill progress"})
+      .then(()=>toast("Backup sent. Keep it somewhere you can find it, like Google Drive or your email."))
+      .catch(err=>{if(!err||err.name!=="AbortError")download()});
+    return}
+  download();
 }
 $("importFile").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d||d.app!=="hamdrill"||!d.decks)throw 0;
-    const n=importDecks(d.decks);mergeBadges(d.badges);if(d.examDay!=null&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} decks.`);route()}
+    const n=importDecks(d.decks);mergeBadges(d.badges);if(d.examDay!=null&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} sections.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
 };
 
@@ -439,7 +476,7 @@ const FIGS={
 const FIG_KEY={"T-1":"1 resistor, 2 transistor, 3 lamp, 4 battery","T-2":"3 switch, 4 transformer, 6 capacitor, 8 light-emitting diode, 9 variable resistor","T-3":"3 variable inductor, 4 antenna"};
 const figBox=f=>FIGS[f]?`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}</figcaption></figure>`:`<p class="fig">Uses figure ${f} from the pool.</p>`;
 function studySection(d,{solo}){
-  const h=solo?"h1":"h1";
+  const h="h1";
   let body="";
   if(d.S){
     body=`<p class="sub">${d.S.length} symbols that appear on the exam. The hook under each is how to spot it.</p>
@@ -461,7 +498,7 @@ function study(deck){
   const app=$("app");
   const decks=deck?[deck]:DECKS;
   app.innerHTML=`<div class="study">
-  <button class="back" id="back">&larr; ${deck?"All decks":"All decks"}</button>
+  <button class="back" id="back">&larr; All sections</button>
   ${deck?"":`<p class="over">Amateur Radio Service</p><h1>Technician study guide</h1><p class="sub">The basics behind every section of the 2026-2030 pool, in pool order. Print this page for a paper copy.</p>`}
   <p class="tools">${deck?`<a href="#${deck.id}">Drill ${deck.code}</a><a href="#study">Whole guide</a>`:""}<button class="linkbtn" id="print">Print</button></p>
   ${decks.map(d=>studySection(d,{solo:!!deck})).join("")}
@@ -473,7 +510,7 @@ function study(deck){
 /* ---------- about ---------- */
 function about(){
   $("app").innerHTML=`<div class="about">
-  <button class="back" id="back">&larr; All decks</button>
+  <button class="back" id="back">&larr; All sections</button>
   <p class="over">Amateur Radio Service</p><h1>About these drills</h1>
   <p>Drills for the 2026-2030 Technician question pool, worded as on the exam, with spaced review. FCC license class Technician, exam Element 2, radio service code HA.</p>
   <h2>How review works</h2>
@@ -502,10 +539,10 @@ function drill({deck,mixed,primer}){
   const grpOf=(d,id)=>d.id==="math"?(["T5B","T5C","T5D"].includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
   let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
   const title=mixed?"Everything due":deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
-  const sub=mixed?"Every pool question due today, mixed across sections. Math and symbols stay in their own decks.":
+  const sub=mixed?"Every pool question due today, mixed across sections. Math and Symbols are reviewed on their own.":
     deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your 35 exam questions.`;
   const chips=mixed||primer?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
-  app.innerHTML=`<button class="back" id="back">&larr; All decks</button>
+  app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>${title}</h1>${mixed?`<p class="sub">${sub}</p>`:""}
   ${primer?`<p class="only">Drilling the ${deck.Q.filter(q=>deck.CON[q[0]]===primer).length} questions under <b>${esc(deck.P[primer][0])}</b>, due or not. <a href="#${deck.id}/study">Back to the ${deck.code} study page</a>.</p>`:""}
   ${!mixed&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
@@ -551,13 +588,14 @@ function drill({deck,mixed,primer}){
     $("fill").style.width=items.length?(done/items.length*100)+"%":"0";
   }
   function render(){
-    status();const c=$("card");
-    if(!items.length){c.innerHTML=opt("dueOnly")?`<p class="q">Nothing is due here today.</p><p>Spacing works best when cards rest. Come back tomorrow, or turn off Due today to practice anyway.</p>`:`<p class="q">No questions match.</p>`;return}
+    status();const c=$("card");keepInView(c);
+    if(!items.length){c.innerHTML=mixed?`<p class="q">Nothing is due for review today.</p><p>Spacing works best when cards rest. Come back tomorrow, or go back to all sections and open one to practice anyway.</p>`
+      :opt("dueOnly")?`<p class="q">Nothing is due here today.</p><p>Spacing works best when cards rest. Come back tomorrow, or turn off Due today under Options to practice anyway.</p>`:`<p class="q">No questions match.</p>`;return}
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try. ${fd&&fr===fd?"<em>Wouldn't that be just like you?</em>":"The exam pass mark is 74%."}</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
-      <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
+      <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
       $("home").onclick=goHome;$("again").onclick=start;return;
     }
     const {d,q}=items[i];
@@ -601,7 +639,7 @@ function symbols(){
   const SW='stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
   const svg=s=>`<svg viewBox="0 0 120 60" role="img" aria-label="Schematic symbol"><g ${SW}>${s.d}</g></svg>`;
   let mode="name",items=[],i=0,done=0,fr=0,fd=0;
-  app.innerHTML=`<button class="back" id="back">&larr; All decks</button>
+  app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>Symbol drill</h1><p class="sub">Twenty-one symbols drawn to match the three pool figures, plus the look-alikes the pool uses as wrong answers.</p>
   <div class="groups" id="modes" role="group" aria-label="Drill mode">${[["name","Name the symbol"],["find","Find the symbol"],["mix","Mixed"]].map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===mode}">${l}</button>`).join("")}</div>
   <div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>
@@ -621,11 +659,11 @@ function symbols(){
   function start(){const pool=prefs.dueOnly?S.filter(due):S;items=shuffle(pool).map(s=>({s,m:mode==="mix"?(Math.random()<.5?"name":"find"):mode}));i=0;done=0;fr=0;fd=0;render()}
   function status(){srsLine();$("pos").textContent=items.length?`Symbol ${Math.min(i+1,items.length)} of ${items.length}`:"";$("score").textContent=fd?`${fr} of ${fd} right first try`:"";$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
   function render(){
-    status();const c=$("card");
+    status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
     if(i>=items.length){const left=S.filter(due).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
-      <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
+      <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
       $("home").onclick=goHome;$("again").onclick=start;return}
     const {s,m}=items[i],opts=choices(s);
     if(m==="name"){c.innerHTML=`<p class="prompt">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans"></div><div id="after"></div>`;
@@ -649,7 +687,12 @@ function symbols(){
 route();
 if("serviceWorker" in navigator&&location.protocol!=="file:"){
   const had=!!navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had)toast("Updated. Close and reopen the app to use the new version.")});
+  /* A new version has taken over. Reload now if on home, where nothing is in progress; otherwise at the next
+     return home or when the app goes to the background. Answers are saved as they're given, so nothing is lost. */
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!had)return;
+    try{sessionStorage.setItem(NS+"updated","1")}catch(e){}
+    updateReady=true;if(!location.hash)location.reload()});
+  try{if(sessionStorage.getItem(NS+"updated")){sessionStorage.removeItem(NS+"updated");toast(`Updated to version ${APP_VERSION}.`)}}catch(e){}
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).catch(()=>{});
 }
 </script>
