@@ -242,6 +242,9 @@ function record(id,k,ok){
   r.last=t;r.n=(r.n||0)+1;if(!ok)r.w=(r.w||0)+1;r.ts=Date.now();s[k]=r;saveSrs(id);
   if(ok)awardBadges(DECK[id]);
 }
+/* True if this card has ever been answered correctly; a miss on such a card gets the Lemon line instead of "Not quite." */
+const hadRight=(id,k)=>{const r=srsOf(id)[k];return !!r&&((r.n||0)>(r.w||0)||r.lv>0)};
+const missText=lemon=>lemon?"Good God, Lemon!":"Not quite.";
 function stats(d){const ids=itemIds(d),t=dayNum();
   return{total:ids.length,due:ids.filter(k=>isDue(d.id,k)).length,seen:ids.filter(k=>isSeen(d.id,k)).length,
     mastered:ids.filter(k=>isMastered(d.id,k)).length,tomorrow:ids.filter(k=>{const r=srsOf(d.id)[k];return r&&r.due===t+1}).length}}
@@ -617,11 +620,11 @@ function drill({deck,mixed,primer}){
     const {d,q}=items[i],[id,,,ans,note]=q,ok=oi===ans;
     [...$("ans").children].forEach(b=>{b.disabled=true;const v=+b.dataset.oi;if(v===ans)b.classList.add("right");else if(v===oi)b.classList.add("wrong")});
     done++;if(!items[i].re){fd++;if(ok)fr++}
-    record(d.id,id,ok);
+    const lemon=!ok&&hadRight(d.id,id);record(d.id,id,ok);
     if(!ok&&opt("dueOnly")){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
     status();
     const F=d.F&&d.F[id],ex=EXPLAIN[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
-    $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</strong> ${note}</p>
+    $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> ${note}</p>
       ${F?`<div class="fx"><p class="eq">${F[0]}</p><ul class="leg">${F[1].map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
       <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
       <div class="explain" id="exbox" hidden>${ex?ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""):""}
@@ -675,10 +678,10 @@ function symbols(){
   function pick(o,s){
     const ok=o===s;
     [...$("ans").children].forEach(b=>{b.disabled=true;if(b.dataset.n===s.n)b.classList.add("right");else if(b.dataset.n===o.n)b.classList.add("wrong")});
-    done++;if(!items[i].re){fd++;if(ok)fr++}record("symbols",s.n,ok);
+    done++;if(!items[i].re){fd++;if(ok)fr++}const lemon=!ok&&hadRight("symbols",s.n);record("symbols",s.n,ok);
     if(!ok&&prefs.dueOnly)items.splice(Math.min(i+4,items.length),0,{...items[i],re:1});
     status();
-    $("after").innerHTML=`<div class="note"><p class="defn"><strong class="${ok?"ok":"no"}">${ok?"Correct.":"Not quite."}</strong> <b>${esc(s.n)}</b>: ${s.def}</p><p class="hook">How to spot it: ${s.t}</p></div><div class="actions"><button class="btn" id="next">${i+1<items.length?"Next symbol":"See results"}</button></div>`;
+    $("after").innerHTML=`<div class="note"><p class="defn"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> <b>${esc(s.n)}</b>: ${s.def}</p><p class="hook">How to spot it: ${s.t}</p></div><div class="actions"><button class="btn" id="next">${i+1<items.length?"Next symbol":"See results"}</button></div>`;
     $("next").onclick=()=>{i++;render()};$("next").focus({preventScroll:true});
   }
   start();
