@@ -192,7 +192,9 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .linkbtn{font:inherit;font-size:14px;background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
 .toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);box-shadow:0 4px 18px rgba(0,0,0,.25);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;max-width:90vw;pointer-events:none}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-@media (prefers-reduced-motion: reduce){.bar span{transition:none}}
+.wink{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.55);color:#fff;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-style:italic;font-weight:600;font-size:clamp(34px,8vw,64px);line-height:1.1;text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.4);pointer-events:none;z-index:9;animation:wink 3s ease-in-out forwards}
+@keyframes wink{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.bar span{transition:none}.wink{animation:none}}
 </style>
 </head>
 <body>
@@ -304,6 +306,7 @@ const depth=()=>(history.state&&history.state.d)||0;
 const go=h=>{history.pushState({d:depth()+1},"","#"+h);route()};
 const goHome=()=>{const d=depth();if(d>0){history.go(-d);if(updateReady)return}else if(location.hash)history.replaceState(null,"",location.pathname+location.search);home();window.scrollTo(0,0)};
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();go(a.getAttribute("href").slice(1))});
+function wink(msg){const w=document.createElement("div");w.className="wink";w.setAttribute("role","status");w.textContent=msg;document.body.appendChild(w);setTimeout(()=>w.remove(),3000)}
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60))}
 /* After a long explanation the page can sit scrolled below the card's top; bring the next question's start into view. */
 const keepInView=el=>{if(el.getBoundingClientRect().top<0)el.scrollIntoView({block:"start"})};
@@ -597,9 +600,11 @@ function drill({deck,mixed,primer}){
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try. ${fd&&fr===fd?"<em>Wouldn't that be just like you?</em>":"The exam pass mark is 74%."}</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":" The exam pass mark is 74%."}</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=goHome;$("again").onclick=start;return;
+      $("home").onclick=goHome;$("again").onclick=start;
+      if(fd&&fr===fd)wink("Wouldn't that be just like you?");
+      return;
     }
     const {d,q}=items[i];
     if(opt("basics")&&deck.CON[q[0]]&&deck.CON[q[0]]!==shown){
