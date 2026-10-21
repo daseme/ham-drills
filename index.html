@@ -292,7 +292,7 @@ const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{la
 const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false,showEst:true,showDate:false},get("prefs",{}));prefs.dueOnly=true;
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
-const goHome=()=>{if(location.hash)location.hash="";else home()};
+const goHome=()=>{if(location.hash)history.pushState(null,"",location.pathname+location.search);home();window.scrollTo(0,0)};
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
 
 /* ---------- router ---------- */
@@ -556,7 +556,7 @@ function drill({deck,mixed,primer}){
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try. ${fd&&fr===fd?"Wouldn't that be just like you?":"The exam pass mark is 74%."}</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try. ${fd&&fr===fd?"<em>Wouldn't that be just like you?</em>":"The exam pass mark is 74%."}</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all decks</button><button class="btn ghost" id="again">Start over</button></div>`;
       $("home").onclick=goHome;$("again").onclick=start;return;
     }
