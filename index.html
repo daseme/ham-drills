@@ -303,7 +303,7 @@ function badgeSvg(tier,size,{lapsed=false,full=false}={}){
 const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{lapsed:e>0&&tierNow(d)<e,full})};
 
 /* Shuffle and basics choices persist; Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
-const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false,showEst:true,showDate:false},get("prefs",{}));prefs.dueOnly=true;
+const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false,showEst:true,showDate:false,haveFRN:false},get("prefs",{}));prefs.dueOnly=true;
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
 /* In-app moves push a history entry carrying its depth from home, so the phone's Back button retraces them and
@@ -394,6 +394,7 @@ function home(){
     if(day>t+730)return;
     setExamDay(day);editingDate=false;prefs.showDate=true;savePrefs();home()};
   if($("clearDate"))$("clearDate").onclick=()=>{setExamDay(null);editingDate=false;prefs.showDate=false;savePrefs();home()};
+  if($("haveFRN"))$("haveFRN").onclick=()=>{prefs.haveFRN=true;savePrefs();home()};
   if($("hideEst"))$("hideEst").onclick=()=>{prefs.showEst=!prefs.showEst;savePrefs();home()};
 }
 function planBlock(){
@@ -408,7 +409,12 @@ function planBlock(){
     date=D>0?`<p>Exam in <b>${D} ${D===1?"day":"days"}</b>, ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="changeDate">Change</button></p>`
       :D===0?`<p>Exam day. Good luck. <button class="linkbtn" id="clearDate">Clear date</button></p>`
       :`<p class="muted">Your exam date (${dayLabel(EXAM.day)}) has passed. <button class="linkbtn" id="clearDate">Clear it</button></p>`;
-    if(D!=null&&D>0&&prefs.showDate!==false)date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get your FRN before test day</a></p>`;
+    if(D!=null&&D>0&&prefs.showDate!==false){
+      date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a></p>`;
+      /* The FRN reminder stays until the person says they have one. */
+      if(!prefs.haveFRN)date+=`<p>Do you have your FRN yet? You need it on test day. <button class="linkbtn" id="haveFRN">Yes, I have it</button></p>
+      <p class="links"><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get your FRN from the FCC</a></p>`;
+    }
   }else{
     date=`<p class="muted">Have a test date? <button class="linkbtn" id="setDate">Set it</button> and reviews will tighten toward it.</p>`;
   }
