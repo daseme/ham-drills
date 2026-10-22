@@ -1,5 +1,7 @@
 # Technician drills
 
+[![check](https://github.com/daseme/ham-technicians-drills/actions/workflows/check.yml/badge.svg)](https://github.com/daseme/ham-technicians-drills/actions/workflows/check.yml)
+
 A single offline web app holding all 12 Technician drills: T1 through T0, electronics math, and schematic symbols. Every question has a prewritten "Explain this more" panel, so the app makes no network calls once installed.
 
 The live copy is at https://daseme.github.io/ham-technicians-drills/.
@@ -14,6 +16,7 @@ The live copy is at https://daseme.github.io/ham-technicians-drills/.
 | manifest.webmanifest, icons/ | Home-screen install |
 | fonts/ | Bundled typefaces, so nothing loads from Google |
 | tools/pool-check.js | Checks data.js; given the NCVEC pool .docx, compares every question against it |
+| test/ | Node tests for the scheduler, exam cap, estimate, badges and demo; they load the script from index.html |
 
 ## Checking the questions
 
@@ -23,6 +26,12 @@ data.js was built once from the NCVEC pool and is maintained by hand. To check i
     node tools/pool-check.js "2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx"
 
 The first runs the checks that need no pool file. The second also compares every id, stem, option and answer with the pool, downloaded from https://ncvec.org/index.php/2026-2030-technician-question-pool. It currently matches the February 19, 2026 errata release exactly.
+
+## Tests
+
+    node --test "test/*.test.js"
+
+Plain Node, no packages; Node 22 or later. test/harness.js loads the script straight out of index.html with a stub page, so the tests run the code the app runs. GitHub runs these and the pool check on every push.
 
 ## Hosting
 

@@ -318,7 +318,8 @@ const dayLabel=day=>new Date(day*86400000).toLocaleDateString(undefined,{timeZon
 const EST_W={lo:{m:.9,k:.55,s:.35,u:.25},hi:{m:1,k:.85,s:.65,u:.25}};
 function sectionShare(d,w){const srs=srsOf(d.id);let acc=0;for(const k of itemIds(d)){const r=srs[k];acc+=!r?w.u:r.lv>=MASTER?w.m:r.lv>=1?w.k:w.s}return acc/itemIds(d).length}
 function estimate(){let lo=0,hi=0;const gain=[];for(const d of POOL){const l=d.exam*sectionShare(d,EST_W.lo),h=d.exam*sectionShare(d,EST_W.hi);lo+=l;hi+=h;gain.push([d,d.exam-(l+h)/2])}
-  gain.sort((a,b)=>b[1]-a[1]);return{lo:Math.round(lo),hi:Math.round(hi),gain:gain.filter(g=>g[1]>=0.75).slice(0,2).map(g=>g[0].code)}}
+  /* The nudge keeps a sum like 31.4999... (0.9 x 35 added up by section) rounding as the 31.5 it is. */
+  gain.sort((a,b)=>b[1]-a[1]);return{lo:Math.round(lo+1e-9),hi:Math.round(hi+1e-9),gain:gain.filter(g=>g[1]>=0.75).slice(0,2).map(g=>g[0].code)}}
 
 /* ---------- badges ----------
    Three rungs per deck, judged on every card: bronze = all seen, silver = all answered correctly at least
