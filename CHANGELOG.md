@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 24 (October 21)
+- Shorter home-screen wording: "339 of 409 seen", "26 passes. Most to gain", "Have your FRN?", "Set your exam date to time reviews to it", "New to T2? Read its basics first." The Math and Symbols due sentence is gone; their rows show their own counts.
+
 ## 23 (October 21)
 - The service worker clears only its own old caches. Every site on daseme.github.io shares one origin, and it was deleting every cache there.
 

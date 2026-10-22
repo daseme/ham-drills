@@ -389,8 +389,7 @@ function home(){
   if(updateReady){location.reload();return}
   const app=$("app");demoBar(true);
   const reviews=DECKS.map(d=>[d,reviewsDue(d),stats(d)]);
-  const totalDue=reviews.reduce((a,[,n])=>a+n,0);
-  const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0),otherDue=totalDue-poolDue;
+  const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0);
   const poolSeen=POOL.reduce((a,d)=>a+stats(d).seen,0),poolTotal=POOL.reduce((a,d)=>a+stats(d).total,0);
   const untouched=POOL.filter(d=>stats(d).seen===0);
   const untouchedQs=untouched.reduce((a,d)=>a+d.exam,0);
@@ -399,20 +398,20 @@ function home(){
   let hinted=false;
   const row=([d,due,s])=>{
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
-    const meta=d.exam?`${d.exam} on the exam. ${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} questions, not started.`}`
-      :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}, not started.`}`;
+    const meta=d.exam?`${s.seen?`${d.exam} on the exam. ${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${d.exam} on the exam, ${s.total} questions. Not started.`}`
+      :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}. Not started.`}`;
     const earned=tierEarned(d);
     return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
       <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
       <span class="due${due?"":" zero"}">${due||""}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
-      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S)&&(hinted=true)?`<span class="study-link">New to a section? <a href="#${d.id}/study">Read the ${d.code} basics first</a>; every section has a study page.</span>`:""}</li>`};
+      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S)&&(hinted=true)?`<span class="study-link">New to ${d.code}? <a href="#${d.id}/study">Read its basics first</a>.</span>`:""}</li>`};
   app.innerHTML=`
   <p class="over">Amateur Radio Service</p>
   <h1>Technician Class Operator License</h1>
   ${poolSeen?`<div class="today"><b>${poolDue}</b><span>${poolDue===1?"question":"questions"} due today</span></div>
-  <p class="reach">You've seen ${poolSeen} of ${poolTotal} pool questions.${untouched.length?` Untouched sections hold ${untouchedQs} of the 35 exam questions.`:""}${otherDue?` Math and Symbols have ${otherDue} more due; open them below.`:""}</p>`
-  :`<p class="reach">New here? The pool's ${poolTotal} questions come in ten sections, T1 to T0. Start with the first; after each answer you'll see why it's right.</p>`}
+  <p class="reach">${poolSeen} of ${poolTotal} seen.${untouched.length?` Untouched sections hold ${untouchedQs} exam questions.`:""}</p>`
+  :`<p class="reach">${poolTotal} questions in ten sections. Start with T1; each answer shows why.</p>`}
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due question":`Review all ${poolDue} due questions`}</button></div>`
   :next?`<div class="actions"><button class="btn" data-go="${next.id}">${stats(next).seen?"Keep going with":"Start with"} ${next.code}: ${esc(next.name)}</button></div>`:""}
   ${planBlock()}
@@ -442,7 +441,7 @@ function home(){
 }
 function planBlock(){
   const e=estimate(),D=daysToExam(),pass=e.lo>=26;
-  const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of 35</b> today; pass is 26.${e.gain.length?` Most room to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
+  const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of 35</b>; 26 passes.${e.gain.length?` Most to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
     :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
   let date;
   if(editingDate||(EXAM.day==null&&prefs.showDate)){
@@ -455,11 +454,11 @@ function planBlock(){
     if(D!=null&&D>0&&prefs.showDate!==false){
       date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a></p>`;
       /* The FRN reminder stays until the person says they have one. */
-      if(!prefs.haveFRN)date+=`<p>Do you have your FRN yet? You need it on test day. <button class="linkbtn" id="haveFRN">Yes, I have it</button></p>
-      <p class="links"><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get your FRN from the FCC</a></p>`;
+      if(!prefs.haveFRN)date+=`<p>Have your FRN? You'll need it at the exam. <button class="linkbtn" id="haveFRN">Yes, I have it</button></p>
+      <p class="links"><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get one from the FCC</a></p>`;
     }
   }else{
-    date=`<p class="muted">Have a test date? <button class="linkbtn" id="setDate">Set it</button> and reviews will tighten toward it.</p>`;
+    date=`<p class="muted"><button class="linkbtn" id="setDate">Set your exam date</button> to time reviews to it.</p>`;
   }
   return `<div class="plan">${est}${date}</div>`;
 }
