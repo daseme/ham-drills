@@ -13,6 +13,16 @@ The live copy is at https://daseme.github.io/ham-technicians-drills/.
 | sw.js | Service worker; caches everything for offline use |
 | manifest.webmanifest, icons/ | Home-screen install |
 | fonts/ | Bundled typefaces, so nothing loads from Google |
+| tools/pool-check.js | Checks data.js; given the NCVEC pool .docx, compares every question against it |
+
+## Checking the questions
+
+data.js was built once from the NCVEC pool and is maintained by hand. To check it:
+
+    node tools/pool-check.js
+    node tools/pool-check.js "2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx"
+
+The first runs the checks that need no pool file. The second also compares every id, stem, option and answer with the pool, downloaded from https://ncvec.org/index.php/2026-2030-technician-question-pool. It currently matches the February 19, 2026 errata release exactly.
 
 ## Hosting
 
