@@ -50,7 +50,7 @@ Export progress on the home screen produces a JSON backup. Import progress merge
 
 ## Screens
 
-Home: title, the count of cards due today, a short plan card (estimated score and exam date, both optional), the review button, the section list, the badge sash, and a one-line footer with Export, Import, Study guide, About and the version. The explanatory text lives on the About page at #about. On the drill screen the group chips stay visible; shuffle, Basics first and Due today sit behind an Options line that reports the current settings. The question text leads the card; the pool ID is a small label beside the topic.
+Home: title, the count of cards due today, a short plan card (estimated score and exam date, both optional), the review button, the section list, the badge sash, and a one-line footer with Export, Import, Study guide, About and the version. The explanatory text lives on the About page at #about. On the drill screen the group chips stay visible, with one setting beside them: Due today. Questions and answers are always shuffled (answers stay put when one reads "All these choices are correct"). Reviews come first; new questions follow grouped by topic, each topic's basics shown before its first new question. The question text leads the card; the pool ID is a small label beside the topic.
 
 ## Exam date and estimate
 
@@ -58,7 +58,7 @@ Both optional. The home screen shows an estimated exam score as a range: each se
 
 ## Study pages
 
-Every section has a study page with its basics in pool order, each primer naming the questions it covers and offering to drill just those. Open one from the section's drill screen, or from the home screen for a section not yet started. The whole guide at #study is one page built for printing. The primers are the same text that Basics first shows before each group of questions and that the explanation panel draws on; they live once, in data.js.
+Every section has a study page with its basics in pool order, each primer naming the questions it covers and offering to drill just those. Open one from the section's drill screen, or from the home screen for a section not yet started. The whole guide at #study is one page built for printing. The primers are the same text the drill shows before a topic's first new question and that the explanation panel draws on; they live once, in data.js.
 
 ## Badges
 

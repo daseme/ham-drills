@@ -87,12 +87,6 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .groups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chip{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.optsbox{margin:0 0 12px}
-.optsbox summary{cursor:pointer;font-size:14px;color:var(--muted);list-style:none;display:inline-flex;align-items:center;gap:6px}
-.optsbox summary::-webkit-details-marker{display:none}
-.optsbox summary::before{content:"";width:0;height:0;border:5px solid transparent;border-left:7px solid var(--muted);border-right:0;transition:transform .15s}
-.optsbox[open] summary::before{transform:rotate(90deg)}
-.optsbox .opts{margin:10px 0 2px}
 .opts{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:15px;color:var(--muted);margin-bottom:14px}
 .opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .opts input{width:18px;height:18px;accent-color:var(--amber)}
@@ -349,8 +343,9 @@ function badgeSvg(tier,size,{lapsed=false,full=false}={}){
 }
 const deckBadge=(d,size,full)=>{const e=tierEarned(d);return badgeSvg(e,size,{lapsed:e>0&&tierNow(d)<e,full})};
 
-/* Shuffle and basics choices persist; Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
-const prefs=Object.assign({shuffleQ:true,shuffleA:true,basics:false,showEst:true,showDate:false,haveFRN:false},get("prefs",{}));prefs.dueOnly=true;
+/* Due today resets to on each time a deck opens, so one practice run never leaks into the next review. */
+const prefs=Object.assign({showEst:true,showDate:false,haveFRN:false},get("prefs",{}));prefs.dueOnly=true;
+["shuffleQ","shuffleA","basics"].forEach(k=>delete prefs[k]);
 const savePrefs=()=>{const {dueOnly,...keep}=prefs;put("prefs",keep)};
 
 /* In-app moves push a history entry carrying its depth from home, so the phone's Back button retraces them and
@@ -586,7 +581,7 @@ function about(){
   <h2>The estimated score</h2>
   <p>Each section is weighed by how many of the 35 exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards answered right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction. Hide it from the home screen if it's unwelcome.</p>
   <h2>Study pages</h2>
-  <p>Every section has a study page with its basics in pool order; the <a href="#study">whole guide</a> is one page you can print. The same text appears before each group of questions when Basics first is on, and under Explain this more.</p>
+  <p>Every section has a study page with its basics in pool order; the <a href="#study">whole guide</a> is one page you can print. The same text appears before your first new question on each topic, and under Explain this more.</p>
   <h2>Testing yourself</h2>
   <p>This app is for learning the pool. For practice exams under exam conditions, use <a href="https://hamstudy.org/" target="_blank" rel="noopener">HamStudy.org</a>. When you're ready, find a session through <a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy</a> or the <a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL</a>, and get your <a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">FCC Registration Number</a> before test day.</p>
   <h2>Your progress</h2>
@@ -614,22 +609,15 @@ function drill({deck,mixed,primer}){
   ${!mixed&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
   ${!mixed&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
   ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
-  <details class="optsbox"><summary id="optsum"></summary><div class="opts">
-    <label><input type="checkbox" id="shuffleQ"> Shuffle questions</label>
-    <label><input type="checkbox" id="shuffleA"> Shuffle answers</label>
-    ${mixed?"":`<label><input type="checkbox" id="basics"> Basics first</label>`}
-    ${mixed?"":`<label><input type="checkbox" id="dueOnly"> Due today</label>`}
-  </div></details>
+  ${mixed?"":`<div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>`}
   <p class="srs" id="srsline"></p>
   <div class="status"><span id="pos"></span><span id="score"></span></div>
   <div class="bar"><span id="fill"></span></div>
   <div class="card" id="card" aria-live="polite"></div>
   ${mixed?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
   $("back").onclick=goHome;
-  const opt=k=>mixed&&k==="basics"?false:mixed&&k==="dueOnly"?true:prefs[k];
-  const optSummary=()=>{const on=[];if(opt("dueOnly"))on.push("due today");if(opt("shuffleQ"))on.push("shuffled");if(opt("shuffleA"))on.push("answers shuffled");if(opt("basics"))on.push("basics first");$("optsum").textContent="Options: "+(on.length?on.join(", "):"none")};
-  ["shuffleQ","shuffleA","basics","dueOnly"].forEach(k=>{const el=$(k);if(!el)return;el.checked=prefs[k];el.onchange=()=>{prefs[k]=el.checked;savePrefs();optSummary();k==="shuffleA"?render():start()}});
-  optSummary();
+  const dueOnly=()=>mixed||prefs.dueOnly;
+  if($("dueOnly")){$("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;start()}}
   if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
   if($("reset"))$("reset").onclick=function(){if(this.dataset.armed){SRS[deck.id]={};saveSrs(deck.id);delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all "+deck.code+" progress"}};
 
@@ -640,11 +628,15 @@ function drill({deck,mixed,primer}){
     const n=g.filter(due).length,m=g.filter(x=>isMastered(x.d.id,x.q[0])).length,tom=g.filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
     $("srsline").textContent=mixed?`${n} due today${tom?`, ${tom} coming up tomorrow`:""}.`:`${n} due today, ${m} of ${g.length} mastered${tom?`, ${tom} coming up tomorrow`:""}.`;
   }
+  /* Reviews come first, shuffled. New cards follow grouped by topic in pool order, and the topic's basics
+     come before its first new card; a review never stops for basics. */
+  const basicsFor=x=>!mixed&&!primer&&deck.CON&&!isSeen(deck.id,x.q[0])?deck.CON[x.q[0]]:null;
   function start(){
     let pool=inGroup();
-    if(opt("dueOnly"))pool=pool.filter(due);
-    items=opt("shuffleQ")?shuffle(pool):pool;
-    if(opt("basics")){const ord=Object.keys(deck.P);items=ord.flatMap(k=>items.filter(x=>deck.CON[x.q[0]]===k)).concat(items.filter(x=>!deck.CON[x.q[0]]))}
+    if(dueOnly())pool=pool.filter(due);
+    pool=shuffle(pool);
+    const ord=Object.keys(deck&&deck.P||{}),fresh=pool.filter(basicsFor);
+    items=pool.filter(x=>!basicsFor(x)).concat(ord.flatMap(k=>fresh.filter(x=>basicsFor(x)===k)));
     shown=null;i=0;done=0;fr=0;fd=0;render();
   }
   function status(){
@@ -656,25 +648,25 @@ function drill({deck,mixed,primer}){
   function render(){
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=mixed?`<p class="q">Nothing is due for review today.</p><p>Spacing works best when cards rest. Come back tomorrow, or go back to all sections and open one to practice anyway.</p>`
-      :opt("dueOnly")?`<p class="q">Nothing is due here today.</p><p>Spacing works best when cards rest. Come back tomorrow, or turn off Due today under Options to practice anyway.</p>`:`<p class="q">No questions match.</p>`;return}
+      :dueOnly()?`<p class="q">Nothing is due here today.</p><p>Spacing works best when cards rest. Come back tomorrow, or turn off Due today to practice anyway.</p>`:`<p class="q">No questions match.</p>`;return}
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":" The exam pass mark is 74%."}</p>${opt("dueOnly")?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":" The exam pass mark is 74%."}</p>${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
       $("home").onclick=goHome;$("again").onclick=start;
       if(fd&&fr===fd)wink(`${fr} out of ${fd}`,"Wouldn't that be just like you?");
       return;
     }
     const {d,q}=items[i];
-    if(opt("basics")&&deck.CON[q[0]]&&deck.CON[q[0]]!==shown){
-      const k=deck.CON[q[0]],[t,b]=deck.P[k];let n=0;while(i+n<items.length&&deck.CON[items[i+n].q[0]]===k)n++;
+    if(basicsFor(items[i])&&basicsFor(items[i])!==shown){
+      const k=basicsFor(items[i]),[t,b]=deck.P[k];let n=0;while(i+n<items.length&&basicsFor(items[i+n])===k)n++;
       c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}. <a href="#${deck.id}/study" style="color:inherit">Read all of ${deck.code}'s basics</a>.</p><div class="actions"><button class="btn" id="go">Show the question</button></div>`;
       $("go").onclick=()=>{shown=k;render()};$("go").focus({preventScroll:true});return;
     }
     const [id,text,opts,ans,note,fig]=q;
     const hasAll=opts.some(o=>/^All these/.test(o));
-    const order=opt("shuffleA")&&!hasAll?shuffle([0,1,2,3]):[0,1,2,3];
+    const order=hasAll?[0,1,2,3]:shuffle([0,1,2,3]);
     c.innerHTML=`<p class="topic"><span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}</p>
       ${fig?figBox(fig):""}
       <p class="q">${text}</p><div class="ans" id="ans"></div><div id="after"></div>`;
@@ -686,7 +678,7 @@ function drill({deck,mixed,primer}){
     [...$("ans").children].forEach(b=>{b.disabled=true;const v=+b.dataset.oi;if(v===ans)b.classList.add("right");else if(v===oi)b.classList.add("wrong")});
     done++;if(!items[i].re){fd++;if(ok)fr++}
     const lemon=!ok&&hadRight(d.id,id);record(d.id,id,ok);
-    if(!ok&&opt("dueOnly")){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
+    if(!ok&&dueOnly()){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
     status();
     const F=d.F&&d.F[id],ex=EXPLAIN[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
     $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> ${note}</p>
