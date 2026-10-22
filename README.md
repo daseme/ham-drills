@@ -2,83 +2,42 @@
 
 [![check](https://github.com/daseme/ham-technicians-drills/actions/workflows/check.yml/badge.svg)](https://github.com/daseme/ham-technicians-drills/actions/workflows/check.yml)
 
-A single offline web app holding all 12 Technician drills: T1 through T0, electronics math, and schematic symbols. Every question has a prewritten "Explain this more" panel, so the app makes no network calls once installed.
+<p>
+<img src="docs/screenshots/home.png" width="300" alt="Home screen with sample progress: 54 questions due, an estimate of 25 to 29 of 35, an exam 16 days out">
+<img src="docs/screenshots/drill.png" width="300" alt="A T6 drill card answered correctly, with the short explanation and Explain this more">
+</p>
 
-The live copy is at https://daseme.github.io/ham-technicians-drills/.
+A study app for the US amateur radio Technician exam. It holds all 409 questions of the 2026-2030 pool, worded exactly as on the exam, and drills them with spaced review: a card comes back after one day, then three, then seven, and three right answers on separate days master it. Every question has a short note and a longer explanation, and every topic has a primer shown before its first new question.
 
-## What's in the folder
+Set an exam date and nothing is scheduled past it; in the last week every card comes back once more. The home screen estimates the exam score as a range and names the sections with the most to gain. Each section earns bronze, silver and gold badges, judged on every card.
 
-| File | Purpose |
-|---|---|
-| index.html | The app |
-| data.js | All 409 pool questions, primers, formulas, symbols and explanations |
-| sw.js | Service worker; caches everything for offline use |
-| manifest.webmanifest, icons/ | Home-screen install |
-| fonts/ | Bundled typefaces, so nothing loads from Google |
-| tools/pool-check.js | Checks data.js; given the NCVEC pool .docx, compares every question against it |
-| test/ | Node tests for the scheduler, exam cap, estimate, badges and demo; they load the script from index.html |
+It is one web page with no framework and no server. It installs to a phone's home screen, works with no signal, and keeps progress on the phone.
 
-## Checking the questions
+**Try it with sample progress:** https://daseme.github.io/ham-technicians-drills/?demo
 
-data.js was built once from the NCVEC pool and is maintained by hand. To check it:
+**Use it for real:** https://daseme.github.io/ham-technicians-drills/
+
+## Running it
+
+Open index.html in a browser. That runs everything except offline install, which needs the page served: run `python -m http.server 8000` in this folder and browse to http://localhost:8000.
+
+To host it, put the files on any static host with HTTPS; GitHub Pages serves this repo. On Android, open the address in Chrome and choose Add to Home screen. On an iPhone, use Safari, Share, Add to Home Screen, and open it from that icon: Safari clears data for ordinary websites after a week without a visit.
+
+## Releasing
+
+Change files, then raise `APP_VERSION` in version.js. That one number is the footer's version and the service worker's cache name, so installed copies fetch the new files the next time they open online and switch at the next safe moment. CHANGELOG.md lists every version.
+
+## Checking
 
     node tools/pool-check.js
-    node tools/pool-check.js "2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx"
-
-The first runs the checks that need no pool file. The second also compares every id, stem, option and answer with the pool, downloaded from https://ncvec.org/index.php/2026-2030-technician-question-pool. It currently matches the February 19, 2026 errata release exactly.
-
-## Tests
-
     node --test "test/*.test.js"
 
-Plain Node, no packages; Node 22 or later. test/harness.js loads the script straight out of index.html with a stub page, so the tests run the code the app runs. GitHub runs these and the pool check on every push.
-
-## Hosting
-
-Android will only install a web app served over HTTPS. Upload the folder's contents, not the folder itself, to any static host. Two simple routes:
-
-**GitHub Pages.** Create a repository, upload these files to its root, then open Settings > Pages and publish from the main branch. The site appears at https://<username>.github.io/<repo>/.
-
-**Your own server.** Any web server with a valid certificate works. Serve the files as static content; no server-side code is involved.
-
-To try it on a Windows PC first, open a terminal in this folder and run `python -m http.server 8000`, then browse to http://localhost:8000. Service workers are allowed on localhost without HTTPS.
-
-## Installing on Android
-
-1. Open the hosted address in Chrome.
-2. Tap the three-dot menu, then Add to Home screen (or Install app).
-3. Launch it from the new icon. It opens full screen and works with no signal.
-
-On an iPhone, open the address in Safari, tap Share, then Add to Home Screen. Use the home-screen icon rather than a bookmark: Safari clears saved data for ordinary websites after a week without a visit, and that would wipe progress.
+The pool check confirms every question is well formed: four options, a valid answer, unique ids, exam counts summing to 35. Given the NCVEC pool file from https://ncvec.org/index.php/2026-2030-technician-question-pool, it also compares every id, stem, option and answer; data.js matches the February 19, 2026 errata release exactly. The tests (Node 22 or later, no packages) cover the scheduler, the exam cap, the estimate, the badges and the demo. GitHub runs both on every push.
 
 ## Progress
 
-Progress is stored on the phone and nowhere else. The app asks the browser to keep its storage through cleanups, but Export progress is the only real backup.
+Progress is stored on the phone and nowhere else. Export progress on the home screen makes a backup file; Import progress merges one back, keeping the newer record for each card.
 
-Export progress on the home screen produces a JSON backup. Import progress merges a backup into the phone, keeping the newer record for each card. Use it before clearing browser data or moving to a new phone.
+## More
 
-## Screens
-
-Home: title, the count of cards due today, a short plan card (estimated score and exam date, both optional), the review button, the section list, the badge sash, and a one-line footer with Export, Import, Study guide, About and the version. The explanatory text lives on the About page at #about. On the drill screen the group chips stay visible, with one setting beside them: Due today. Questions and answers are always shuffled (answers stay put when one reads "All these choices are correct"). Reviews come first; new questions follow grouped by topic, each topic's basics shown before its first new question. The question text leads the card; the pool ID is a small label beside the topic.
-
-## Exam date and estimate
-
-Both optional. The home screen shows an estimated exam score as a range: each section's exam count weighted by how far along its cards are (mastered near full credit, answered-right-once partial, unseen a guess). Hide it with the link beside it. Set an exam date and intervals are capped so nothing is scheduled past the exam; inside the last week every card comes back at least once more. The date block links to the HamStudy and ARRL session finders and to the FCC page on getting an FRN, which first-time applicants need before test day. The date travels with Export and Import.
-
-## Study pages
-
-Every section has a study page with its basics in pool order, each primer naming the questions it covers and offering to drill just those. Open one from the section's drill screen, or from the home screen for a section not yet started. The whole guide at #study is one page built for printing. The primers are the same text the drill shows before a topic's first new question and that the explanation panel draws on; they live once, in data.js.
-
-## Badges
-
-Each section carries a badge: a radio tower with one, two or three signal arcs. Bronze means every card in the section has been seen, silver that every card has been answered correctly at least once, and gold that every card is mastered. A rung, once earned, stays, along with the day it was earned, but the badge dims while the section's current standing is below its best rung. Badges travel with Export and Import.
-
-## Testing yourself
-
-This app teaches the pool. For practice exams under exam conditions, use HamStudy.org; the footer links to it.
-
-## Updating
-
-After changing any file, raise APP_VERSION in version.js (for example, from "11" to "12"); the footer and the service-worker cache key both read it. Phones fetch the new copy the next time the app opens online and switch to it at the next safe moment: right away if the home screen is showing, otherwise on the next return home or when the app goes to the background. A short notice names the new version. The footer shows the version a phone is running.
-
-Files in private/ are ignored by git; keep personal progress exports there.
+ARCHITECTURE.md explains how it works: the files, the data format, storage, the scheduler, the estimate, the badges, demo mode and the service worker. For practice exams under exam conditions, use HamStudy.org. Pool text is from the NCVEC and is public domain; the code is MIT licensed. Files in private/ are ignored by git.
