@@ -8,7 +8,8 @@ const FILES=["./","index.html","version.js","data.js","manifest.webmanifest",
 /* cache:"reload" makes each precache fetch bypass the HTTP cache; otherwise a copy Chrome fetched for the previous
    build within its max-age can be stored under the new cache name and never replaced. */
 self.addEventListener("install",e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:"reload"})))).then(()=>self.skipWaiting()))});
-self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
+/* Caches belong to the whole origin, shared with every other site on daseme.github.io, so only this app's own old caches are cleared. */
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("hamdrill-v")&&k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{
   if(e.request.method!=="GET")return;
   e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(r=>r||fetch(e.request)));
