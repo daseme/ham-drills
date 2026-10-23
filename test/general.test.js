@@ -68,3 +68,17 @@ test("General's footer doesn't offer a demo it doesn't have",()=>{
 test("an empty Technician app still offers the demo",()=>{
   assert.match(homeHtml(load()),/See it with sample progress/);
 });
+
+test("the real General app is complete: estimate shown, every section live",()=>{
+  const app=load({exam:"general"});
+  assert.equal(app.run("COMPLETE"),true);
+  const html=homeHtml(app);
+  assert.match(html,/Likely/);
+  assert.doesNotMatch(html,/estimate appears once/);
+});
+
+test("General's Math section groups by its own topics, not Technician's",()=>{
+  const app=load({exam:"general"});
+  assert.deepEqual(app.run("C.mathGroups"),["G5B","G5C"]);
+  assert.equal(app.run("DECK.math.Q.length"),34);
+});

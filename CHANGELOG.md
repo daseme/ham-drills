@@ -2,8 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 30 (October 22)
+- General drills complete: G7 to G0 and an Electronics math section with worked solutions, so all 423 questions of the 2023-2027 pool, each section independently reviewed. Figure G7-1 is redrawn in the app. The estimate now shows on General's home screen.
+
 ## 29 (October 22)
-- General drills, first six sections: G1 to G6 (292 questions), each with notes, explanations and topic basics, checked against the 2023-2027 pool (6th errata) and current Part 97, and independently reviewed. The splash page links to General.
+- General drills, first six sections: G1 to G6 (272 questions), each with notes, explanations and topic basics, checked against the 2023-2027 pool (6th errata) and current Part 97, and independently reviewed. The splash page links to General.
 - An exam without a demo no longer offers one in its footer.
 
 ## 28 (October 22)

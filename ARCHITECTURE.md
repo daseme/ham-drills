@@ -6,15 +6,19 @@ One shared app, and a folder per exam holding that exam's settings and questions
 
 | File | What it holds |
 |---|---|
+| index.html | The splash page at /ham-drills/, linking to each exam's app |
 | app/app.js, app/app.css | The whole app: script and styles, shared by every exam; names no exam |
 | app/sw-core.js | The service worker every exam shares |
 | technician/index.html | The Technician page: loads version.js, its exam.js and data.js, then app.js |
 | technician/exam.js | `window.EXAM_CONFIG`: Technician's names, pool years, question count and pass mark, storage namespace, figures, demo plan |
 | technician/data.js | `window.DECKS` (the twelve sections) and `window.EXPLAIN` (the longer explanation for each question) |
 | technician/sw.js, technician/manifest.webmanifest | Technician's cache name, then the shared worker; its home-screen install |
+| general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, no demo) and data.js (G1 to G0 and Math, 423 pool questions) |
+| forward/ | The content of the daseme/ham-technicians-drills repository: the old address forwards here, and its last service worker retires the old offline copy |
 | version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
 | icons/, fonts/ | Shared icons and bundled typefaces |
-| tools/pool-check.js | Checks data.js; compares it with the NCVEC pool .docx when given one |
+| tools/pool-check.js | Checks an exam's data.js (`technician` or `general`); compares it with the NCVEC pool .docx when given one, skipping withdrawn questions |
+| tools/pool-parse.js, tools/pool-import.js | Read an NCVEC pool .docx; print one section as a data.js deck skeleton, stems and options verbatim |
 | tools/docx-text.js | Reads a .docx's paragraphs with no dependencies (a .docx is a zip) |
 | test/ | Node tests; test/harness.js loads app/app.js with an exam's files into a stub page |
 | tools/screens.mjs, tools/compare-screens.mjs | Screenshots of every screen in headless Chrome, compared pixel for pixel; how a change is shown to leave screens untouched |
@@ -22,7 +26,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 
 ## Data
 
-Each deck in `DECKS` has an `id` (`t1` … `t0`, `math`, `symbols`), a display `code`, a `name`, and `exam`, the number of the 35 exam questions it supplies (0 for Math and Symbols, whose questions already sit in the pool sections). Question decks hold:
+Each deck in `DECKS` has an `id` (`t1` … `t0` or `g1` … `g0`, `math`, and `symbols` for Technician), a display `code`, a `name`, and `exam`, the number of the 35 exam questions it supplies (0 for Math and Symbols, whose questions already sit in the pool sections). Question decks hold:
 
 - `Q`: questions as `[id, stem, [four options], answer index, short note, figure?]`. Text is HTML.
 - `G`: group names, keyed by the three-character group (`T1A`).

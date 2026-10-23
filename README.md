@@ -7,7 +7,7 @@
 <img src="docs/screenshots/drill.png" width="300" alt="A T6 drill card answered correctly, with the short explanation and Explain this more">
 </p>
 
-A study app for the US amateur radio license exams. The Technician drills hold all 409 questions of the 2026-2030 pool, worded exactly as on the exam; the General drills, the 2023-2027 pool, section by section. Both use spaced review: a card comes back after one day, then three, then seven, and three right answers on separate days master it. Every question has a short note and a longer explanation, and every topic has a primer shown before its first new question.
+A study app for the US amateur radio license exams. The Technician drills hold all 409 questions of the 2026-2030 pool, worded exactly as on the exam; the General drills hold all 423 questions of the 2023-2027 pool (6th errata). Both use spaced review: a card comes back after one day, then three, then seven, and three right answers on separate days master it. Every question has a short note and a longer explanation, and every topic has a primer shown before its first new question.
 
 Set an exam date and nothing is scheduled past it; in the last week every card comes back once more. The home screen estimates the exam score as a range and names the sections with the most to gain. Each section earns bronze, silver and gold badges, judged on every card.
 
@@ -15,7 +15,7 @@ It is one web page with no framework and no server. It installs to a phone's hom
 
 **Try it with sample progress:** https://daseme.github.io/ham-drills/technician/?demo
 
-**Use it for real:** https://daseme.github.io/ham-drills/ (Technician, and General as its sections are added)
+**Use it for real:** https://daseme.github.io/ham-drills/ (Technician and General)
 
 ## Running it
 

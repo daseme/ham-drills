@@ -1,6 +1,6 @@
 # General exam drills: design
 
-Date: 2026-10-22. Status: draft for Kurt's approval.
+Date: 2026-10-22. Status: built and live (version 30).
 
 ## Why
 
