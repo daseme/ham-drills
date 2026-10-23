@@ -12,5 +12,7 @@ self.addEventListener("install",e=>{e.waitUntil(caches.open(VERSION).then(c=>c.a
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith(self.EXAM_CACHE)&&k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener("fetch",e=>{
   if(e.request.method!=="GET")return;
-  e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(r=>r||fetch(e.request)));
+  /* Only this exam's own cache: both apps precache the same shared files (app.js, version.js), and caches.match
+     would search every cache on the origin, oldest first, and could return the other app's older copy. */
+  e.respondWith(caches.open(VERSION).then(c=>c.match(e.request,{ignoreSearch:true})).then(r=>r||fetch(e.request)));
 });

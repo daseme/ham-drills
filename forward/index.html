@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Technician drills have moved</title>
 <script>
-/* The Technician drills moved to /ham-drills/technician/. Keep ?demo and the #screen, so old links land where they pointed. */
+/* The Technician drills moved to /ham-drills/technician/. Keep ?demo and the #screen, so old links land where they pointed.
+   First install this address's worker (sw.js), which answers future visits here itself, so an old home-screen icon
+   still opens with no signal; move on once it's registered, or after a moment regardless. */
 function forwardUrl(search,hash){return "/ham-drills/technician/"+search+hash}
-location.replace(forwardUrl(location.search,location.hash));
+var gone=false;
+function go(){if(gone)return;gone=true;location.replace(forwardUrl(location.search,location.hash))}
+if(typeof navigator!=="undefined"&&navigator.serviceWorker){navigator.serviceWorker.register("sw.js").then(go,go);setTimeout(go,1500)}
+else go();
 </script>
 <meta http-equiv="refresh" content="2; url=/ham-drills/technician/">
 <style>body{font:17px/1.55 system-ui,sans-serif;margin:0;padding:24px 16px;background:#EDF0F2;color:#18232E}@media (prefers-color-scheme:dark){body{background:#11171D;color:#E3E8ED}a{color:#E9A33E}}</style>

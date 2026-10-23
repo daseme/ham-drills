@@ -63,3 +63,21 @@ test("activation clears only this exam's older caches",async()=>{
   let p;w2.on.activate({waitUntil:x=>p=x});await p;
   assert.deepEqual([...w2.names].sort(),[...others,mine].sort());
 });
+
+test("the worker answers only from its own cache, never another exam's older copy of a shared file",async()=>{
+  const v=worker("technician").version,opened=[];
+  const dir=path.join(ROOT,"technician"),on={};
+  /* Two caches hold the same shared URL: the other exam's older one first, as caches.match would search them. */
+  const stores={["hamdrills-general-v"+(v-1)]:"old general copy",["hamdrills-technician-v"+v]:"current technician copy"};
+  const ctx={Promise,Request:class{},fetch:async()=>"network",
+    self:{addEventListener:(t,f)=>on[t]=f,skipWaiting(){},clients:{claim:async()=>{}}},
+    caches:{keys:async()=>Object.keys(stores),delete:async()=>true,
+      match:async()=>Object.values(stores)[0],
+      open:async k=>(opened.push(k),{match:async()=>stores[k],addAll:async()=>{}})},
+    importScripts:(...fs_)=>fs_.forEach(f=>vm.runInContext(globals(fs.readFileSync(path.join(dir,f),"utf8")),ctx))};
+  ctx.self.caches=ctx.caches;vm.createContext(ctx);
+  vm.runInContext(globals(fs.readFileSync(path.join(dir,"sw.js"),"utf8")),ctx);
+  let res;on.fetch({request:{method:"GET",url:"https://daseme.github.io/ham-drills/app/app.js"},respondWith:p=>res=p});
+  assert.equal(await res,"current technician copy");
+  assert.deepEqual(opened,["hamdrills-technician-v"+v]);
+});
