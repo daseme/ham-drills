@@ -2,6 +2,10 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 29 (October 22)
+- General drills, first six sections: G1 to G6 (292 questions), each with notes, explanations and topic basics, checked against the 2023-2027 pool (6th errata) and current Part 97, and independently reviewed. The splash page links to General.
+- An exam without a demo no longer offers one in its footer.
+
 ## 28 (October 22)
 - The General app's frame in general/: its own storage (`hamgeneral:`), backups and offline copy. While its sections are still being written, home lists the finished ones and holds back the estimate.
 - A backup from one exam's drills is refused by the other's.

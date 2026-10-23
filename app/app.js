@@ -214,7 +214,7 @@ function home(){
   <div class="sashbox"><ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
   <p class="sash-cap">${sashCaption()}</p></div>
   <div class="foot">
-    <p class="links"><button class="linkbtn" id="exp">${DEMO?"Export sample":"Export progress"}</button>${DEMO?"":`<button class="linkbtn" id="imp">Import progress</button>`}<a href="#study">Study guide</a><a href="#about">About</a>${!DEMO&&DECKS.every(d=>!stats(d).seen)?`<a href="?demo">See it with sample progress</a>`:""}<span>Version ${APP_VERSION}${DEMO?", demo":""}</span></p>
+    <p class="links"><button class="linkbtn" id="exp">${DEMO?"Export sample":"Export progress"}</button>${DEMO?"":`<button class="linkbtn" id="imp">Import progress</button>`}<a href="#study">Study guide</a><a href="#about">About</a>${C.demo&&!DEMO&&DECKS.every(d=>!stats(d).seen)?`<a href="?demo">See it with sample progress</a>`:""}<span>Version ${APP_VERSION}${DEMO?", demo":""}</span></p>
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
   $("exp").onclick=exportProgress;if($("imp"))$("imp").onclick=()=>$("importFile").click();

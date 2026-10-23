@@ -60,3 +60,11 @@ test("a General backup is taken by General",async()=>{
   await app.runAsync(backup("hamdrill-general","g1"));
   assert.equal(app.run("srsOf('g1').X1.lv"),3);
 });
+
+test("General's footer doesn't offer a demo it doesn't have",()=>{
+  assert.doesNotMatch(homeHtml(general()),/sample progress/);
+});
+
+test("an empty Technician app still offers the demo",()=>{
+  assert.match(homeHtml(load()),/See it with sample progress/);
+});
