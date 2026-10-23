@@ -82,3 +82,12 @@ test("General's Math section groups by its own topics, not Technician's",()=>{
   assert.deepEqual(app.run("C.mathGroups"),["G5B","G5C"]);
   assert.equal(app.run("DECK.math.Q.length"),34);
 });
+
+test("General's review-all screen names only the sections it has",()=>{
+  const g=load({exam:"general"});g.run("drill({mixed:true})");
+  const html=g.run(`$("app").innerHTML`);
+  assert.doesNotMatch(html,/Symbols/);
+  assert.match(html,/Math is reviewed on its own/);
+  const t=load();t.run("drill({mixed:true})");
+  assert.match(t.run(`$("app").innerHTML`),/Math and Symbols are reviewed on their own/);
+});

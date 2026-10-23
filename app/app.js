@@ -356,7 +356,7 @@ function drill({deck,mixed,primer}){
   const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
   let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
   const title=mixed?"Everything due":deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
-  const sub=mixed?"Every pool question due today, mixed across sections. Math and Symbols are reviewed on their own.":
+  const sub=mixed?`Every pool question due today, mixed across sections. ${DECK.symbols?"Math and Symbols are reviewed on their own.":"Math is reviewed on its own."}`:
     deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your ${C.examQ} exam questions.`;
   const chips=mixed||primer?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>

@@ -2,6 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 31 (October 22)
+- Each app's offline copy now answers only from its own cache. Someone who used both exams could be served the other app's older shared code.
+- The old Technician address keeps working offline: its worker stays installed and forwards to the new address without a signal.
+- General's review-all screen no longer mentions a Symbols section it doesn't have.
+
 ## 30 (October 22)
 - General drills complete: G7 to G0 and an Electronics math section with worked solutions, so all 423 questions of the 2023-2027 pool, each section independently reviewed. Figure G7-1 is redrawn in the app. The estimate now shows on General's home screen.
 
