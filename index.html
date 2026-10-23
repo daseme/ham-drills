@@ -214,6 +214,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 <!-- No accept filter: some Android pickers grey out a backup that came back through Drive or email under another file type. The import checks the contents instead. -->
 <input type="file" id="importFile" hidden>
 <script src="version.js"></script>
+<script src="exam.js"></script>
 <script src="data.js"></script>
 <script>
 "use strict";
@@ -224,11 +225,14 @@ const dayNum=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezon
 const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
 const DECK=Object.fromEntries(DECKS.map(d=>[d.id,d]));
 const POOL=DECKS.filter(d=>d.exam>0);
+/* Everything that makes this one exam's drills, from exam.js. */
+const C=window.EXAM_CONFIG;
+const {FIGS,FIG_KEY}=C.figures,{plan:DEMO_PLAN,lapse:DEMO_LAPSE,seed:DEMO_SEED}=C.demo||{};
 
 /* ---------- storage ---------- */
 /* ?demo opens the app as a sample learner under its own namespace, so a visitor's own progress is never read or touched. */
-const DEMO=new URLSearchParams(location.search).has("demo");
-const NS=DEMO?"hamdemo:":"hamdrill:";
+const DEMO=!!C.demo&&new URLSearchParams(location.search).has("demo");
+const NS=DEMO?C.demoNs:C.ns;
 const get=(k,f)=>{try{const v=localStorage.getItem(NS+k);return v==null?f:JSON.parse(v)}catch(e){return f}};
 const put=(k,v)=>{try{localStorage.setItem(NS+k,JSON.stringify(v))}catch(e){toast("Couldn't save progress on this device.")}};
 const SRS={};
@@ -266,10 +270,7 @@ const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
 /* ---------- demo seed ----------
    A learner three weeks in, simulated day by day through step from a fixed seed, so every record follows the
    interval table and exam cap, badge dates are the days they were earned, and every visitor sees the same
-   history dated from the day of the visit. Per deck: [first day, last day new cards came in (days ago),
-   accuracy, share of the deck started]. */
-const DEMO_PLAN={t1:[21,12,.9],t2:[17,11,.72],t5:[15,9,.72],t8:[11,6,.75],symbols:[9,4,.6],math:[11,6,.7,.5],t3:[11,4,.62],t6:[9,3,.62],t7:[9,3,.62],t4:[5,2,.65,.5]};
-const DEMO_LAPSE=["T8A02","T8B05","T8C03"];
+   history dated from the day of the visit. The plan, lapses and seeds come from exam.js. */
 function seedDemo(){
   if(!DEMO||get("seeded",false))return;
   const rng=x=>()=>{x=x+0x6D2B79F5|0;let z=Math.imul(x^x>>>15,1|x);z=z+Math.imul(z^z>>>7,61|z)^z;return((z^z>>>14)>>>0)/4294967296};
@@ -281,7 +282,7 @@ function seedDemo(){
     do{const r=s[c.k],right=r?(r.n||0)-(r.w||0):0;ok=force?false:c.rnd()<1-(1-c.acc)*Math.pow(c.learn,right);
       s[c.k]=step(r,ok,t,exam);s[c.k].ts=t*864e5+tz+(18+tries)*36e5+Math.floor(c.rnd()*36e5)}while(!ok&&!force&&++tries<3)};
   for(let t=T-21;t<T;t++){
-    /* Two days were skipped; yesterday ended with three T8 lapses, which drop T8 from silver back to bronze. */
+    /* Two days were skipped; yesterday ended with the plan's lapses, which drop a silver section back to bronze. */
     if(t!==T-9&&t!==T-16)for(const c of cards){const r=srsOf(c.id)[c.k];if(t>=c.intro&&(!r||r.due<=t))answer(c,t)}
     if(t===T-1)cards.filter(c=>DEMO_LAPSE.includes(c.k)).forEach(c=>answer(c,t,true));
     for(const id in DEMO_PLAN){const b=badges[id]||(badges[id]={});for(let g=1;g<=tierNow(DECK[id]);g++)if(!b[g])b[g]=t}
@@ -289,8 +290,7 @@ function seedDemo(){
   for(const id in DEMO_PLAN)saveSrs(id);
   put("badges",badges);put("examDay",exam);put("prefs",{showDate:true});put("seeded",true);
 }
-const DEMO_SEED={t1:5,t2:6,t3:14,t4:1,t5:7,t6:4,t7:2,t8:1,math:1,symbols:7};
-const clearDemo=()=>{try{Object.keys(localStorage).filter(k=>k.startsWith("hamdemo:")).forEach(k=>localStorage.removeItem(k))}catch(e){}};
+const clearDemo=()=>{try{Object.keys(localStorage).filter(k=>k.startsWith(C.demoNs)).forEach(k=>localStorage.removeItem(k))}catch(e){}};
 seedDemo();
 /* The banner: full above the home hero, one line on every other screen. */
 function demoBar(full){
@@ -314,7 +314,7 @@ const dayLabel=day=>new Date(day*86400000).toLocaleDateString(undefined,{timeZon
 
 /* ---------- estimated score ----------
    Expected correct per section = its exam count times a weighted share of cards by state. Two weightings
-   give a low and a high. Math and symbols are not exam sections; their questions already sit in T5 etc. */
+   give a low and a high. Math and symbols are not exam sections; their questions already sit in the pool sections. */
 const EST_W={lo:{m:.9,k:.55,s:.35,u:.25},hi:{m:1,k:.85,s:.65,u:.25}};
 function sectionShare(d,w){const srs=srsOf(d.id);let acc=0;for(const k of itemIds(d)){const r=srs[k];acc+=!r?w.u:r.lv>=MASTER?w.m:r.lv>=1?w.k:w.s}return acc/itemIds(d).length}
 function estimate(){let lo=0,hi=0;const gain=[];for(const d of POOL){const l=d.exam*sectionShare(d,EST_W.lo),h=d.exam*sectionShare(d,EST_W.hi);lo+=l;hi+=h;gain.push([d,d.exam-(l+h)/2])}
@@ -407,8 +407,8 @@ function home(){
       <span class="meta">${meta}</span>
       <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S)&&(hinted=true)?`<span class="study-link">New to ${d.code}? <a href="#${d.id}/study">Read its basics first</a>.</span>`:""}</li>`};
   app.innerHTML=`
-  <p class="over">Amateur Radio Service</p>
-  <h1>Technician Class Operator License</h1>
+  <p class="over">${C.over}</p>
+  <h1>${C.title}</h1>
   ${poolSeen?`<div class="today"><b>${poolDue}</b><span>${poolDue===1?"question":"questions"} due today</span></div>
   <p class="reach">${poolSeen} of ${poolTotal} seen.${untouched.length?` Untouched sections hold ${untouchedQs} exam questions.`:""}</p>`
   :`<p class="reach">${poolTotal} questions in ten sections. Start with T1; each answer shows why.</p>`}
@@ -440,8 +440,8 @@ function home(){
   if($("hideEst"))$("hideEst").onclick=()=>{prefs.showEst=!prefs.showEst;savePrefs();home()};
 }
 function planBlock(){
-  const e=estimate(),D=daysToExam(),pass=e.lo>=26;
-  const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of 35</b>; 26 passes.${e.gain.length?` Most to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
+  const e=estimate(),D=daysToExam(),pass=e.lo>=C.pass;
+  const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of ${C.examQ}</b>; ${C.pass} passes.${e.gain.length?` Most to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
     :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
   let date;
   if(editingDate||(EXAM.day==null&&prefs.showDate)){
@@ -468,9 +468,9 @@ function sashCaption(){
   return parts.length?`${parts.join(", ")} of ${DECKS.length} sections.`:"No badges yet. Bronze comes when every card in a section has been seen once.";
 }
 function exportProgress(){
-  const data={app:"hamdrill",version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day};
+  const data={app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
-  const d=new Date(),name=`ham-drill-${DEMO?"sample":"progress"}-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
+  const d=new Date(),name=`${C.exportName}-${DEMO?"sample":"progress"}-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const file=new File([blob],name,{type:"application/json"});
   const download=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     toast(`Backup saved as ${name}, usually in your Downloads folder.`)};
@@ -484,7 +484,7 @@ function exportProgress(){
 }
 $("importFile").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d||d.app!=="hamdrill"||!d.decks)throw 0;
+  try{const d=JSON.parse(await f.text());if(!d||d.app!==C.exportApp||!d.decks)throw 0;
     if(d.sample){toast("That's the demo's sample progress, not a backup of yours.");return}
     const n=importDecks(d.decks);mergeBadges(d.badges);if(d.examDay!=null&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} sections.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
@@ -494,47 +494,6 @@ $("importFile").onchange=async e=>{
    One source, three views: the primers in data.js feed the Basics-first cards, the explanation panel
    and these pages. A page per deck, or every deck at once for printing. */
 const SYM_SW='stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
-/* ---------- pool figures ----------
-   Figures T-1, T-2 and T-3 redrawn from the NCVEC originals with the same layout and part numbers, in the symbol
-   drill's line style and in currentColor so they follow the theme. */
-const FIG_DEFS=`<defs>
- <g id="fg-gnd"><path d="M-9 0H9M-7 0l-4 8M0 0l-4 8M7 0l-4 8"/></g>
- <g id="fg-plug"><circle r="16"/><path d="M-5-9v6M5-9v6M-6 1h12M-4 6h8"/></g>
-</defs>`;
-const FIG_NUM=(x,y,n)=>`<text x="${x}" y="${y}" class="fnum">${n}</text>`;
-const FIGS={
-"T-1":`<svg viewBox="0 0 360 215" role="img" aria-label="Figure T-1: a transistor switching a lamp; numbered parts 1 to 5">${FIG_DEFS}<g class="fln">
- <path d="M24 112l12 8-12 8M24 137l12 8-12 8"/><circle cx="51" cy="120" r="5"/><circle cx="51" cy="145" r="5"/>
- <path d="M51 150v30"/><use href="#fg-gnd" x="51" y="180"/>
- <path d="M56 120h38"/><polyline points="94,120 99,110 107,130 115,110 123,130 131,110 136,120"/><path d="M136 120h32"/>
- <circle cx="200" cy="120" r="32"/><path d="M168 120h20M188 102v36M188 112l30-18M188 128l30 18"/><path d="M218 146l-10-1 4-9z" fill="currentColor"/>
- <path d="M218 94V56h40M218 146v38"/><use href="#fg-gnd" x="218" y="184"/>
- <path d="M258 56v-6a12 12 0 0 1 24 0v6M262 56v-4a8 8 0 0 1 16 0v4M282 56h24v34"/>
- <path d="M288 90h36M296 98h20M288 106h36M296 114h20M306 114v52"/><use href="#fg-gnd" x="306" y="166"/>
-</g>${FIG_NUM(115,98,1)}${FIG_NUM(186,76,2)}${FIG_NUM(270,32,3)}${FIG_NUM(342,108,4)}${FIG_NUM(51,210,5)}</svg>`,
-"T-2":`<svg class="wide" viewBox="0 0 560 205" role="img" aria-label="Figure T-2: a power supply from wall plug to regulated output; numbered parts 1 to 10">${FIG_DEFS}<g class="fln">
- <use href="#fg-plug" x="40" y="118"/><path d="M40 102V45h30M40 134v46h135v-25"/>
- <rect x="70" y="40" width="26" height="10" rx="2"/><path d="M70 45h26"/><path d="M96 45h14"/><circle cx="114" cy="45" r="3.5"/><path d="M117 43l24-11"/><circle cx="145" cy="45" r="3.5"/><path d="M148.5 45H175v30"/>
- <path d="M175 75a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18a9 9 0 0 1 0 18M205 72v84M215 72v84M245 75a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18"/>
- <path d="M245 75V45h40M245 147v38"/><use href="#fg-gnd" x="245" y="185"/>
- <path d="M285 32v26l24-13z" fill="currentColor"/><path d="M309 32v26M309 45h231"/><circle cx="540" cy="45" r="4.5" fill="var(--panel)"/>
- <circle cx="350" cy="45" r="3.5" fill="currentColor"/><path d="M350 45v62M338 107h24M338 120q12-9 24 0M350 120v60"/><use href="#fg-gnd" x="350" y="180"/>
- <circle cx="410" cy="45" r="3.5" fill="currentColor"/><path d="M410 45v22"/><polyline points="410,67 400,72 420,80 400,88 420,96 410,101"/><path d="M410 101v16"/>
- <path d="M398 117h24l-12 22z" fill="currentColor"/><path d="M398 139h24M410 139v41"/><use href="#fg-gnd" x="410" y="180"/><path d="M420 128l10-8M425 136l10-8M428 118l2 2-3 0zM433 126l2 2-3 0z"/>
- <polyline points="430,45 436,36 444,54 452,36 460,54 468,36 474,45"/><path d="M452 68v-12"/><path d="M452 56l-4 7h8z" fill="currentColor"/><path d="M452 68h28v-23"/>
- <circle cx="480" cy="45" r="3.5" fill="currentColor"/><circle cx="495" cy="45" r="3.5" fill="currentColor"/>
- <path d="M495 45v22"/><path d="M483 67h24M483 67v4M507 67v-4"/><path d="M483 89h24l-12-22z" fill="currentColor"/><path d="M495 89v46"/><use href="#fg-gnd" x="495" y="135"/>
-</g>${FIG_NUM(72,122,1)}${FIG_NUM(83,30,2)}${FIG_NUM(130,30,3)}${FIG_NUM(210,62,4)}${FIG_NUM(297,22,5)}${FIG_NUM(322,118,6)}${FIG_NUM(386,88,7)}${FIG_NUM(386,134,8)}${FIG_NUM(452,26,9)}${FIG_NUM(522,84,10)}</svg>`,
-"T-3":`<svg viewBox="0 0 320 300" role="img" aria-label="Figure T-3: an antenna tuner; numbered parts 1 to 4">${FIG_DEFS}<g class="fln">
- <path d="M42 115q5-10 10 0t10 0h20"/><path d="M82 115h10M92 97v36M102 97v36M102 115h55"/><path d="M84 132l24-30"/><path d="M108 102l-7 1 3 6z" fill="currentColor"/>
- <circle cx="157" cy="115" r="4" fill="currentColor"/>
- <path d="M157 115h55M212 97v36M222 97v36M222 115h53V50"/><path d="M204 132l24-30"/><path d="M228 102l-7 1 3 6z" fill="currentColor"/>
- <path d="M257 32h36l-18 22z"/><path d="M275 54v-4"/>
- <path d="M157 119v26a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18a9 9 0 0 0 0 18v30"/><circle cx="157" cy="247" r="4" fill="currentColor"/>
- <path d="M190 185h-20M190 185v62h-33"/><path d="M170 185l7-4-1 8z" fill="currentColor"/>
- <path d="M157 251v26"/><use href="#fg-gnd" x="157" y="277"/>
-</g>${FIG_NUM(22,120,1)}${FIG_NUM(100,80,2)}${FIG_NUM(122,200,3)}${FIG_NUM(275,22,4)}</svg>`};
-const FIG_KEY={"T-1":"1 resistor, 2 transistor, 3 lamp, 4 battery","T-2":"3 switch, 4 transformer, 6 capacitor, 8 light-emitting diode, 9 variable resistor","T-3":"3 variable inductor, 4 antenna"};
 const figBox=f=>FIGS[f]?`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}</figcaption></figure>`:`<p class="fig">Uses figure ${f} from the pool.</p>`;
 function studySection(d,{solo}){
   const h="h1";
@@ -546,7 +505,7 @@ function studySection(d,{solo}){
     <div class="figs">${Object.keys(FIGS).map(f=>`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}. The pool asks about ${FIG_KEY[f]}.</figcaption></figure>`).join("")}</div>`;
   }else{
     const cov={};for(const q of d.Q){const k=d.CON&&d.CON[q[0]];if(k)(cov[k]=cov[k]||[]).push(q[0])}
-    const intro=d.exam?`${d.code} supplies ${d.exam} of the 35 exam questions, drawn from ${d.Q.length} in the pool.`:`${d.Q.length} questions, with the formulas they rest on.`;
+    const intro=d.exam?`${d.code} supplies ${d.exam} of the ${C.examQ} exam questions, drawn from ${d.Q.length} in the pool.`:`${d.Q.length} questions, with the formulas they rest on.`;
     body=`<p class="sub">${intro}</p>
     ${d.cheat?`<details class="cheat" open><summary>Formulas</summary>${d.cheat}</details>`:""}
     ${Object.keys(d.P||{}).map(k=>{const [t,b]=d.P[k],ids=cov[k]||[];
@@ -560,7 +519,7 @@ function study(deck){
   const decks=deck?[deck]:DECKS;
   app.innerHTML=`<div class="study">
   <button class="back" id="back">&larr; All sections</button>
-  ${deck?"":`<p class="over">Amateur Radio Service</p><h1>Technician study guide</h1><p class="sub">The basics behind every section of the 2026-2030 pool, in pool order. Print this page for a paper copy.</p>`}
+  ${deck?"":`<p class="over">${C.over}</p><h1>${C.studyTitle}</h1><p class="sub">The basics behind every section of the ${C.poolYears} pool, in pool order. Print this page for a paper copy.</p>`}
   <p class="tools">${deck?`<a href="#${deck.id}">Drill ${deck.code}</a><a href="#study">Whole guide</a>`:""}<button class="linkbtn" id="print">Print</button></p>
   ${decks.map(d=>studySection(d,{solo:!!deck})).join("")}
   </div>`;
@@ -572,14 +531,14 @@ function study(deck){
 function about(){
   $("app").innerHTML=`<div class="about">
   <button class="back" id="back">&larr; All sections</button>
-  <p class="over">Amateur Radio Service</p><h1>About these drills</h1>
-  <p>Drills for the 2026-2030 Technician question pool, worded as on the exam, with spaced review. FCC license class Technician, exam Element 2, radio service code HA.</p>
+  <p class="over">${C.over}</p><h1>About these drills</h1>
+  <p>Drills for the ${C.poolYears} ${C.shortName} question pool, worded as on the exam, with spaced review. ${C.aboutFacts}</p>
   <h2>How review works</h2>
   <p>A card comes back after one day, then three, then seven, then longer. Three correct answers on separate days marks it mastered. A miss sends it back to the start. Nothing is scheduled past your exam date if you set one, and inside the last week every card comes back at least once more.</p>
   <h2>Badges</h2>
   <p>A section earns bronze when every card has been seen, silver when every card has been answered correctly at least once, and gold when every card is mastered. A rung, once earned, stays; the badge dims while the section's current standing is below its best rung.</p>
   <h2>The estimated score</h2>
-  <p>Each section is weighed by how many of the 35 exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards answered right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction. Hide it from the home screen if it's unwelcome.</p>
+  <p>Each section is weighed by how many of the ${C.examQ} exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards answered right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction. Hide it from the home screen if it's unwelcome.</p>
   <h2>Study pages</h2>
   <p>Every section has a study page with its basics in pool order; the <a href="#study">whole guide</a> is one page you can print. The same text appears before your first new question on each topic, and under Explain this more.</p>
   <h2>Testing yourself</h2>
@@ -597,11 +556,11 @@ function drill({deck,mixed,primer}){
   const app=$("app");prefs.dueOnly=!primer;
   const decks=mixed?POOL:[deck];
   const all=decks.flatMap(d=>d.Q.map(q=>({d,q})));
-  const grpOf=(d,id)=>d.id==="math"?(["T5B","T5C","T5D"].includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
+  const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
   let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
   const title=mixed?"Everything due":deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
   const sub=mixed?"Every pool question due today, mixed across sections. Math and Symbols are reviewed on their own.":
-    deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your 35 exam questions.`;
+    deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your ${C.examQ} exam questions.`;
   const chips=mixed||primer?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>${title}</h1>${mixed?`<p class="sub">${sub}</p>`:""}
@@ -652,7 +611,7 @@ function drill({deck,mixed,primer}){
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":" The exam pass mark is 74%."}</p>${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":` The exam pass mark is ${Math.round(C.pass/C.examQ*100)}%.`}</p>${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
       $("home").onclick=goHome;$("again").onclick=start;
       if(fd&&fr===fd)wink(`${fr} out of ${fd}`,"Wouldn't that be just like you?");

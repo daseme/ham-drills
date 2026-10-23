@@ -1,7 +1,7 @@
 /* The version lives in version.js; raise it there whenever any file changes, so phones pick up the new copy. */
 importScripts("version.js");
 const VERSION="hamdrill-v"+APP_VERSION;
-const FILES=["./","index.html","version.js","data.js","manifest.webmanifest",
+const FILES=["./","index.html","version.js","exam.js","data.js","manifest.webmanifest",
   "icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png",
   "fonts/atkinson-hyperlegible-latin-400-normal.woff2","fonts/atkinson-hyperlegible-latin-700-normal.woff2",
   "fonts/barlow-condensed-latin-500-normal.woff2","fonts/barlow-condensed-latin-600-normal.woff2"];

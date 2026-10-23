@@ -8,6 +8,7 @@ const ROOT=path.join(__dirname,"..");
 const html=fs.readFileSync(path.join(ROOT,"index.html"),"utf8");
 const script=html.match(/<script>\s*"use strict";([\s\S]*?)<\/script>/)[1];
 const data=fs.readFileSync(path.join(ROOT,"data.js"),"utf8");
+const examFile=path.join(ROOT,"exam.js"),exam=fs.existsSync(examFile)?fs.readFileSync(examFile,"utf8"):"";
 const version=fs.readFileSync(path.join(ROOT,"version.js"),"utf8");
 
 /* Any element the script asks for: properties can be set and read back, methods are no-ops. */
@@ -28,9 +29,10 @@ function load({search=""}={}){
   ctx.window=ctx;
   vm.createContext(ctx);
   vm.runInContext(version.replace("const APP_VERSION","var APP_VERSION"),ctx);
+  vm.runInContext(exam,ctx);
   vm.runInContext(data,ctx);
   vm.runInContext(`"use strict";${script}\n;globalThis.run=e=>eval(e);`,ctx);
   /* Results are copied out through JSON: objects made in the sandbox have its prototypes, which deepStrictEqual rejects. */
   return {run:e=>{const v=ctx.run(e);return v===undefined?v:JSON.parse(JSON.stringify(v))},keys:()=>[...store.keys()]};
 }
-module.exports={load};
+module.exports={load,script:()=>script};

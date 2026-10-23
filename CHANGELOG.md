@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 25 (October 22)
+- Exam settings moved into exam.js: names, pool years, question count and pass mark, figures, the demo plan. No visible change; this prepares for General.
+
 ## 24 (October 21)
 - Shorter home-screen wording: "339 of 409 seen", "26 passes. Most to gain", "Have your FRN?", "Set your exam date to time reviews to it", "New to T2? Read its basics first." The Math and Symbols due sentence is gone; their rows show their own counts.
 
