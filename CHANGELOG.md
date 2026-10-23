@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 26 (October 22)
+- The app is split into shared code (app/) and a folder per exam; Technician now lives in technician/. Its own service-worker cache name, `hamdrills-technician-v`. No visible change.
+
 ## 25 (October 22)
 - Exam settings moved into exam.js: names, pool years, question count and pass mark, figures, the demo plan. No visible change; this prepares for General.
 

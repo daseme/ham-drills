@@ -1,19 +1,23 @@
 # Architecture
 
-One HTML page, one data file, a service worker. No framework, no build step, no server: the files in the repo are the files that ship.
+One shared app, and a folder per exam holding that exam's settings and questions. No framework, no build step, no server: the files in the repo are the files that ship.
 
 ## Files
 
 | File | What it holds |
 |---|---|
-| index.html | Styles, markup and the whole app in one script block |
-| data.js | `window.DECKS` (the twelve sections) and `window.EXPLAIN` (the longer explanation for each question) |
-| version.js | `APP_VERSION`, the one version number; read by the page footer and the service worker |
-| sw.js | Service worker: precaches every file, serves from cache, clears this app's old caches |
-| manifest.webmanifest, icons/, fonts/ | Home-screen install and bundled typefaces |
+| app/app.js, app/app.css | The whole app: script and styles, shared by every exam; names no exam |
+| app/sw-core.js | The service worker every exam shares |
+| technician/index.html | The Technician page: loads version.js, its exam.js and data.js, then app.js |
+| technician/exam.js | `window.EXAM_CONFIG`: Technician's names, pool years, question count and pass mark, storage namespace, figures, demo plan |
+| technician/data.js | `window.DECKS` (the twelve sections) and `window.EXPLAIN` (the longer explanation for each question) |
+| technician/sw.js, technician/manifest.webmanifest | Technician's cache name, then the shared worker; its home-screen install |
+| version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
+| icons/, fonts/ | Shared icons and bundled typefaces |
 | tools/pool-check.js | Checks data.js; compares it with the NCVEC pool .docx when given one |
 | tools/docx-text.js | Reads a .docx's paragraphs with no dependencies (a .docx is a zip) |
-| test/ | Node tests; test/harness.js loads the script out of index.html with a stub page |
+| test/ | Node tests; test/harness.js loads app/app.js with an exam's files into a stub page |
+| tools/screens.mjs, tools/compare-screens.mjs | Screenshots of every screen in headless Chrome, compared pixel for pixel; how a change is shown to leave screens untouched |
 | .github/workflows/check.yml | Runs the pool check and the tests on every push and pull request |
 
 ## Data
@@ -74,7 +78,7 @@ In a drill, reviews come first, shuffled; new cards follow grouped by topic in p
 
 ## Offline and releases
 
-sw.js precaches every file under a cache named `hamdrill-v<APP_VERSION>` and answers every request from it (`ignoreSearch`, so `?demo` works offline). On activation it deletes only older `hamdrill-v*` caches: every site on daseme.github.io shares one origin, and so one set of caches and one localStorage.
+Each exam's sw.js sets its cache name (`hamdrills-technician-v`) and imports app/sw-core.js, which precaches the exam's files and the shared ones under `<name><APP_VERSION>` and answers every request from cache (`ignoreSearch`, so `?demo` works offline). On activation it deletes only its own older caches: every site on daseme.github.io shares one origin, and so one set of caches and one localStorage. The old address's `hamdrill-v*` caches are left to the old address.
 
 To release, change files and raise `APP_VERSION` in version.js. The new service worker installs, takes over, and the page reloads at the next safe moment (on home, or when the app goes to the background), with a toast naming the version.
 

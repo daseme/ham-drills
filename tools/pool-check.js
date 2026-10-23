@@ -11,7 +11,7 @@ const {docxParagraphs}=require("./docx-text");
 
 const ROOT=path.join(__dirname,"..");
 const ctx={window:{}};vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(path.join(ROOT,"data.js"),"utf8"),ctx);
+vm.runInContext(fs.readFileSync(path.join(ROOT,"technician","data.js"),"utf8"),ctx);
 const DECKS=ctx.window.DECKS;
 
 const fails=[],notes=[];

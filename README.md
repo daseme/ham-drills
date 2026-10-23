@@ -19,7 +19,7 @@ It is one web page with no framework and no server. It installs to a phone's hom
 
 ## Running it
 
-Open index.html in a browser. That runs everything except offline install, which needs the page served: run `python -m http.server 8000` in this folder and browse to http://localhost:8000.
+Open technician/index.html in a browser. That runs everything except offline install, which needs the page served: run `python -m http.server 8000` in this folder and browse to http://localhost:8000/technician/.
 
 To host it, put the files on any static host with HTTPS; GitHub Pages serves this repo. On Android, open the address in Chrome and choose Add to Home screen. On an iPhone, use Safari, Share, Add to Home Screen, and open it from that icon: Safari clears data for ordinary websites after a week without a visit.
 
