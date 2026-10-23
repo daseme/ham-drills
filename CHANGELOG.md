@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 27 (October 22)
+- A splash page at the repo root (/ham-drills/) linking to each exam's drills.
+
 ## 26 (October 22)
 - The app is split into shared code (app/) and a folder per exam; Technician now lives in technician/. Its own service-worker cache name, `hamdrills-technician-v`. No visible change.
 
