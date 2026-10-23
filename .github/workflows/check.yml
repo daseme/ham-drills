@@ -11,6 +11,8 @@ jobs:
         with:
           node-version: 22
       - name: Question data
-        run: node tools/pool-check.js
+        run: |
+          node tools/pool-check.js technician
+          node tools/pool-check.js general
       - name: Tests
         run: node --test "test/*.test.js"

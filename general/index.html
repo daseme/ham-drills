@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>General drills</title>
+<meta name="theme-color" content="#EDF0F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11171D" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="stylesheet" href="../app/app.css">
+</head>
+<body>
+<div class="demobar" id="demobar" hidden></div>
+<main id="app"></main>
+<!-- No accept filter: some Android pickers grey out a backup that came back through Drive or email under another file type. The import checks the contents instead. -->
+<input type="file" id="importFile" hidden>
+<script src="../version.js"></script>
+<script src="exam.js"></script>
+<script src="data.js"></script>
+<script src="../app/app.js"></script>
+</body>
+</html>

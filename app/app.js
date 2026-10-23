@@ -18,6 +18,9 @@ const DECK=Object.fromEntries(DECKS.map(d=>[d.id,d]));
 const POOL=DECKS.filter(d=>d.exam>0);
 /* Everything that makes this one exam's drills, from exam.js. */
 const C=window.EXAM_CONFIG;
+/* While an exam's sections are still being written, only the finished ones are in DECKS. */
+const COMPLETE=POOL.length===C.sections;
+const NUMBER=["no","one","two","three","four","five","six","seven","eight","nine","ten"];
 const {FIGS,FIG_KEY}=C.figures,{plan:DEMO_PLAN,lapse:DEMO_LAPSE,seed:DEMO_SEED}=C.demo||{};
 
 /* ---------- storage ---------- */
@@ -162,7 +165,7 @@ function route(){
   else if(h==="about")about();
   else if(m&&DECK[m[1]]&&m[2]==="study")study(DECK[m[1]]);
   else if(m&&DECK[m[1]]&&m[2]==="p"&&DECK[m[1]].P&&DECK[m[1]].P[m[3]])drill({deck:DECK[m[1]],primer:m[3]});
-  else if(h==="symbols")symbols();
+  else if(h==="symbols"&&DECK.symbols)symbols();
   else if(DECK[h])drill({deck:DECK[h]});
   else home();
   window.scrollTo(0,0);
@@ -202,7 +205,7 @@ function home(){
   <h1>${C.title}</h1>
   ${poolSeen?`<div class="today"><b>${poolDue}</b><span>${poolDue===1?"question":"questions"} due today</span></div>
   <p class="reach">${poolSeen} of ${poolTotal} seen.${untouched.length?` Untouched sections hold ${untouchedQs} exam questions.`:""}</p>`
-  :`<p class="reach">${poolTotal} questions in ten sections. Start with T1; each answer shows why.</p>`}
+  :`<p class="reach">${poolTotal} questions in ${NUMBER[POOL.length]||POOL.length} ${POOL.length===1?"section":"sections"}. Start with ${POOL[0].code}; each answer shows why.</p>`}
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due question":`Review all ${poolDue} due questions`}</button></div>`
   :next?`<div class="actions"><button class="btn" data-go="${next.id}">${stats(next).seen?"Keep going with":"Start with"} ${next.code}: ${esc(next.name)}</button></div>`:""}
   ${planBlock()}
@@ -232,7 +235,8 @@ function home(){
 }
 function planBlock(){
   const e=estimate(),D=daysToExam(),pass=e.lo>=C.pass;
-  const est=prefs.showEst?`<p class="${pass?"pass":e.hi<26?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of ${C.examQ}</b>; ${C.pass} passes.${e.gain.length?` Most to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
+  const est=!COMPLETE?`<p class="muted">The estimate appears once all ${C.sections} sections are in.</p>`
+    :prefs.showEst?`<p class="${pass?"pass":e.hi<C.pass?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of ${C.examQ}</b>; ${C.pass} passes.${e.gain.length?` Most to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
     :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
   let date;
   if(editingDate||(EXAM.day==null&&prefs.showDate)){
@@ -275,7 +279,9 @@ function exportProgress(){
 }
 $("importFile").onchange=async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
-  try{const d=JSON.parse(await f.text());if(!d||d.app!==C.exportApp||!d.decks)throw 0;
+  try{const d=JSON.parse(await f.text());
+    if(d&&d.decks&&/^hamdrill/.test(d.app)&&d.app!==C.exportApp){toast("That backup is from another exam's drills.");return}
+    if(!d||d.app!==C.exportApp||!d.decks)throw 0;
     if(d.sample){toast("That's the demo's sample progress, not a backup of yours.");return}
     const n=importDecks(d.decks);mergeBadges(d.badges);if(d.examDay!=null&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} sections.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}

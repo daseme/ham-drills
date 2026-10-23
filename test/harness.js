@@ -1,6 +1,7 @@
 /* Loads the app's own script (app/app.js, after an exam's exam.js and data.js) into a sandbox with a stub DOM and
    in-memory localStorage, so the tests run the code the app runs, with no build step. load() returns a fresh app
-   each time; app.run("expression") evaluates inside it, where the script's top-level consts and functions live. */
+   each time; app.run("expression") evaluates inside it, where the script's top-level consts and functions live.
+   load({data}) replaces the exam's data.js with the given source, for tests on sample decks. */
 "use strict";
 const fs=require("fs"),path=require("path"),vm=require("vm");
 
@@ -15,7 +16,7 @@ function element(){
   return new Proxy(o,{get:(t,k)=>k in t?t[k]:k==="querySelectorAll"?()=>[]:typeof k==="string"&&/^[a-z]/.test(k)&&!/^(innerHTML|textContent|hidden|checked|value|className|onclick|onchange)$/.test(k)?()=>element():undefined});
 }
 
-function load({exam="technician",search=""}={}){
+function load({exam="technician",search="",data}={}){
   const store=new Map(),els={};
   const localStorage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k),clear:()=>store.clear()};
   Object.defineProperty(localStorage,"keys",{value:()=>[...store.keys()]});
@@ -28,9 +29,10 @@ function load({exam="technician",search=""}={}){
   vm.createContext(ctx);
   vm.runInContext(version.replace("const APP_VERSION","var APP_VERSION"),ctx);
   vm.runInContext(read(`${exam}/exam.js`),ctx);
-  vm.runInContext(read(`${exam}/data.js`),ctx);
+  vm.runInContext(data??read(`${exam}/data.js`),ctx);
   vm.runInContext(`${script}\n;globalThis.run=e=>eval(e);`,ctx);
   /* Results are copied out through JSON: objects made in the sandbox have its prototypes, which deepStrictEqual rejects. */
-  return {run:e=>{const v=ctx.run(e);return v===undefined?v:JSON.parse(JSON.stringify(v))},keys:()=>[...store.keys()],els};
+  const copy=v=>v===undefined?v:JSON.parse(JSON.stringify(v));
+  return {run:e=>copy(ctx.run(e)),runAsync:async e=>copy(await ctx.run(e)),keys:()=>[...store.keys()],els};
 }
 module.exports={load,script:()=>script};

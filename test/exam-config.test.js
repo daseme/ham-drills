@@ -14,6 +14,6 @@ test("Technician settings are what the app used to hard-code",()=>{
 });
 
 test("no Technician-specific text is left in the shared code",()=>{
-  for(const s of ["Technician","T5B","Element 2","2026-2030","of 35","pass is 26","26 passes","74%",'"T-1"',"T8A02","T8 ","T5 "])
+  for(const s of ["Technician","T5B","Element 2","2026-2030","of 35","pass is 26","26 passes","74%",'"T-1"',"T8A02","T8 ","T5 ","<26",">=26","ten sections","with T1"])
     assert.ok(!script().includes(s),`shared code still contains "${s}"`);
 });

@@ -51,7 +51,7 @@ return {
   exportApp:"hamdrill",exportName:"ham-drill",
   shortName:"Technician",over:"Amateur Radio Service",title:"Technician Class Operator License",studyTitle:"Technician study guide",
   poolYears:"2026-2030",aboutFacts:"FCC license class Technician, exam Element 2, radio service code HA.",
-  examQ:35,pass:26,sections:10,mathGroups:["T5B","T5C","T5D"],
+  examQ:35,pass:26,sections:10,idLetter:"T",mathGroups:["T5B","T5C","T5D"],
   figures:{FIGS,FIG_KEY},
   demo:{plan:DEMO_PLAN,lapse:DEMO_LAPSE,seed:DEMO_SEED}
 };

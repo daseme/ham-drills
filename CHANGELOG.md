@@ -2,6 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 28 (October 22)
+- The General app's frame in general/: its own storage (`hamgeneral:`), backups and offline copy. While its sections are still being written, home lists the finished ones and holds back the estimate.
+- A backup from one exam's drills is refused by the other's.
+- tools/pool-import.js turns a pool section into a data skeleton; tools/pool-check.js checks either exam, skips withdrawn questions, and reports unwritten sections as not yet added.
+
 ## 27 (October 22)
 - A splash page at the repo root (/ham-drills/) linking to each exam's drills.
 
