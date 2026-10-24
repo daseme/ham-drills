@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 32 (October 24)
+- Technician notes, explanations and basics reviewed section by section for accuracy and clarity, the way General's were: 34 errors fixed (mostly rules details, such as which call-sign groups each class may hold, the model-craft ID exemption and the CW-only bottom of 6 and 2 meters), about 75 explanations made clearer for newcomers, and the symbol drill corrected on figure T-1's part 5 (a ground, not a connector). Every fix was re-checked.
+
 ## 31 (October 22)
 - Each app's offline copy now answers only from its own cache. Someone who used both exams could be served the other app's older shared code.
 - The old Technician address keeps working offline: its worker stays installed and forwards to the new address without a signal.
