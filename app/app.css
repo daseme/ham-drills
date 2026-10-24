@@ -18,12 +18,9 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,"Segoe UI",Roboto,sans-serif;font-size:17px;line-height:1.55;-webkit-tap-highlight-color:transparent}
 main{max-width:640px;margin:0 auto;padding:16px 16px 48px}
-.cond{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
 h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:34px;line-height:1.05;margin:4px 0 6px;letter-spacing:.01em}
 .sub{color:var(--muted);margin:0 0 8px;font-size:15px}
 .over{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:500;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--amber);margin:14px 0 0}
-.facts{list-style:none;margin:0 0 18px;padding:0;color:var(--muted);font-size:14px;display:flex;flex-wrap:wrap;gap:2px 14px}
-.facts b{font-weight:400;color:var(--ink)}
 .back{font:inherit;font-size:15px;background:none;border:0;padding:6px 0;margin:0 0 4px;color:var(--muted);cursor:pointer}
 /* home */
 .today{display:flex;align-items:baseline;gap:12px;margin:6px 0 4px}
@@ -40,6 +37,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .plan .set{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:8px}
 .plan input[type=date]{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px;color-scheme:inherit}
 .plan .links{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px}
+.plan p>a+.linkbtn,.plan p>.linkbtn+a{margin-left:12px}
 .decks{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--line)}
 .decks li{border-bottom:1px solid var(--line)}
 .row{font:inherit;color:inherit;background:none;border:0;width:100%;text-align:left;display:grid;grid-template-columns:104px 1fr auto;gap:2px 10px;align-items:center;padding:12px 2px;cursor:pointer}
@@ -48,7 +46,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .row .meta{font-size:14px;color:var(--muted);grid-column:2}
 .row .due{grid-row:span 2;grid-column:3;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:26px;line-height:1;text-align:right;min-width:44px}
 .row .due small{display:block;font-family:"Atkinson Hyperlegible",system-ui,sans-serif;font-weight:400;font-size:12px;color:var(--muted)}
-.row .due.zero{color:var(--muted)}
+.row .due.zero{color:var(--line)}
 .meter{grid-column:2/4;height:4px;border-radius:2px;background:var(--line);overflow:hidden;display:flex;margin-top:6px}
 .meter i{display:block;height:100%}
 .meter .m{background:var(--ok)}.meter .s{background:var(--amber)}
@@ -135,7 +133,6 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .tools{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px;margin:0 0 14px}
 .tools a,.tools .linkbtn{font-size:15px;color:var(--muted)}
 .study-link{display:block;font-size:14px;color:var(--muted);padding:0 2px 12px 104px;margin-top:-6px}
-.row .due.zero{color:var(--line)}
 .study-link a{color:inherit}
 .only{font-size:15px;color:var(--muted);margin:0 0 14px}
 .only a{color:inherit}

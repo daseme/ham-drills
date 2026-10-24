@@ -1,6 +1,6 @@
 {
   "name": "Technician drills",
-  "short_name": "Ham drills",
+  "short_name": "Tech drills",
   "description": "Spaced-review drills for the 2026-2030 amateur radio Technician pool.",
   "start_url": "./",
   "scope": "./",

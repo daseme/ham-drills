@@ -69,12 +69,20 @@ test("an empty Technician app still offers the demo",()=>{
   assert.match(homeHtml(load()),/See it with sample progress/);
 });
 
-test("the real General app is complete: estimate shown, every section live",()=>{
+test("the real General app is complete: every section live, the estimate waiting only on progress",()=>{
   const app=load({exam:"general"});
   assert.equal(app.run("COMPLETE"),true);
   const html=homeHtml(app);
-  assert.match(html,/Likely/);
-  assert.doesNotMatch(html,/estimate appears once/);
+  assert.doesNotMatch(html,/once all 10 sections are in/);
+  assert.match(html,/Your estimated score appears once you've seen 43 questions\./);
+});
+
+test("the estimate shows once a tenth of the pool has been seen",()=>{
+  const app=load({exam:"general"});
+  app.run(`itemIds(DECK.g1).slice(0,42).forEach(k=>record("g1",k,true))`);
+  assert.match(homeHtml(app),/42 so far/);
+  app.run(`record("g2",DECK.g2.Q[0][0],true)`);
+  assert.match(homeHtml(app),/Likely/);
 });
 
 test("General's Math section groups by its own topics, not Technician's",()=>{

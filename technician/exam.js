@@ -53,6 +53,9 @@ return {
   poolYears:"2026-2030",aboutFacts:"FCC license class Technician, exam Element 2, radio service code HA.",
   examQ:35,pass:26,sections:10,idLetter:"T",mathGroups:["T5B","T5C","T5D"],
   figures:{FIGS,FIG_KEY},
+  /* Words for the symbol drill and the Symbols study page; an exam without a symbols section leaves this out. */
+  symbolText:{drill:"Twenty-one symbols drawn to match the three pool figures, plus the look-alikes the pool uses as wrong answers.",
+    figsHead:"The three pool figures",figsNote:"Questions in T6 and T7 point at numbered parts of these drawings."},
   demo:{plan:DEMO_PLAN,lapse:DEMO_LAPSE,seed:DEMO_SEED}
 };
 })();

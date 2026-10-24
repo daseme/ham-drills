@@ -2,6 +2,15 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 33 (October 24)
+- The estimated score waits until a tenth of the pool has been seen, instead of greeting a newcomer with a failing guess.
+- On a keyboard, 1 to 4 or A to D picks an answer; Enter goes on.
+- Screen readers hear the question as the answers' label and the verdict once, rather than the whole card again at every step.
+- The exam-date box is shorter: Find a session sits on the exam line, the FRN reminder on one line.
+- A finished section reads "All 68 mastered."
+- A reset left untapped for five seconds disarms.
+- Technician's home-screen name is "Tech drills", so it can't be confused with General.
+
 ## 32 (October 24)
 - Technician notes, explanations and basics reviewed section by section for accuracy and clarity, the way General's were: 34 errors fixed (mostly rules details, such as which call-sign groups each class may hold, the model-craft ID exemption and the CW-only bottom of 6 and 2 meters), about 75 explanations made clearer for newcomers, and the symbol drill corrected on figure T-1's part 5 (a ground, not a connector). Every fix was re-checked.
 

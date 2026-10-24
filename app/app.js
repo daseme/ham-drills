@@ -29,6 +29,7 @@ const DEMO=!!C.demo&&new URLSearchParams(location.search).has("demo");
 const NS=DEMO?C.demoNs:C.ns;
 const get=(k,f)=>{try{const v=localStorage.getItem(NS+k);return v==null?f:JSON.parse(v)}catch(e){return f}};
 const put=(k,v)=>{try{localStorage.setItem(NS+k,JSON.stringify(v))}catch(e){toast("Couldn't save progress on this device.")}};
+const drop=k=>{try{localStorage.removeItem(NS+k)}catch(e){}};
 const SRS={};
 const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
@@ -101,7 +102,7 @@ const EXAM={day:get("examDay",null)};
 let editingDate=false;
 const daysToExam=(t=dayNum())=>EXAM.day==null?null:EXAM.day-t;
 function capInterval(iv,t,exam=EXAM.day){const D=exam==null?null:exam-t;if(D==null||D<=0)return iv;let cap=Math.max(1,D-1);if(D<=7)cap=Math.min(cap,Math.max(1,Math.floor(D/2)));return Math.min(iv,cap)}
-function setExamDay(day){EXAM.day=day;if(day==null)localStorage.removeItem(NS+"examDay");else put("examDay",day)}
+function setExamDay(day){EXAM.day=day;if(day==null)drop("examDay");else put("examDay",day)}
 const isoToDay=iso=>{const [y,m,d]=iso.split("-").map(Number);return Math.floor(Date.UTC(y,m-1,d)/86400000)};
 const dayToIso=day=>new Date(day*86400000).toISOString().slice(0,10);
 const dayLabel=day=>new Date(day*86400000).toLocaleDateString(undefined,{timeZone:"UTC",weekday:"short",month:"short",day:"numeric"});
@@ -110,6 +111,8 @@ const dayLabel=day=>new Date(day*86400000).toLocaleDateString(undefined,{timeZon
    Expected correct per section = its exam count times a weighted share of cards by state. Two weightings
    give a low and a high. Math and symbols are not exam sections; their questions already sit in the pool sections. */
 const EST_W={lo:{m:.9,k:.55,s:.35,u:.25},hi:{m:1,k:.85,s:.65,u:.25}};
+/* Until a tenth of the pool is seen the estimate is nearly all guesses, a failing score that says nothing, so it waits. */
+const EST_MIN=.1;
 function sectionShare(d,w){const srs=srsOf(d.id);let acc=0;for(const k of itemIds(d)){const r=srs[k];acc+=!r?w.u:r.lv>=MASTER?w.m:r.lv>=1?w.k:w.s}return acc/itemIds(d).length}
 function estimate(){let lo=0,hi=0;const gain=[];for(const d of POOL){const l=d.exam*sectionShare(d,EST_W.lo),h=d.exam*sectionShare(d,EST_W.hi);lo+=l;hi+=h;gain.push([d,d.exam-(l+h)/2])}
   /* The nudge keeps a sum like 31.4999... (0.9 x 35 added up by section) rounding as the 31.5 it is. */
@@ -151,6 +154,18 @@ const goHome=()=>{const d=depth();if(d>0){history.go(-d);if(updateReady)return}e
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();go(a.getAttribute("href").slice(1))});
 function wink(top,msg){const w=document.createElement("div");w.className="wink";w.setAttribute("role","status");const t=document.createElement("b"),m=document.createElement("span");t.textContent=top;m.textContent=msg;w.append(t,m);document.body.appendChild(w);setTimeout(()=>w.remove(),4800)}
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60))}
+/* A reset takes two taps; unless the second comes within five seconds, the button goes back to how it was. */
+function armReset(b,what,erase){const label=b.textContent;
+  b.onclick=()=>{if(b.dataset.armed){delete b.dataset.armed;erase();b.textContent="Progress reset";return}
+    b.dataset.armed="1";b.textContent=`Tap again to erase all ${what} progress`;
+    setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent=label}},5000)}}
+/* In a drill, 1 to 4 or A to D picks an answer; Enter already presses the focused Next button. */
+document.addEventListener("keydown",e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey||e.key.length!==1||(e.target.closest&&e.target.closest("input,textarea,select")))return;
+  const n=Math.max("1234".indexOf(e.key),"abcd".indexOf(e.key.toLowerCase())),b=n>=0&&$("ans")&&$("ans").children[n];
+  if(b&&!b.disabled){e.preventDefault();b.click()}});
+/* What a screen reader hears after an answer and at the end of a drill; the question itself labels the answer group. */
+const say=t=>{const s=$("said");if(s)s.textContent=t};
 /* After a long explanation the page can sit scrolled below the card's top; bring the next question's start into view. */
 const keepInView=el=>{if(el.getBoundingClientRect().top<0)el.scrollIntoView({block:"start"})};
 /* Set when a new version has taken over; the page reloads at the next safe moment (home, or the app going to the background). */
@@ -192,8 +207,9 @@ function home(){
   let hinted=false;
   const row=([d,due,s])=>{
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
-    const meta=d.exam?`${s.seen?`${d.exam} on the exam. ${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${d.exam} on the exam, ${s.total} questions. Not started.`}`
-      :`${s.seen?`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`:`${s.total} ${d.S?"symbols":"questions"}. Not started.`}`;
+    const how=s.mastered===s.total?`All ${s.total} mastered.`:`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`;
+    const meta=d.exam?`${s.seen?`${d.exam} on the exam. ${how}`:`${d.exam} on the exam, ${s.total} questions. Not started.`}`
+      :`${s.seen?how:`${s.total} ${d.S?"symbols":"questions"}. Not started.`}`;
     const earned=tierEarned(d);
     return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
       <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
@@ -235,7 +251,9 @@ function home(){
 }
 function planBlock(){
   const e=estimate(),D=daysToExam(),pass=e.lo>=C.pass;
+  const seen=POOL.reduce((a,d)=>a+stats(d).seen,0),need=Math.ceil(POOL.reduce((a,d)=>a+d.Q.length,0)*EST_MIN);
   const est=!COMPLETE?`<p class="muted">The estimate appears once all ${C.sections} sections are in.</p>`
+    :seen<need?`<p class="muted">Your estimated score appears once you've seen ${need} questions${seen?`; ${seen} so far`:""}.</p>`
     :prefs.showEst?`<p class="${pass?"pass":e.hi<C.pass?"short":""}">Likely <b>${e.lo===e.hi?e.lo:`${e.lo} to ${e.hi}`} of ${C.examQ}</b>; ${C.pass} passes.${e.gain.length?` Most to gain: ${e.gain.join(", ")}.`:""} <button class="linkbtn" id="hideEst">Hide</button></p>`
     :`<p class="muted">Estimated score hidden. <button class="linkbtn" id="hideEst">Show</button></p>`;
   let date;
@@ -243,15 +261,12 @@ function planBlock(){
     date=`<div class="set"><label for="examDate">Exam date</label><input type="date" id="examDate" min="${dayToIso(dayNum())}"${EXAM.day!=null?` value="${dayToIso(EXAM.day)}"`:""}><button class="linkbtn" id="cancelDate">Never mind</button>${EXAM.day!=null?`<button class="linkbtn" id="clearDate">Remove the date</button>`:""}</div>
     <p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy session finder</a><a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL session finder</a></p>`;
   }else if(EXAM.day!=null){
-    date=D>0?`<p>Exam in <b>${D} ${D===1?"day":"days"}</b>, ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="changeDate">Change</button></p>`
+    date=D>0?`<p>Exam in <b>${D} ${D===1?"day":"days"}</b>, ${dayLabel(EXAM.day)}.${D<=7?` Reviews are tightened so every card comes back before then.`:""} <button class="linkbtn" id="changeDate">Change</button>${prefs.showDate!==false?`<a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a>`:""}</p>`
       :D===0?`<p>Exam day. Good luck. <button class="linkbtn" id="clearDate">Clear date</button></p>`
       :`<p class="muted">Your exam date (${dayLabel(EXAM.day)}) has passed. <button class="linkbtn" id="clearDate">Clear it</button></p>`;
-    if(D!=null&&D>0&&prefs.showDate!==false){
-      date+=`<p class="links"><a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">Find a session</a></p>`;
-      /* The FRN reminder stays until the person says they have one. */
-      if(!prefs.haveFRN)date+=`<p>Have your FRN? You'll need it at the exam. <button class="linkbtn" id="haveFRN">Yes, I have it</button></p>
-      <p class="links"><a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get one from the FCC</a></p>`;
-    }
+    /* The FRN reminder stays until the person says they have one. */
+    if(D!=null&&D>0&&prefs.showDate!==false&&!prefs.haveFRN)
+      date+=`<p>Have your FRN? You'll need it at the exam. <a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">Get one from the FCC</a><button class="linkbtn" id="haveFRN">I have one</button></p>`;
   }else{
     date=`<p class="muted"><button class="linkbtn" id="setDate">Set your exam date</button> to time reviews to it.</p>`;
   }
@@ -298,7 +313,7 @@ function studySection(d,{solo}){
   if(d.S){
     body=`<p class="sub">${d.S.length} symbols that appear on the exam. The hook under each is how to spot it.</p>
     <div class="gallery">${d.S.map(s=>`<div><svg viewBox="0 0 120 60" role="img" aria-label="${esc(s.n)}"><g ${SYM_SW}>${s.d}</g></svg><b>${esc(s.n)}</b>${esc(s.def)}<p>${esc(s.t)}</p></div>`).join("")}</div>
-    <h2>The three pool figures</h2><p>Questions in T6 and T7 point at numbered parts of these drawings. Each figure also appears on the card for any question that uses it.</p>
+    <h2>${C.symbolText.figsHead}</h2><p>${C.symbolText.figsNote} Each figure also appears on the card for any question that uses it.</p>
     <div class="figs">${Object.keys(FIGS).map(f=>`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}. The pool asks about ${FIG_KEY[f]}.</figcaption></figure>`).join("")}</div>`;
   }else{
     const cov={};for(const q of d.Q){const k=d.CON&&d.CON[q[0]];if(k)(cov[k]=cov[k]||[]).push(q[0])}
@@ -369,13 +384,13 @@ function drill({deck,mixed,primer}){
   <p class="srs" id="srsline"></p>
   <div class="status"><span id="pos"></span><span id="score"></span></div>
   <div class="bar"><span id="fill"></span></div>
-  <div class="card" id="card" aria-live="polite"></div>
+  <div class="card" id="card"></div><p class="sr" id="said" aria-live="polite"></p>
   ${mixed?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
   $("back").onclick=goHome;
   const dueOnly=()=>mixed||prefs.dueOnly;
   if($("dueOnly")){$("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;start()}}
   if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
-  if($("reset"))$("reset").onclick=function(){if(this.dataset.armed){SRS[deck.id]={};saveSrs(deck.id);delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all "+deck.code+" progress"}};
+  if(!mixed)armReset($("reset"),deck.code,()=>{SRS[deck.id]={};saveSrs(deck.id);start()});
 
   const inGroup=()=>all.filter(x=>primer?deck.CON[x.q[0]]===primer:(group==="all"||grpOf(x.d,x.q[0])===group));
   const due=x=>mixed?(isSeen(x.d.id,x.q[0])&&isDue(x.d.id,x.q[0])):isDue(x.d.id,x.q[0]);
@@ -410,14 +425,14 @@ function drill({deck,mixed,primer}){
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":` The exam pass mark is ${Math.round(C.pass/C.examQ*100)}%.`}</p>${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=goHome;$("again").onclick=start;
+      $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);
       if(fd&&fr===fd)wink(`${fr} out of ${fd}`,"Wouldn't that be just like you?");
       return;
     }
     const {d,q}=items[i];
     if(basicsFor(items[i])&&basicsFor(items[i])!==shown){
       const k=basicsFor(items[i]),[t,b]=deck.P[k];let n=0;while(i+n<items.length&&basicsFor(items[i+n])===k)n++;
-      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}. <a href="#${deck.id}/study" style="color:inherit">Read all of ${deck.code}'s basics</a>.</p><div class="actions"><button class="btn" id="go">Show the question</button></div>`;
+      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle" id="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}. <a href="#${deck.id}/study" style="color:inherit">Read all of ${deck.code}'s basics</a>.</p><div class="actions"><button class="btn" id="go" aria-describedby="ptitle">Show the question</button></div>`;
       $("go").onclick=()=>{shown=k;render()};$("go").focus({preventScroll:true});return;
     }
     const [id,text,opts,ans,note,fig]=q;
@@ -425,7 +440,7 @@ function drill({deck,mixed,primer}){
     const order=hasAll?[0,1,2,3]:shuffle([0,1,2,3]);
     c.innerHTML=`<p class="topic"><span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}</p>
       ${fig?figBox(fig):""}
-      <p class="q">${text}</p><div class="ans" id="ans"></div><div id="after"></div>`;
+      <p class="q" id="qtext">${text}</p><div class="ans" id="ans" role="group" aria-labelledby="qtext"></div><div id="after"></div>`;
     order.forEach((oi,pos)=>{const b=document.createElement("button");b.innerHTML=`<b>${"ABCD"[pos]}</b><span>${opts[oi]}</span>`;b.dataset.oi=oi;b.onclick=()=>pick(oi);$("ans").appendChild(b)});
     $("ans").firstChild.focus({preventScroll:true});
   }
@@ -442,6 +457,7 @@ function drill({deck,mixed,primer}){
       <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
       <div class="explain" id="exbox" hidden>${ex?ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""):""}
       ${pr?`<details><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
+    say($("after").querySelector(".note").textContent);
     $("next").onclick=()=>{i++;render()};
     if($("more"))$("more").onclick=function(){const box=$("exbox"),open=box.hidden;box.hidden=!open;this.setAttribute("aria-expanded",open);this.textContent=open?"Hide explanation":"Explain this more"};
     $("next").focus({preventScroll:true});
@@ -456,18 +472,18 @@ function symbols(){
   const svg=s=>`<svg viewBox="0 0 120 60" role="img" aria-label="Schematic symbol"><g ${SW}>${s.d}</g></svg>`;
   let mode="name",items=[],i=0,done=0,fr=0,fd=0;
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
-  <h1>Symbol drill</h1><p class="sub">Twenty-one symbols drawn to match the three pool figures, plus the look-alikes the pool uses as wrong answers.</p>
+  <h1>Symbol drill</h1><p class="sub">${C.symbolText.drill}</p>
   <div class="groups" id="modes" role="group" aria-label="Drill mode">${[["name","Name the symbol"],["find","Find the symbol"],["mix","Mixed"]].map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===mode}">${l}</button>`).join("")}</div>
   <div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>
   <p class="srs" id="srsline"></p>
   <div class="status"><span id="pos"></span><span id="score"></span></div>
   <div class="bar"><span id="fill"></span></div>
-  <div class="card" id="card" aria-live="polite"></div>
+  <div class="card" id="card"></div><p class="sr" id="said" aria-live="polite"></p>
   <p class="foot"><button class="linkbtn" id="reset">Reset symbol progress</button></p>`;
   $("back").onclick=goHome;
   $("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;savePrefs();start()};
   $("modes").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{mode=b.dataset.v;$("modes").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
-  $("reset").onclick=function(){if(this.dataset.armed){SRS.symbols={};saveSrs("symbols");delete this.dataset.armed;this.textContent="Progress reset";start()}else{this.dataset.armed="1";this.textContent="Tap again to erase all symbol progress"}};
+  armReset($("reset"),"symbol",()=>{SRS.symbols={};saveSrs("symbols");start()});
   const due=s=>isDue("symbols",s.n);
   const tomorrow=()=>S.filter(s=>{const r=srsOf("symbols")[s.n];return r&&r.due===dayNum()+1}).length;
   function srsLine(){$("srsline").textContent=`${S.filter(due).length} due today, ${S.filter(s=>isMastered("symbols",s.n)).length} of ${S.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}.`}
@@ -480,11 +496,11 @@ function symbols(){
     if(i>=items.length){const left=S.filter(due).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=goHome;$("again").onclick=start;return}
+      $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);return}
     const {s,m}=items[i],opts=choices(s);
-    if(m==="name"){c.innerHTML=`<p class="prompt">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans"></div><div id="after"></div>`;
+    if(m==="name"){c.innerHTML=`<p class="prompt" id="qtext">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans" role="group" aria-labelledby="qtext"></div><div id="after"></div>`;
       opts.forEach(o=>{const b=document.createElement("button");b.textContent=o.n;b.dataset.n=o.n;b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}
-    else{c.innerHTML=`<p class="prompt">Tap the symbol for</p><p class="name">${esc(s.n)}</p><div class="ans tiles" id="ans"></div><div id="after"></div>`;
+    else{c.innerHTML=`<p class="prompt" id="qtext">Tap the symbol for</p><p class="name" id="qname">${esc(s.n)}</p><div class="ans tiles" id="ans" role="group" aria-labelledby="qtext qname"></div><div id="after"></div>`;
       opts.forEach((o,k)=>{const b=document.createElement("button");b.innerHTML=svg(o);b.dataset.n=o.n;b.setAttribute("aria-label","Option "+"ABCD"[k]);b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}
     $("ans").firstChild.focus({preventScroll:true});
   }
@@ -495,6 +511,7 @@ function symbols(){
     if(!ok&&prefs.dueOnly)items.splice(Math.min(i+4,items.length),0,{...items[i],re:1});
     status();
     $("after").innerHTML=`<div class="note"><p class="defn"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> <b>${esc(s.n)}</b>: ${s.def}</p><p class="hook">How to spot it: ${s.t}</p></div><div class="actions"><button class="btn" id="next">${i+1<items.length?"Next symbol":"See results"}</button></div>`;
+    say($("after").querySelector(".note").textContent);
     $("next").onclick=()=>{i++;render()};$("next").focus({preventScroll:true});
   }
   start();
