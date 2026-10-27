@@ -34,7 +34,12 @@ try {
   await cmd("Page.enable"); await cmd("Runtime.enable");
   await cmd("Emulation.setDeviceMetricsOverride", {width: 412, height: 915, deviceScaleFactor: 1, mobile: true});
   await cmd("Emulation.setEmulatedMedia", {features: [{name: "prefers-color-scheme", value: "light"}, {name: "prefers-reduced-motion", value: "reduce"}]});
-  await cmd("Page.addScriptToEvaluateOnNewDocument", {source: `(()=>{let x=12345;Math.random=()=>{x=x+0x6D2B79F5|0;let z=Math.imul(x^x>>>15,1|x);z=z+Math.imul(z^z>>>7,61|z)^z;return((z^z>>>14)>>>0)/4294967296}})();`});
+  /* Shuffles repeat (seeded Math.random) and the clock stands still at noon UTC on 2026-10-20, so the demo's relative
+     dates ("Exam in 16 days, Thu, Nov 5") and badge days come out the same on any day, in any time zone. */
+  const FROZEN = Date.UTC(2026, 9, 20, 12);
+  await cmd("Page.addScriptToEvaluateOnNewDocument", {source: `(()=>{let x=12345;Math.random=()=>{x=x+0x6D2B79F5|0;let z=Math.imul(x^x>>>15,1|x);z=z+Math.imul(z^z>>>7,61|z)^z;return((z^z>>>14)>>>0)/4294967296};
+    const R=Date,T=${FROZEN};function D(...a){if(!new.target)return new R(T).toString();return a.length?new R(...a):new R(T)}
+    D.prototype=R.prototype;D.now=()=>T;D.UTC=R.UTC;D.parse=R.parse;window.Date=D})();`});
   await open(base + "index.html" + query);
   await evaluate(`localStorage.clear()`);
   if (opt.progress) {
