@@ -31,8 +31,15 @@ const get=(k,f)=>{try{const v=localStorage.getItem(NS+k);return v==null?f:JSON.p
 const put=(k,v)=>{try{localStorage.setItem(NS+k,JSON.stringify(v))}catch(e){toast("Couldn't save progress on this device.")}};
 const drop=k=>{try{localStorage.removeItem(NS+k)}catch(e){}};
 const SRS={};
-const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
-const saveSrs=id=>put("srs:"+id,SRS[id]);
+/* Stored records are checked the first time a deck is read: a damaged one (an old import, say) is dropped, and
+   unknown ids (withdrawn questions) go with it. The deck is rewritten only when something changed. */
+const srsOf=id=>SRS[id]||(SRS[id]=loadSrs(id));
+function loadSrs(id){const raw=get("srs:"+id,{});if(!DECK[id]||!raw||typeof raw!=="object")return {};
+  const ids=new Set(itemIds(DECK[id])),out={};let changed=false;
+  for(const k in raw){const r=ids.has(k)?validRecord(raw[k]):null;if(r){out[k]=r;if(Object.keys(raw[k]).length!==Object.keys(r).length||Object.keys(r).some(f=>r[f]!==raw[k][f]))changed=true}else changed=true}
+  if(changed){SRS[id]=out;saveSrs(id)}
+  return out}
+const saveSrs=id=>{put("srs:"+id,SRS[id]);updateBadge()};
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
 /* A record from a backup, or null if it is damaged: lv and due must be whole numbers in range, the rest the right
    kind when present (a version 1 backup has no w on a card never missed). Only these seven fields are kept, and
@@ -41,7 +48,7 @@ const isInt=v=>Number.isInteger(v);
 function validRecord(r,t=dayNum()){
   if(!r||typeof r!=="object"||!isInt(r.lv)||r.lv<0||r.lv>=IV.length||!isInt(r.due))return null;
   const o={lv:r.lv,due:Math.min(r.due,t+IV[IV.length-1])};
-  for(const k of ["last","fail"]){if(k in r){if(r[k]!==null&&!isInt(r[k]))return null;o[k]=r[k]}}
+  for(const k of ["last","fail"]){if(k in r){if(r[k]!==null&&!isInt(r[k]))return null;o[k]=r[k]===null?null:Math.min(r[k],t)}}
   for(const k of ["n","w"]){if(k in r){if(!isInt(r[k])||r[k]<0)return null;o[k]=r[k]}}
   if("n" in o&&"w" in o&&o.w>o.n)return null;
   if("ts" in r){if(typeof r.ts!=="number")return null;o.ts=r.ts}
@@ -59,6 +66,8 @@ const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
 const isDue=(id,k)=>{const r=srsOf(id)[k];return !r||r.due<=dayNum()};
 const isMastered=(id,k)=>{const r=srsOf(id)[k];return !!r&&r.lv>=MASTER};
 const isSeen=(id,k)=>!!srsOf(id)[k];
+/* A miss sets due and fail to the same day; a right answer later that day moves due on. So this is "the last answer was a miss". */
+const lastMissed=(id,k)=>{const r=srsOf(id)[k];return !!r&&r.lv===0&&r.fail!=null&&r.due===r.fail};
 /* One answer on day t, as a new record; the scheduler itself, shared by record and the demo seed. */
 function step(r0,ok,t,exam=EXAM.day){
   const r={...(r0||{lv:0,due:t,last:null,fail:null})};
@@ -79,6 +88,18 @@ function stats(d){const ids=itemIds(d),t=dayNum();
     mastered:ids.filter(k=>isMastered(d.id,k)).length,tomorrow:ids.filter(k=>{const r=srsOf(d.id)[k];return r&&r.due===t+1}).length}}
 /* An unseen card counts as due, so untouched decks would swamp the home count. Home counts reviews only. */
 const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
+const dueTomorrow=d=>{const t=dayNum(),s=srsOf(d.id);return itemIds(d).filter(k=>s[k]&&s[k].due===t+1).length};
+/* ---------- app icon badge ----------
+   On an installed app the icon carries the pool questions due today, the home headline's number; once those are
+   done it carries tomorrow's, so the icon still says something in the morning. With nothing coming, no badge.
+   iOS shows it only once notification permission is granted (asked from a tap on home); Android needs nothing. */
+const badgeCount=()=>POOL.reduce((a,d)=>a+reviewsDue(d),0)||POOL.reduce((a,d)=>a+dueTomorrow(d),0);
+function updateBadge(){
+  if(DEMO||!navigator.setAppBadge)return;
+  const n=badgeCount();
+  try{(n?navigator.setAppBadge(n):navigator.clearAppBadge()).catch(()=>{})}catch(e){}
+}
+const badgeAsk=()=>!DEMO&&navigator.standalone===true&&!!navigator.setAppBadge&&!!window.Notification&&Notification.permission==="default";
 
 /* ---------- demo seed ----------
    A learner three weeks in, simulated day by day through step from a fixed seed, so every record follows the
@@ -135,6 +156,29 @@ function sectionShare(d,w){const srs=srsOf(d.id);let acc=0;for(const k of itemId
 function estimate(){let lo=0,hi=0;const gain=[];for(const d of POOL){const l=d.exam*sectionShare(d,EST_W.lo),h=d.exam*sectionShare(d,EST_W.hi);lo+=l;hi+=h;gain.push([d,d.exam-(l+h)/2])}
   /* The nudge keeps a sum like 31.4999... (0.9 x 35 added up by section) rounding as the 31.5 it is. */
   gain.sort((a,b)=>b[1]-a[1]);return{lo:Math.round(lo+1e-9),hi:Math.round(hi+1e-9),gain:gain.filter(g=>g[1]>=0.75).slice(0,2).map(g=>g[0].code)}}
+
+/* ---------- practice exam ----------
+   The real exam draws one question from each group, so a draw is one random question per group in pool order,
+   35 in all. Answers are shuffled as in the drills. Scoring never touches the review records. */
+const examOrder=q=>q[2].some(o=>/^All these/.test(o))?[0,1,2,3]:shuffle([0,1,2,3]);
+function examDraw(){const out=[];
+  for(const d of POOL){const by={};for(const q of d.Q){const g=q[0].slice(0,3);(by[g]=by[g]||[]).push(q)}
+    for(const g of Object.keys(by).sort()){const q=by[g][Math.floor(Math.random()*by[g].length)];out.push({d:d.id,id:q[0],q,order:examOrder(q)})}}
+  return out}
+function examScore(draw,picks){let right=0;const missed=[],bySection={};
+  for(let i=0;i<draw.length;i++){const x=draw[i],g=picks[i]==null?null:picks[i],ok=g===x.q[3];
+    const s=bySection[x.d]||(bySection[x.d]={asked:0,right:0});s.asked++;if(ok){right++;s.right++}else missed.push({d:x.d,id:x.id,given:g})}
+  return {right,missed,bySection}}
+/* The last ten practice exams: {day, right, missed:[[deck id, question id, answer given or null]...], secs, est}. */
+const validExam=e=>!!e&&typeof e==="object"&&Number.isInteger(e.day)&&Number.isInteger(e.right)&&Array.isArray(e.missed)&&e.missed.every(m=>Array.isArray(m)&&typeof m[0]==="string"&&typeof m[1]==="string");
+const lastExam=()=>{const x=get("exams",[]);return Array.isArray(x)&&x.length&&validExam(x[x.length-1])?x[x.length-1]:null};
+function saveExam(e){const x=get("exams",[]);put("exams",(Array.isArray(x)?x:[]).concat([e]).slice(-10))}
+const examMissed=()=>(lastExam()&&Array.isArray(lastExam().missed)?lastExam().missed:[]).map(([d,id])=>({d:DECK[d],q:DECK[d]&&DECK[d].Q.find(q=>q[0]===id)})).filter(x=>x.d&&x.q);
+/* Cards missed at least twice and not yet mastered, hardest first; a math card that is also a pool card is listed once. */
+function hardCards(){const by={};
+  for(const d of DECKS){if(d.S)continue;const s=srsOf(d.id);
+    for(const q of d.Q){const r=s[q[0]];if(!r||(r.w||0)<2||r.lv>=MASTER)continue;const o=by[q[0]];if(!o||r.w>o.w||(r.w===o.w&&d.exam&&!o.d.exam))by[q[0]]={d,q,w:r.w,lv:r.lv}}}
+  return Object.values(by).sort((a,b)=>b.w-a.w||a.lv-b.lv)}
 
 /* ---------- badges ----------
    Three rungs per deck, judged on every card: bronze = all seen, silver = all answered correctly at least
@@ -194,6 +238,10 @@ function route(){
   const h=location.hash.slice(1);demoBar(false);
   const m=h.match(/^([a-z0-9]+)\/(study|p)(?:\/([a-z0-9_-]+))?$/);
   if(h==="due")drill({mixed:true});
+  else if(h==="hard")drill({cards:hardCards(),title:"Hardest for you",sub:"Questions you've missed more than once and haven't mastered, hardest first, due or not. Each shows how often it's been missed."});
+  else if(h==="exam"&&COMPLETE)examScreen();
+  else if(h==="exam/result"&&lastExam())examResult();
+  else if(h==="exam/missed"&&examMissed().length)drill({cards:examMissed(),title:"Missed on the practice exam",sub:"The questions the last practice exam caught, due or not. Answers here count as reviews."});
   else if(h==="study")study(null);
   else if(h==="about")about();
   else if(m&&DECK[m[1]]&&m[2]==="study")study(DECK[m[1]]);
@@ -208,7 +256,7 @@ window.addEventListener("hashchange",route);
 if(location.hash&&history.state==null){const h=location.hash;history.replaceState(null,"",location.pathname+location.search);history.pushState({d:1},"",h)}
 let lastDay=dayNum();
 document.addEventListener("visibilitychange",()=>{
-  if(document.hidden){if(updateReady)location.reload();return}
+  if(document.hidden){updateBadge();if(updateReady)location.reload();return}
   if(dayNum()!==lastDay){lastDay=dayNum();if(!location.hash)home()}});
 
 /* ---------- home ---------- */
@@ -222,6 +270,8 @@ function home(){
   const untouchedQs=untouched.reduce((a,d)=>a+d.exam,0);
   /* With nothing due, offer the first section that still has unseen questions, so the screen never dead-ends. */
   const next=POOL.find(d=>{const s=stats(d);return s.seen<s.total});
+  const hard=hardCards().length;
+  updateBadge();
   let hinted=false;
   const row=([d,due,s])=>{
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
@@ -242,6 +292,7 @@ function home(){
   :`<p class="reach">${poolTotal} questions in ${NUMBER[POOL.length]||POOL.length} ${POOL.length===1?"section":"sections"}. Start with ${POOL[0].code}; each answer shows why.</p>`}
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due question":`Review all ${poolDue} due questions`}</button></div>`
   :next?`<div class="actions"><button class="btn" data-go="${next.id}">${stats(next).seen?"Keep going with":"Start with"} ${next.code}: ${esc(next.name)}</button></div>`:""}
+  ${hard?`<p class="reach hard">${hard} ${hard===1?"question":"questions"} you've missed more than once. <a href="#hard">Drill the hardest</a>.</p>`:""}
   ${planBlock()}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
@@ -266,7 +317,9 @@ function home(){
   if($("clearDate"))$("clearDate").onclick=()=>{setExamDay(null);editingDate=false;prefs.showDate=false;savePrefs();home()};
   if($("haveFRN"))$("haveFRN").onclick=()=>{prefs.haveFRN=true;savePrefs();home()};
   if($("hideEst"))$("hideEst").onclick=()=>{prefs.showEst=!prefs.showEst;savePrefs();home()};
+  if($("askBadge"))$("askBadge").onclick=()=>Notification.requestPermission().then(()=>{updateBadge();home()},()=>home());
 }
+const estReady=()=>COMPLETE&&POOL.reduce((a,d)=>a+stats(d).seen,0)>=Math.ceil(POOL.reduce((a,d)=>a+d.Q.length,0)*EST_MIN);
 function planBlock(){
   const e=estimate(),D=daysToExam(),pass=e.lo>=C.pass;
   const seen=POOL.reduce((a,d)=>a+stats(d).seen,0),need=Math.ceil(POOL.reduce((a,d)=>a+d.Q.length,0)*EST_MIN);
@@ -288,7 +341,11 @@ function planBlock(){
   }else{
     date=`<p class="muted"><button class="linkbtn" id="setDate">Set your exam date</button> to time reviews to it.</p>`;
   }
-  return `<div class="plan">${est}${date}</div>`;
+  const last=lastExam();
+  const exam=!COMPLETE?"":last?`<p class="muted">Last practice exam: <b>${last.right} of ${C.examQ}</b>, ${dayLabel(last.day)}. <a href="#exam">Take another</a></p>`
+    :`<p class="muted"><a href="#exam">Take a practice exam</a>: ${C.examQ} questions drawn as the real one draws them.</p>`;
+  const badge=badgeAsk()?`<p class="muted"><button class="linkbtn" id="askBadge">Show the due count on the app icon</button></p>`:"";
+  return `<div class="plan">${est}${exam}${date}${badge}</div>`;
 }
 function sashCaption(){
   const c=[0,0,0,0];DECKS.forEach(d=>c[tierEarned(d)]++);
@@ -296,7 +353,7 @@ function sashCaption(){
   return parts.length?`${parts.join(", ")} of ${DECKS.length} sections.`:"No badges yet. Bronze comes when every card in a section has been seen once.";
 }
 function exportProgress(){
-  const data={app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day};
+  const data={app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day,exams:get("exams",[])};
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const d=new Date(),name=`${C.exportName}-${DEMO?"sample":"progress"}-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const file=new File([blob],name,{type:"application/json"});
@@ -317,6 +374,7 @@ $("importFile").onchange=async e=>{
     if(!d||d.app!==C.exportApp||!d.decks)throw 0;
     if(d.sample){toast("That's the demo's sample progress, not a backup of yours.");return}
     const {decks:n,dropped}=importDecks(d.decks);mergeBadges(d.badges);if(Number.isInteger(d.examDay)&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));
+    if(Array.isArray(d.exams)&&!lastExam())put("exams",d.exams.filter(validExam).slice(-10));
     toast(`Imported progress for ${n} ${n===1?"section":"sections"}${dropped?`; ${dropped} damaged ${dropped===1?"record was":"records were"} skipped`:""}.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
 };
@@ -370,10 +428,16 @@ function about(){
   <p>A section earns bronze when every card has been seen, silver when every card has been answered correctly at least once, and gold when every card is mastered. A rung, once earned, stays; the badge dims while the section's current standing is below its best rung.</p>
   <h2>The estimated score</h2>
   <p>Each section is weighed by how many of the ${C.examQ} exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards answered right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction. Hide it from the home screen if it's unwelcome.</p>
+  <h2>Practice exam</h2>
+  <p>The real exam draws one question from each of the pool's ${C.examQ} groups, and so does the practice exam, with no answers shown until the end. It scores you against the pass mark, section by section, lists what you missed, and offers those as a drill. Taking it changes none of your review records.</p>
+  <h2>Hardest for you</h2>
+  <p>Home offers a drill of the questions you've missed more than once and haven't mastered since, hardest first. In a section, each group's chip shows how many of its questions you missed at their last answer.</p>
+  ${"setAppBadge" in navigator?`<h2>The app icon</h2>
+  <p>Installed on an iPhone or a desktop, the icon shows how many questions are due today; once those are done it shows how many come due tomorrow. On an iPhone, allow it from the home screen first. Android doesn't support this.</p>`:""}
   <h2>Study pages</h2>
   <p>Every section has a study page with its basics in pool order; the <a href="#study">whole guide</a> is one page you can print. The same text appears before your first new question on each topic, and under Explain this more.</p>
   <h2>Testing yourself</h2>
-  <p>This app is for learning the pool. For practice exams under exam conditions, use <a href="https://hamstudy.org/" target="_blank" rel="noopener">HamStudy.org</a>. When you're ready, find a session through <a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy</a> or the <a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL</a>, and get your <a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">FCC Registration Number</a> before test day.</p>
+  <p>This app is for learning the pool; the practice exam shows where you stand. <a href="https://hamstudy.org/" target="_blank" rel="noopener">HamStudy.org</a> has practice exams too. When you're ready, find a session through <a href="https://hamstudy.org/sessions" target="_blank" rel="noopener">HamStudy</a> or the <a href="https://www.arrl.org/find-an-amateur-radio-license-exam-session" target="_blank" rel="noopener">ARRL</a>, and get your <a href="https://www.fcc.gov/wireless/support/universal-licensing-system-uls-resources/getting-fcc-registration-number-frn/" target="_blank" rel="noopener">FCC Registration Number</a> before test day.</p>
   <h2>Your progress</h2>
   <p>Progress is saved on this phone and nowhere else. Export progress on the home screen makes a backup file; import it on a new phone. Do that before clearing browser data or switching phones.</p>
   <h2>Credits</h2>
@@ -383,48 +447,55 @@ function about(){
 }
 
 /* ---------- question drills ---------- */
-function drill({deck,mixed,primer}){
+function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   const app=$("app");prefs.dueOnly=!primer;
-  const decks=mixed?POOL:[deck];
-  const all=decks.flatMap(d=>d.Q.map(q=>({d,q})));
+  const list=!!cards,decks=mixed?POOL:list?[]:[deck];
+  const all=list?cards:decks.flatMap(d=>d.Q.map(q=>({d,q})));
   const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
   let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
-  const title=mixed?"Everything due":deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
-  const sub=mixed?`Every pool question due today, mixed across sections. ${DECK.symbols?"Math and Symbols are reviewed on their own.":"Math is reviewed on its own."}`:
+  const title=mixed?"Everything due":list?listTitle:deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
+  const sub=mixed?`Every pool question due today, mixed across sections. ${DECK.symbols?"Math and Symbols are reviewed on their own.":"Math is reviewed on its own."}`:list?listSub:
     deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your ${C.examQ} exam questions.`;
-  const chips=mixed||primer?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
+  const chips=mixed||primer||list?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
-  <h1>${title}</h1>${mixed?`<p class="sub">${sub}</p>`:""}
+  <h1>${title}</h1>${mixed||list?`<p class="sub">${sub}</p>`:""}
   ${primer?`<p class="only">Drilling the ${deck.Q.filter(q=>deck.CON[q[0]]===primer).length} questions under <b>${esc(deck.P[primer][0])}</b>, due or not. <a href="#${deck.id}/study">Back to the ${deck.code} study page</a>.</p>`:""}
-  ${!mixed&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
-  ${!mixed&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
+  ${deck&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
+  ${deck&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
   ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
-  ${mixed?"":`<div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>`}
+  ${mixed||list?"":`<div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>`}
   <p class="srs" id="srsline"></p>
   <div class="status"><span id="pos"></span><span id="score"></span></div>
   <div class="bar"><span id="fill"></span></div>
   <div class="card" id="card"></div><p class="sr" id="said" aria-live="polite"></p>
-  ${mixed?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
+  ${mixed||list?"":`<p class="foot"><button class="linkbtn" id="reset">Reset ${deck.code} progress</button></p>`}`;
   $("back").onclick=goHome;
-  const dueOnly=()=>mixed||prefs.dueOnly;
+  /* A list drill (hardest, or the exam's misses) runs every card it was given, due or not, with misses retried. */
+  const dueOnly=()=>mixed||(!list&&prefs.dueOnly),retry=()=>dueOnly()||list;
   if($("dueOnly")){$("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;start()}}
   if($("groups"))$("groups").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{group=b.dataset.v;$("groups").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));start()});
-  if(!mixed)armReset($("reset"),deck.code,()=>{SRS[deck.id]={};saveSrs(deck.id);start()});
+  if(!mixed&&!list)armReset($("reset"),deck.code,()=>{SRS[deck.id]={};saveSrs(deck.id);start()});
 
   const inGroup=()=>all.filter(x=>primer?deck.CON[x.q[0]]===primer:(group==="all"||grpOf(x.d,x.q[0])===group));
   const due=x=>mixed?(isSeen(x.d.id,x.q[0])&&isDue(x.d.id,x.q[0])):isDue(x.d.id,x.q[0]);
+  /* Each chip counts its group's cards whose last answer was a miss. */
+  const missedIn=g=>all.filter(x=>(g==="all"||grpOf(x.d,x.q[0])===g)&&lastMissed(x.d.id,x.q[0])).length;
+  function chipCounts(){if(!chips.length)return;
+    $("groups").querySelectorAll(".chip").forEach(b=>{const n=missedIn(b.dataset.v),l=chips.find(c=>c[0]===b.dataset.v)[1];
+      b.classList.toggle("weak",n>0);b.innerHTML=n?`${l}<small>${n}</small>`:l;b.setAttribute("aria-label",n?`${l}, ${n} missed last time`:l)})}
   function srsLine(){
     const g=inGroup(),t=dayNum();
     const n=g.filter(due).length,m=g.filter(x=>isMastered(x.d.id,x.q[0])).length,tom=g.filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-    $("srsline").textContent=mixed?`${n} due today${tom?`, ${tom} coming up tomorrow`:""}.`:`${n} due today, ${m} of ${g.length} mastered${tom?`, ${tom} coming up tomorrow`:""}.`;
+    $("srsline").textContent=mixed?`${n} due today${tom?`, ${tom} coming up tomorrow`:""}.`:list?`${g.length} ${g.length===1?"question":"questions"}, ${n} of them due today.`:`${n} due today, ${m} of ${g.length} mastered${tom?`, ${tom} coming up tomorrow`:""}.`;
+    chipCounts();
   }
   /* Reviews come first, shuffled. New cards follow grouped by topic in pool order, and the topic's basics
      come before its first new card; a review never stops for basics. */
-  const basicsFor=x=>!mixed&&!primer&&deck.CON&&!isSeen(deck.id,x.q[0])?deck.CON[x.q[0]]:null;
+  const basicsFor=x=>deck&&!primer&&deck.CON&&!isSeen(deck.id,x.q[0])?deck.CON[x.q[0]]:null;
   function start(){
     let pool=inGroup();
     if(dueOnly())pool=pool.filter(due);
-    pool=shuffle(pool);
+    if(!list)pool=shuffle(pool);
     const ord=Object.keys(deck&&deck.P||{}),fresh=pool.filter(basicsFor);
     items=pool.filter(x=>!basicsFor(x)).concat(ord.flatMap(k=>fresh.filter(x=>basicsFor(x)===k)));
     shown=null;i=0;done=0;fr=0;fd=0;render();
@@ -438,6 +509,7 @@ function drill({deck,mixed,primer}){
   function render(){
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=mixed?`<p class="q">Nothing is due for review today.</p><p>Spacing works best when cards rest. Come back tomorrow, or go back to all sections and open one to practice anyway.</p>`
+      :list?`<p class="q">Nothing here.</p><p>No question has been missed more than once without being mastered since.</p>`
       :dueOnly()?`<p class="q">Nothing is due here today.</p><p>Spacing works best when cards rest. Come back tomorrow, or turn off Due today to practice anyway.</p>`:`<p class="q">No questions match.</p>`;return}
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
@@ -457,7 +529,7 @@ function drill({deck,mixed,primer}){
     const [id,text,opts,ans,note,fig]=q;
     const hasAll=opts.some(o=>/^All these/.test(o));
     const order=hasAll?[0,1,2,3]:shuffle([0,1,2,3]);
-    c.innerHTML=`<p class="topic"><span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}</p>
+    c.innerHTML=`<p class="topic"><span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}${items[i].w?` &middot; Missed ${items[i].w} ${items[i].w===1?"time":"times"}`:""}</p>
       ${fig?figBox(fig):""}
       <p class="q" id="qtext">${text}</p><div class="ans" id="ans" role="group" aria-labelledby="qtext"></div><div id="after"></div>`;
     order.forEach((oi,pos)=>{const b=document.createElement("button");b.innerHTML=`<b>${"ABCD"[pos]}</b><span>${opts[oi]}</span>`;b.dataset.oi=oi;b.onclick=()=>pick(oi);$("ans").appendChild(b)});
@@ -468,7 +540,7 @@ function drill({deck,mixed,primer}){
     [...$("ans").children].forEach(b=>{b.disabled=true;const v=+b.dataset.oi;if(v===ans)b.classList.add("right");else if(v===oi)b.classList.add("wrong")});
     done++;if(!items[i].re){fd++;if(ok)fr++}
     const lemon=!ok&&hadRight(d.id,id);record(d.id,id,ok);
-    if(!ok&&dueOnly()){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
+    if(!ok&&retry()){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
     status();
     const F=d.F&&d.F[id],ex=EXPLAIN[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
     $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> ${note}</p>
@@ -482,6 +554,70 @@ function drill({deck,mixed,primer}){
     $("next").focus({preventScroll:true});
   }
   start();
+}
+
+/* ---------- practice exam screen ----------
+   A continuous scroll of every card, as the testing software shows them: the current card full size and popped
+   out, the rest faded and a touch smaller. Answers give no feedback until Finish. The draw, answers and start time
+   sit in sessionStorage, so a reload (an update taking over, say) comes back to the same exam. */
+const EXAM_KEY=()=>NS+"exam";
+const examLoad=()=>{try{const s=JSON.parse(sessionStorage.getItem(EXAM_KEY()));if(s&&Array.isArray(s.ids)&&Array.isArray(s.orders)&&Array.isArray(s.picks)&&s.ids.length===s.picks.length&&s.ids.length===s.orders.length)return s}catch(e){}return null};
+const examSave=s=>{try{sessionStorage.setItem(EXAM_KEY(),JSON.stringify(s))}catch(e){}};
+const examClear=()=>{try{sessionStorage.removeItem(EXAM_KEY())}catch(e){}};
+/* The saved form holds ids and answer orders; the draw is rebuilt from the decks, or dropped if a question is gone. */
+function examRestore(s){const draw=[];for(let i=0;i<s.ids.length;i++){const [d,id]=s.ids[i],q=DECK[d]&&DECK[d].Q.find(q=>q[0]===id);if(!q||!Array.isArray(s.orders[i]))return null;draw.push({d,id,q,order:s.orders[i]})}return draw}
+function examScreen(){
+  const app=$("app");
+  let s=examLoad(),draw=s&&examRestore(s);
+  if(!draw){draw=examDraw();s={ids:draw.map(x=>[x.d,x.id]),orders:draw.map(x=>x.order),picks:draw.map(()=>null),t0:Date.now(),est:estReady()?estimate():null};examSave(s)}
+  const picks=s.picks;let cur=Math.max(0,picks.findIndex(p=>p==null));
+  const card=(x,i)=>`<li class="card xcard" data-i="${i}"><p class="topic">Question ${i+1} of ${draw.length}</p>${x.q[5]?figBox(x.q[5]):""}<p class="q" id="xq${i}">${x.q[1]}</p>
+    <div class="ans" role="group" aria-labelledby="xq${i}">${x.order.map((oi,pos)=>`<button data-oi="${oi}" class="${picks[i]===oi?"picked":""}" aria-pressed="${picks[i]===oi}"><b>${"ABCD"[pos]}</b><span>${x.q[2][oi]}</span></button>`).join("")}</div></li>`;
+  app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
+  <h1>Practice exam</h1>
+  <p class="sub">${draw.length} questions, one from each group, drawn as the real exam draws them. Nothing is marked until you finish; ${C.pass} right passes. Tap a question to go back to it. Going back to all sections discards the exam.</p>
+  <div class="status"><span id="pos"></span><span id="score"></span></div><div class="bar"><span id="fill"></span></div>
+  <ol class="exam" id="exam">${draw.map(card).join("")}</ol>
+  <div class="actions"><button class="btn" id="finish"></button></div><p class="sr" id="said" aria-live="polite"></p>`;
+  $("back").onclick=()=>{examClear();goHome()};
+  const cards=[...$("exam").children];
+  const answered=()=>picks.filter(p=>p!=null).length;
+  function status(){const n=answered(),left=draw.length-n;$("pos").textContent=`${n} of ${draw.length} answered`;$("fill").style.width=(n/draw.length*100)+"%";
+    if(!$("finish").dataset.armed)$("finish").textContent=left?`Finish with ${left} unanswered`:"Finish"}
+  /* Only the current card's answers carry the id the keyboard shortcuts act on. */
+  function setCurrent(i,{scroll=true,focus=false}={}){cur=i;
+    cards.forEach((c,k)=>{c.classList.toggle("cur",k===i);if(k===i)c.setAttribute("aria-current","true");else c.removeAttribute("aria-current");const a=c.querySelector(".ans");if(k===i)a.id="ans";else a.removeAttribute("id")});
+    if(scroll)cards[i].scrollIntoView({block:"center"});
+    if(focus){const b=cards[i].querySelector(".ans button");if(b)b.focus({preventScroll:true})}}
+  $("exam").addEventListener("click",e=>{const li=e.target.closest(".xcard");if(!li)return;const i=+li.dataset.i,b=e.target.closest("button[data-oi]");
+    if(!b){if(i!==cur)setCurrent(i,{scroll:false});return}
+    picks[i]=+b.dataset.oi;examSave(s);li.querySelectorAll(".ans button").forEach(x=>{const on=x===b;x.classList.toggle("picked",on);x.setAttribute("aria-pressed",on)});
+    status();let n=-1;for(let k=1;k<=draw.length;k++){const j=(i+k)%draw.length;if(picks[j]==null){n=j;break}}
+    if(n>=0)setCurrent(n,{focus:true});else{$("finish").focus({preventScroll:true});$("finish").scrollIntoView({block:"center"})}});
+  /* A keyboard user who tabs into another card makes it current, so 1 to 4 answer the card they are on. */
+  $("exam").addEventListener("focusin",e=>{const li=e.target.closest(".xcard");if(li&&+li.dataset.i!==cur)setCurrent(+li.dataset.i,{scroll:false})});
+  $("finish").onclick=()=>{const left=draw.length-answered();
+    if(left&&!$("finish").dataset.armed){$("finish").dataset.armed="1";$("finish").textContent=`Finish anyway, ${left} unanswered`;setCurrent(picks.findIndex(p=>p==null),{focus:true});return}
+    const r=examScore(draw,picks);
+    saveExam({day:dayNum(),right:r.right,missed:r.missed.map(m=>[m.d,m.id,m.given]),secs:Math.round((Date.now()-s.t0)/1000),est:s.est});
+    examClear();history.replaceState(history.state,"","#exam/result");examResult();window.scrollTo(0,0)};
+  status();setCurrent(cur,{scroll:cur>0});
+}
+/* The last exam's result: the score against the pass mark, a row per section, and every miss with the answer given. */
+function examResult(){
+  const e=lastExam(),app=$("app"),pass=e.right>=C.pass,mins=Math.round((e.secs||0)/60);
+  const rows=POOL.map(d=>{const miss=e.missed.filter(m=>m[0]===d.id).length;return `<li><b>${d.code}</b><span class="nm">${esc(d.name)}</span><span class="n${miss?" short":""}">${d.exam-miss} of ${d.exam}</span></li>`}).join("");
+  const missed=e.missed.map(([d,id,given])=>{const deck=DECK[d],q=deck&&deck.Q.find(q=>q[0]===id);if(!q)return "";
+    return `<div class="miss"><p class="topic"><span class="qid">${id}</span>${esc(deck.G[id.slice(0,3)]||deck.name)}</p><p class="q">${q[1]}</p>
+    <p class="given">${given==null||!q[2][given]?"No answer.":`Your answer: ${q[2][given]}`}</p><p class="note"><strong class="ok">Correct:</strong> ${q[2][q[3]]}. ${q[4]}</p></div>`}).join("");
+  app.innerHTML=`<button class="back" id="back">&larr; All sections</button><h1>Practice exam</h1>
+  <div class="card"><div class="end"><h2>${e.right}/${C.examQ}</h2><p>${pass?`That passes; ${C.pass} is the mark.`:`Short of the ${C.pass} needed to pass.`} ${mins?`${mins} ${mins===1?"minute":"minutes"}.`:"Under a minute."}</p>
+  ${e.est?`<p class="muted">The home screen's estimate was ${e.est.lo===e.est.hi?e.est.lo:`${e.est.lo} to ${e.est.hi}`}.</p>`:""}</div>
+  <ul class="secs" aria-label="Right by section">${rows}</ul>
+  <div class="actions">${e.missed.length?`<button class="btn" id="missed">Drill the ${e.missed.length} you missed</button>`:""}<button class="btn ghost" id="again">Another exam</button></div></div>
+  ${e.missed.length?`<h2 class="misshead">Missed</h2>${missed}`:""}`;
+  $("back").onclick=goHome;if($("missed"))$("missed").onclick=()=>go("exam/missed");
+  $("again").onclick=()=>{history.replaceState(history.state,"","#exam");examScreen();window.scrollTo(0,0)};
 }
 
 /* ---------- symbol drill ---------- */

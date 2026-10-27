@@ -151,6 +151,27 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .primer p{margin:0 0 10px}
 .end h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:56px;line-height:1;margin:0;color:var(--amber)}
 .end p{margin:6px 0 0}
+/* group chips carry how many of the group's cards were missed at their last answer */
+.chip small{font-size:12px;font-weight:700;margin-left:5px;color:var(--bad)}
+.chip[aria-pressed="true"] small{color:inherit}
+/* practice exam: a continuous scroll; the current card pops out, the others fade and shrink a touch.
+   Faded text stays above 4.5:1 on the panel, so every card can still be read. */
+.exam{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.exam .card{opacity:.7;transform:scale(.97);transition:opacity .2s,transform .2s,box-shadow .2s}
+.exam .card:not(.cur){cursor:pointer}
+.exam .card:not(.cur) .topic{color:var(--ink)}
+.exam .card.cur{opacity:1;transform:none;border-color:var(--amber);box-shadow:0 8px 28px rgba(0,0,0,.2)}
+.exam .q{font-size:19px}
+.exam .ans button.picked{background:var(--amber-bg);border-color:var(--amber)}
+.secs{list-style:none;margin:14px 0 0;padding:0;border-top:1px solid var(--line)}
+.secs li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.secs b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:19px;color:var(--amber);min-width:44px}
+.secs .nm{flex:1}.secs .n.short{color:var(--bad)}
+.misshead{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:28px;line-height:1.1;color:var(--amber);margin:26px 0 10px}
+.miss{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 12px}
+.miss .q{font-size:17px;margin:0 0 8px}
+.miss .given{margin:0 0 6px;font-size:15px;color:var(--muted)}
+.miss .note{margin:0;padding:0;border:0}
 /* symbols */
 .prompt{font-size:15px;color:var(--muted);margin:0 0 6px}
 .name{font-size:22px;font-weight:700;margin:0 0 14px}
@@ -182,4 +203,4 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 @keyframes winkveil{0%{opacity:0}6%{opacity:1}94%{opacity:1}100%{opacity:0}}
 @keyframes wink1{0%{opacity:0}8%{opacity:1}38%{opacity:1}46%{opacity:0}100%{opacity:0}}
 @keyframes wink2{0%{opacity:0}48%{opacity:0}56%{opacity:1}92%{opacity:1}100%{opacity:0}}
-@media (prefers-reduced-motion: reduce){.bar span{transition:none}.wink,.wink>*{animation:none;opacity:1}.wink{display:flex;flex-direction:column;align-items:center;justify-content:center}.wink b{margin-bottom:.15em}}
+@media (prefers-reduced-motion: reduce){.bar span{transition:none}.exam .card{transition:none;transform:none}.wink,.wink>*{animation:none;opacity:1}.wink{display:flex;flex-direction:column;align-items:center;justify-content:center}.wink b{margin-bottom:.15em}}

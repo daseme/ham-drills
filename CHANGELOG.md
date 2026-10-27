@@ -2,6 +2,15 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 34 (October 27)
+- A practice exam: 35 questions drawn one per group as the real exam draws them, on one scrolling page with the current question popped out and the rest faded, nothing marked until Finish. The result shows the score against the pass mark, the time, what the estimate had said, a row per section and every miss with the answer given, and offers the misses as a drill. The last result shows on home. A reload mid-exam comes back to the same exam.
+- Hardest for you: home offers a drill of the questions missed more than once and not mastered since, hardest first, each card saying how often.
+- In a section drill, each group's chip counts the questions missed at their last answer.
+- Installed on an iPhone or a desktop, the app icon shows how many questions are due, or how many come due tomorrow once today's are done. iPhones ask once for permission; Android has no icon badges.
+- Backups are checked record by record on import, and stored records on first read: a damaged record or an unknown question is dropped and the import says how many. Backups now carry practice exam results.
+- data.js is one question per line, so a content fix shows as the lines it touched; tools/data-format.js keeps the layout and CI checks it.
+- CI shoots every screen in Chrome and compares it with committed baselines; the screenshot tool's clock stands still.
+
 ## 33 (October 24)
 - The estimated score waits until a tenth of the pool has been seen, instead of greeting a newcomer with a failing guess.
 - On a keyboard, 1 to 4 or A to D picks an answer; Enter goes on.

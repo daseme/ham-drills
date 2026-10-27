@@ -18,11 +18,13 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
 | icons/, fonts/ | Shared icons and bundled typefaces |
 | tools/pool-check.js | Checks an exam's data.js (`technician` or `general`); compares it with the NCVEC pool .docx when given one, skipping withdrawn questions |
+| tools/data-format.js | Writes data.js in its fixed layout, one question per line; `--check` is what CI runs |
 | tools/pool-parse.js, tools/pool-import.js | Read an NCVEC pool .docx; print one section as a data.js deck skeleton, stems and options verbatim |
 | tools/docx-text.js | Reads a .docx's paragraphs with no dependencies (a .docx is a zip) |
 | test/ | Node tests; test/harness.js loads app/app.js with an exam's files into a stub page |
-| tools/screens.mjs, tools/compare-screens.mjs | Screenshots of every screen in headless Chrome, compared pixel for pixel; how a change is shown to leave screens untouched |
-| .github/workflows/check.yml | Runs the pool check and the tests on every push and pull request |
+| tools/screens.mjs, tools/compare-screens.mjs | Screenshots of every screen in headless Chrome, compared pixel for pixel; the clock stands still and the version is masked, so a screen changes only when the app does |
+| test/screens/ | The screenshot baselines, made only by the CI runner's Chrome: run the workflow by hand with rebaseline on |
+| .github/workflows/check.yml | Runs the pool check, the layout check and the tests on every push and pull request, and shoots the screens and compares them with the baselines |
 
 ## Data
 
@@ -33,7 +35,7 @@ Each deck in `DECKS` has an `id` (`t1` … `t0` or `g1` … `g0`, `math`, and `s
 - `P` and `CON`: the primers ("basics") as `[title, html]`, and which primer each question belongs to.
 - Math adds `F` (worked formulas) and `cheat` (a formula sheet). Symbols has `S` instead of `Q`: `{n, def, f, d, t}` per symbol.
 
-data.js was produced once from the NCVEC pool and is maintained by hand. `tools/pool-check.js` is what keeps it honest: it currently matches the February 19, 2026 errata release exactly.
+data.js was produced once from the NCVEC pool and is maintained by hand, one question per line so a fix diffs as the lines it touched; `tools/data-format.js` rewrites the layout and CI refuses a file that strays from it. `tools/pool-check.js` is what keeps the content honest: it currently matches the February 19, 2026 errata release exactly.
 
 ## Storage
 
@@ -45,11 +47,16 @@ Progress lives in `localStorage` on the device and nowhere else. Every read and 
 | `badges` | `{<deck id>: {1: day, 2: day, 3: day}}`, the day each rung was first earned |
 | `examDay` | The exam date, or absent |
 | `prefs` | `showEst`, `showDate`, `haveFRN` |
+| `exams` | The last ten practice exams: `{day, right, missed:[[deck, id, answer given]], secs, est}` |
 | `seeded` | Demo mode only: the sample has been created |
+
+A practice exam in progress sits in `sessionStorage` under `<namespace>exam` (ids, answer orders, picks, start time), so a reload comes back to it; Finish and Back clear it.
+
+Records are checked by `validRecord` on import and the first time a deck is read: `lv` and `due` must be whole numbers in range, the other fields the right kind when present, and only those seven fields are kept; `due` is clamped to today plus the longest interval and `last` and `fail` to today. A damaged record, or one for an id no longer in the deck, is dropped.
 
 Days are whole numbers, local days since 1970 (`dayNum`), so "due today" never depends on the hour.
 
-Export writes the same records to a JSON file; import merges them card by card, keeping whichever record was answered more recently (`mergeSrs`).
+Export writes the same records to a JSON file, with the badges, the exam date and the practice exams; import merges records card by card, keeping whichever was answered more recently (`mergeSrs`), and takes the exams only when there are none yet.
 
 ## Scheduler
 
@@ -72,9 +79,19 @@ Export writes the same records to a JSON file; import merges them card by card, 
 
 ## Screens
 
-The page is a hash router (`route`): home, a deck's drill (`#t1`), a primer drill (`#t1/p/<key>`), study pages (`#t1/study`, `#study`), `#due`, `#symbols`, `#about`. Each screen function rebuilds `#app` from a template string. In-app moves push history entries carrying their depth, so the phone's Back button retraces them.
+The page is a hash router (`route`): home, a deck's drill (`#t1`), a primer drill (`#t1/p/<key>`), study pages (`#t1/study`, `#study`), `#due`, `#hard`, `#symbols`, `#about`, and the practice exam (`#exam`, `#exam/result`, `#exam/missed`). Each screen function rebuilds `#app` from a template string. In-app moves push history entries carrying their depth, so the phone's Back button retraces them.
 
-In a drill, reviews come first, shuffled; new cards follow grouped by topic in pool order, each topic's primer shown before its first new card. Answer order is shuffled except where an option reads "All these choices are correct".
+In a drill, reviews come first, shuffled; new cards follow grouped by topic in pool order, each topic's primer shown before its first new card. Answer order is shuffled except where an option reads "All these choices are correct". A list drill (`drill({cards})`, used by `#hard` and `#exam/missed`) runs the cards it is given in that order, due or not. Each group chip in a section drill counts the cards whose last answer was a miss (`lastMissed`: level 0 with `due` still equal to `fail`).
+
+`hardCards` lists the pool and math cards missed at least twice (`w`) and not mastered, hardest first, one entry per question id.
+
+## Practice exam
+
+`examDraw` picks one random question from each group in pool order, 35 in all, which is how the real exam is built; both pools have exactly 35 groups and each section's group count equals its exam count. The screen is a continuous scroll of every card: the current one full size with an amber border and shadow, the rest at 70% opacity and 97% size, with `aria-current` on the current card and the keyboard-shortcut id `ans` on its answers alone. A tap or a keyboard focus makes a card current. `examScore` turns the picks into right, missed (with the answer given) and per-section counts; unanswered counts as wrong. Results never touch the review records; the misses are offered as a list drill, which does.
+
+## App icon badge
+
+`badgeCount` is the pool reviews due today, or the cards due tomorrow once today's are done. `updateBadge` sets or clears the icon badge from `saveSrs`, `home` and the page going hidden; it does nothing in demo mode or where the Badging API is missing. iOS shows the badge only after notification permission, asked from a line on home that appears on an installed iOS copy; Chrome for Android has no Badging API.
 
 ## Demo mode
 
