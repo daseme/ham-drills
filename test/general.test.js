@@ -10,7 +10,7 @@ const SAMPLE=`window.DECKS=[{id:"g1",code:"G1",name:"Rules",exam:5,G:{G1A:"Privi
   P:{p1:["Privileges","<p>Basics.</p>"]},CON:{G1A01:"p1",G1A02:"p1",G1A03:"p1"}}];window.EXPLAIN={};`;
 const general=(o={})=>load({exam:"general",data:SAMPLE,...o});
 const homeHtml=app=>(app.run("home()"),app.run(`$("app").innerHTML`));
-const backup=(appId,deck)=>`$("importFile").onchange({target:{value:"",files:[{text:async()=>JSON.stringify({app:"${appId}",version:2,decks:{${deck}:{X1:{lv:3,due:1,last:1,fail:null,n:3}}}})}]}})`;
+const backup=(appId,deck)=>`$("importFile").onchange({target:{value:"",files:[{text:async()=>JSON.stringify({app:"${appId}",version:2,decks:{${deck}:{${deck.toUpperCase()}A01:{lv:3,due:1,last:1,fail:null,n:3}}}})}]}})`;
 
 test("General uses its own storage",()=>{
   const app=general();
@@ -58,7 +58,7 @@ test("a General backup is refused by Technician",async()=>{
 test("a General backup is taken by General",async()=>{
   const app=general();
   await app.runAsync(backup("hamdrill-general","g1"));
-  assert.equal(app.run("srsOf('g1').X1.lv"),3);
+  assert.equal(app.run("srsOf('g1').G1A01.lv"),3);
 });
 
 test("General's footer doesn't offer a demo it doesn't have",()=>{

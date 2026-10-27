@@ -34,7 +34,25 @@ const SRS={};
 const srsOf=id=>SRS[id]||(SRS[id]=get("srs:"+id,{}));
 const saveSrs=id=>put("srs:"+id,SRS[id]);
 function mergeSrs(a,b){const o={...a};for(const k in b){const x=o[k],y=b[k];if(!y)continue;const lx=x?(x.last??-1):-2,ly=y.last??-1;if(!x||ly>lx||(ly===lx&&(y.n||0)>(x.n||0)))o[k]=y}return o}
-function importDecks(decks){let n=0;for(const id in decks){if(!DECK[id])continue;SRS[id]=mergeSrs(srsOf(id),decks[id]||{});saveSrs(id);n++}return n}
+/* A record from a backup, or null if it is damaged: lv and due must be whole numbers in range, the rest the right
+   kind when present (a version 1 backup has no w on a card never missed). Only these seven fields are kept, and
+   due is clamped to today plus the longest interval, so a stray value cannot park a card out of reach. */
+const isInt=v=>Number.isInteger(v);
+function validRecord(r,t=dayNum()){
+  if(!r||typeof r!=="object"||!isInt(r.lv)||r.lv<0||r.lv>=IV.length||!isInt(r.due))return null;
+  const o={lv:r.lv,due:Math.min(r.due,t+IV[IV.length-1])};
+  for(const k of ["last","fail"]){if(k in r){if(r[k]!==null&&!isInt(r[k]))return null;o[k]=r[k]}}
+  for(const k of ["n","w"]){if(k in r){if(!isInt(r[k])||r[k]<0)return null;o[k]=r[k]}}
+  if("n" in o&&"w" in o&&o.w>o.n)return null;
+  if("ts" in r){if(typeof r.ts!=="number")return null;o.ts=r.ts}
+  return o;
+}
+function importDecks(decks){let n=0,dropped=0;
+  for(const id in decks){const d=DECK[id],src=decks[id];if(!d||!src||typeof src!=="object")continue;
+    const ok={},ids=new Set(itemIds(d));
+    for(const k in src){if(!ids.has(k))continue;const r=validRecord(src[k]);if(r)ok[k]=r;else dropped++}
+    SRS[id]=mergeSrs(srsOf(id),ok);saveSrs(id);n++}
+  return {decks:n,dropped}}
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
@@ -133,7 +151,7 @@ function awardBadges(d,quiet){
   if(top){saveBadges();if(!quiet)toast(`${TIER[top]} badge: ${d.code} ${d.name}. ${TIER_WHY[top][0].toUpperCase()+TIER_WHY[top].slice(1)}.`)}
   return top;
 }
-function mergeBadges(src){if(!src)return;for(const id in src){if(!DECK[id])continue;const b=BADGES[id]||(BADGES[id]={});for(const t of [1,2,3]){const v=src[id][t];if(v&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
+function mergeBadges(src){if(!src||typeof src!=="object")return;for(const id in src){if(!DECK[id]||!src[id]||typeof src[id]!=="object")continue;const b=BADGES[id]||(BADGES[id]={});for(const t of [1,2,3]){const v=src[id][t];if(Number.isInteger(v)&&v>0&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
 DECKS.forEach(d=>awardBadges(d,true));
 function badgeSvg(tier,size,{lapsed=false,full=false}={}){
   const arcs=['','<use href="#arc1"/>','<use href="#arc1"/><use href="#arc2"/>','<use href="#arc1"/><use href="#arc2"/><use href="#arc3"/>'][tier];
@@ -298,7 +316,8 @@ $("importFile").onchange=async e=>{
     if(d&&d.decks&&/^hamdrill/.test(d.app)&&d.app!==C.exportApp){toast("That backup is from another exam's drills.");return}
     if(!d||d.app!==C.exportApp||!d.decks)throw 0;
     if(d.sample){toast("That's the demo's sample progress, not a backup of yours.");return}
-    const n=importDecks(d.decks);mergeBadges(d.badges);if(d.examDay!=null&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));toast(`Imported progress for ${n} sections.`);route()}
+    const {decks:n,dropped}=importDecks(d.decks);mergeBadges(d.badges);if(Number.isInteger(d.examDay)&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));
+    toast(`Imported progress for ${n} ${n===1?"section":"sections"}${dropped?`; ${dropped} damaged ${dropped===1?"record was":"records were"} skipped`:""}.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
 };
 
