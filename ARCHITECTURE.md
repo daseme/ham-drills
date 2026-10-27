@@ -13,7 +13,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | technician/exam.js | `window.EXAM_CONFIG`: Technician's names, pool years, question count and pass mark, storage namespace, figures, demo plan |
 | technician/data.js | `window.DECKS` (the twelve sections) and `window.EXPLAIN` (the longer explanation for each question) |
 | technician/sw.js, technician/manifest.webmanifest | Technician's cache name, then the shared worker; its home-screen install |
-| general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, no demo) and data.js (G1 to G0 and Math, 423 pool questions) |
+| general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, the band chart, no demo) and data.js (G1 to G0, Math and Bands, 423 pool questions) |
 | forward/ | The content of the daseme/ham-technicians-drills repository: the old address forwards here, and its last service worker retires the old offline copy |
 | version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
 | icons/, fonts/ | Shared icons and bundled typefaces |
@@ -34,6 +34,7 @@ Each deck in `DECKS` has an `id` (`t1` … `t0` or `g1` … `g0`, `math`, and `s
 - `G`: group names, keyed by the three-character group (`T1A`).
 - `P` and `CON`: the primers ("basics") as `[title, html]`, and which primer each question belongs to.
 - Math adds `F` (worked formulas) and `cheat` (a formula sheet). Symbols has `S` instead of `Q`: `{n, def, f, d, t}` per symbol.
+- A deck with no exam count may set `intro` (its study-page line) and `cheatName` (the label on its cheat sheet). A cheat sheet can also come from exam.js, under `EXAM_CONFIG.cheats[deck id]`: General's Bands deck gets its band chart that way, drawn by `bandChart()` from the `BANDS` table (Part 97 §97.301(d), §97.305(c), §97.313, Region 2), which the config also exposes as `bands` for the tests.
 
 data.js was produced once from the NCVEC pool and is maintained by hand, one question per line so a fix diffs as the lines it touched; `tools/data-format.js` rewrites the layout and CI refuses a file that strays from it. `tools/pool-check.js` is what keeps the content honest: it currently matches the February 19, 2026 errata release exactly.
 

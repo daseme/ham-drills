@@ -113,6 +113,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .fx .leg{margin:6px 0 0;padding-left:18px;font-size:15px}.fx .leg li{margin:2px 0}
 .cheat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;font-size:15px}
 .cheat summary{cursor:pointer;font-weight:700}.cheat p{margin:8px 0 0}
+.cheat svg{display:block;width:100%;height:auto;margin:10px 0 2px}
 .study h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:28px;line-height:1.1;color:var(--amber);margin:26px 0 6px}
 .study h2:first-of-type{margin-top:10px}
 .study .cover{font-size:14px;color:var(--muted);margin:4px 0 0}

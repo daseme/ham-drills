@@ -67,6 +67,47 @@ const FIGS={
  <text x="895" y="218" class="fnum" style="font-size:28px">+DC</text><text x="1006" y="327" class="fnum" style="font-size:28px;text-anchor:start">OUT</text>
 </g></svg>`
 };
+/* ---------- General band chart ----------
+   Each HF band as a bar on its own scale: where a General may send CW, RTTY and data, where phone and image are
+   allowed, and the parts reserved for Amateur Extra. From Part 97 (ITU Region 2): the privilege table in
+   97.301(d), the emission table in 97.305(c), and the power limits in 97.313. A segment is [low, high, kind]:
+   "cw" is CW, RTTY and data; "ph" is phone and image (CW is legal there too); "all" is every mode. */
+const BANDS=[
+ {band:"160 m",lo:1.800,hi:2.000,seg:[[1.800,2.000,"all"]]},
+ {band:"80 m",lo:3.500,hi:4.000,seg:[[3.525,3.600,"cw"],[3.800,4.000,"ph"]]},
+ {band:"60 m",lo:5.330,hi:5.407,seg:[[5.3515,5.3665,"ph"]],channels:[5.332,5.348,5.373,5.405]},
+ {band:"40 m",lo:7.000,hi:7.300,seg:[[7.025,7.125,"cw"],[7.175,7.300,"ph"]]},
+ {band:"30 m",lo:10.100,hi:10.150,seg:[[10.100,10.150,"cw"]]},
+ {band:"20 m",lo:14.000,hi:14.350,seg:[[14.025,14.150,"cw"],[14.225,14.350,"ph"]]},
+ {band:"17 m",lo:18.068,hi:18.168,seg:[[18.068,18.110,"cw"],[18.110,18.168,"ph"]]},
+ {band:"15 m",lo:21.000,hi:21.450,seg:[[21.025,21.200,"cw"],[21.275,21.450,"ph"]]},
+ {band:"12 m",lo:24.890,hi:24.990,seg:[[24.890,24.930,"cw"],[24.930,24.990,"ph"]]},
+ {band:"10 m",lo:28.000,hi:29.700,seg:[[28.000,28.300,"cw"],[28.300,29.700,"ph"]]}
+];
+const bandChart=()=>{
+  const X0=56,X1=372,W=X1-X0,ROW=46,TOP=30,H=14,FILL={cw:"var(--amber)",ph:"var(--ok)"};
+  const f3=v=>v.toFixed(3);
+  const rows=BANDS.map((b,i)=>{
+    const y=TOP+i*ROW,x=v=>X0+(v-b.lo)/(b.hi-b.lo)*W;
+    /* The grey base is Extra-only spectrum; 60 m has none between its channels, so it gets a thin line instead. */
+    let bars=b.channels?`<rect x="${X0}" y="${y+H/2-1}" width="${W}" height="2" fill="var(--line)"/>`:`<rect x="${X0}" y="${y}" width="${W}" height="${H}" rx="2" fill="var(--line)"/>`;
+    for(const [lo,hi,k] of b.seg){const w=x(hi)-x(lo);
+      bars+=k==="all"?`<rect x="${x(lo)}" y="${y}" width="${w}" height="${H/2}" fill="${FILL.cw}"/><rect x="${x(lo)}" y="${y+H/2}" width="${w}" height="${H/2}" fill="${FILL.ph}"/>`
+        :`<rect x="${x(lo)}" y="${y}" width="${w}" height="${H}" fill="${FILL[k]}"/>`}
+    for(const c of b.channels||[])bars+=`<rect x="${x(c)-2}" y="${y-2}" width="4" height="${H+4}" fill="${FILL.ph}"/>`;
+    /* Tick labels at the band ends and every segment edge; 60 m is explained in the notes instead. */
+    let ticks=b.channels?[b.lo,b.hi]:[...new Set([b.lo,b.hi,...b.seg.flat().filter(v=>typeof v==="number")])].sort((a,c)=>a-c);
+    /* A band edge 25 kHz from the General edge would print on top of it; the General edge is the one that matters. */
+    if(!b.channels){const near=(a,c)=>Math.abs(x(a)-x(c))<30;ticks=ticks.filter((v,k)=>!((v===b.lo&&near(v,ticks[1]))||(v===b.hi&&near(v,ticks[ticks.length-2]))))}
+    const labels=ticks.map((v,k)=>`<text x="${x(v)}" y="${y+H+12}" text-anchor="${k===0?"start":k===ticks.length-1?"end":"middle"}">${b.channels?f3(v===b.lo?5.332:5.405):f3(v)}</text>`).join("");
+    return `<text x="${X0-8}" y="${y+H-2}" text-anchor="end" class="bname">${b.band}</text>${bars}${labels}`;
+  }).join("");
+  const legend=`<rect x="${X0}" y="6" width="12" height="10" fill="${FILL.cw}"/><text x="${X0+16}" y="15">CW, RTTY, data</text>
+    <rect x="${X0+118}" y="6" width="12" height="10" fill="${FILL.ph}"/><text x="${X0+134}" y="15">Phone, image</text>
+    <rect x="${X0+226}" y="6" width="12" height="10" fill="var(--line)"/><text x="${X0+242}" y="15">Extra only</text>`;
+  return `<svg class="bandchart" viewBox="0 0 380 ${TOP+BANDS.length*ROW}" role="img" aria-label="General class HF privileges, band by band: CW, RTTY and data segments, phone and image segments, and the parts reserved for Amateur Extra"><style>.bandchart text{font-family:"Atkinson Hyperlegible",system-ui,sans-serif;font-size:10.5px;fill:var(--muted)}.bandchart .bname{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:15px;fill:currentColor}</style>${legend}${rows}</svg>`;
+};
+const BAND_NOTES=`<p>Frequencies in MHz, each band on its own scale. 160 meters allows every mode anywhere. 30 meters is CW, RTTY and data only, 200 W PEP. 60 meters is four channels (centred on 5.332, 5.348, 5.373 and 5.405 MHz; USB, CW and data; 100 W ERP, 2.8 kHz) plus a small band at 5.3515 to 5.3665 MHz. Everywhere else the limit is 1500 W PEP. Beacons: 28.200 to 28.300 MHz, 100 W; propagation beacons at 14.100, 18.110, 21.150, 24.930 and 28.200 MHz. 10 meter repeaters above 29.5 MHz. Voice: LSB on 160, 75 and 40 meters, USB from 20 meters up and on 60 meters.</p>`;
 const FIG_KEY={"G7-1":"1 field effect transistor, 2 NPN junction transistor, 5 Zener diode, 6 solid core transformer, 7 tapped inductor"};
 return {
   id:"general",ns:"hamgeneral:",demoNs:null,cachePrefix:"hamdrills-general-v",
@@ -75,6 +116,8 @@ return {
   poolYears:"2023-2027",aboutFacts:"FCC license class General, exam Element 3, radio service code HG.",
   examQ:35,pass:26,sections:10,idLetter:"G",mathGroups:["G5B","G5C"],
   figures:{FIGS,FIG_KEY},
+  /* The Bands deck's cheat sheet is drawn here rather than kept as text in data.js; bands is the table it is drawn from. */
+  cheats:{bands:bandChart()+BAND_NOTES},bands:BANDS,
   demo:null
 };
 })();

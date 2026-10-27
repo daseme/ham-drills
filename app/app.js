@@ -11,6 +11,8 @@ document.body.insertAdjacentHTML("afterbegin",`<svg width="0" height="0" style="
 </defs></svg>`);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* A deck's cheat sheet: its own text, or one the exam draws (a band chart, say). */
+const cheatOf=d=>d.cheat||(window.EXAM_CONFIG.cheats||{})[d.id]||"";
 const IV=[0,1,3,7,16,35],MASTER=3;
 const dayNum=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000)};
 const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
@@ -394,14 +396,14 @@ function studySection(d,{solo}){
     <div class="figs">${Object.keys(FIGS).map(f=>`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}. The pool asks about ${FIG_KEY[f]}.</figcaption></figure>`).join("")}</div>`;
   }else{
     const cov={};for(const q of d.Q){const k=d.CON&&d.CON[q[0]];if(k)(cov[k]=cov[k]||[]).push(q[0])}
-    const intro=d.exam?`${d.code} supplies ${d.exam} of the ${C.examQ} exam questions, drawn from ${d.Q.length} in the pool.`:`${d.Q.length} questions, with the formulas they rest on.`;
+    const intro=d.exam?`${d.code} supplies ${d.exam} of the ${C.examQ} exam questions, drawn from ${d.Q.length} in the pool.`:d.intro||`${d.Q.length} questions, with the formulas they rest on.`;
     body=`<p class="sub">${intro}</p>
-    ${d.cheat?`<details class="cheat" open><summary>Formulas</summary>${d.cheat}</details>`:""}
+    ${cheatOf(d)?`<details class="cheat" open><summary>${esc(d.cheatName||"Formulas")}</summary>${cheatOf(d)}</details>`:""}
     ${Object.keys(d.P||{}).map(k=>{const [t,b]=d.P[k],ids=cov[k]||[];
       return `<h2>${t}</h2><div class="primer">${b}</div>
       <p class="cover">Covers <b>${ids.length===1?ids[0]:`${ids.length} questions, ${ids[0]} to ${ids[ids.length-1]}`}</b>${ids.length?` <a href="#${d.id}/p/${k}">&middot; Drill these</a>`:""}</p>`}).join("")}`;
   }
-  return `<section class="sec"><${h}>${d.id==="math"||d.id==="symbols"?esc(d.name):`${d.code}: ${esc(d.name)}`}</${h}>${body}</section>`;
+  return `<section class="sec"><${h}>${d.exam?`${d.code}: ${esc(d.name)}`:esc(d.name)}</${h}>${body}</section>`;
 }
 function study(deck){
   const app=$("app");
@@ -453,14 +455,15 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   const all=list?cards:decks.flatMap(d=>d.Q.map(q=>({d,q})));
   const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
   let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
-  const title=mixed?"Everything due":list?listTitle:deck.id==="math"?deck.name:`${deck.code}: ${deck.name}`;
-  const sub=mixed?`Every pool question due today, mixed across sections. ${DECK.symbols?"Math and Symbols are reviewed on their own.":"Math is reviewed on its own."}`:list?listSub:
+  const title=mixed?"Everything due":list?listTitle:deck.exam?`${deck.code}: ${deck.name}`:deck.name;
+  const own=DECKS.filter(d=>!d.exam).map(d=>d.S?"Symbols":d.code),ownList=own.length>1?`${own.slice(0,-1).join(", ")} and ${own[own.length-1]}`:own[0];
+  const sub=mixed?`Every pool question due today, mixed across sections.${own.length?` ${ownList} ${own.length>1?"are":"is"} reviewed on ${own.length>1?"their":"its"} own.`:""}`:list?listSub:
     deck.id==="math"?"Every math question in the pool, with a worked solution after each answer.":`All ${deck.Q.length} ${deck.code} questions, worded as on the exam. ${deck.code} supplies ${deck.exam} of your ${C.examQ} exam questions.`;
   const chips=mixed||primer||list?[]:[["all",`All ${deck.Q.length}`],...Object.keys(deck.G).map(g=>[g,g==="X"?"Other":g])];
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>${title}</h1>${mixed||list?`<p class="sub">${sub}</p>`:""}
   ${primer?`<p class="only">Drilling the ${deck.Q.filter(q=>deck.CON[q[0]]===primer).length} questions under <b>${esc(deck.P[primer][0])}</b>, due or not. <a href="#${deck.id}/study">Back to the ${deck.code} study page</a>.</p>`:""}
-  ${deck&&deck.cheat?`<details class="cheat"><summary>Cheat sheet</summary>${deck.cheat}</details>`:""}
+  ${deck&&cheatOf(deck)?`<details class="cheat"><summary>${esc(deck.cheatName||"Cheat sheet")}</summary>${cheatOf(deck)}</details>`:""}
   ${deck&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
   ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
   ${mixed||list?"":`<div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>`}
@@ -523,7 +526,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     const {d,q}=items[i];
     if(basicsFor(items[i])&&basicsFor(items[i])!==shown){
       const k=basicsFor(items[i]),[t,b]=deck.P[k];let n=0;while(i+n<items.length&&basicsFor(items[i+n])===k)n++;
-      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle" id="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}. <a href="#${deck.id}/study" style="color:inherit">Read all of ${deck.code}'s basics</a>.</p><div class="actions"><button class="btn" id="go" aria-describedby="ptitle">Show the question</button></div>`;
+      c.innerHTML=`<p class="topic">Basics</p><h2 class="ptitle" id="ptitle">${t}</h2><div class="primer">${b}</div><p class="topic">Covers the next ${n===1?"question":n+" questions"}. <a href="#${deck.id}/study" style="color:inherit">Read all the ${deck.code} basics</a>.</p><div class="actions"><button class="btn" id="go" aria-describedby="ptitle">Show the question</button></div>`;
       $("go").onclick=()=>{shown=k;render()};$("go").focus({preventScroll:true});return;
     }
     const [id,text,opts,ans,note,fig]=q;

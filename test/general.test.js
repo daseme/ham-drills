@@ -95,7 +95,7 @@ test("General's review-all screen names only the sections it has",()=>{
   const g=load({exam:"general"});g.run("drill({mixed:true})");
   const html=g.run(`$("app").innerHTML`);
   assert.doesNotMatch(html,/Symbols/);
-  assert.match(html,/Math is reviewed on its own/);
+  assert.match(html,/Math and Bands are reviewed on their own/);
   const t=load();t.run("drill({mixed:true})");
   assert.match(t.run(`$("app").innerHTML`),/Math and Symbols are reviewed on their own/);
 });

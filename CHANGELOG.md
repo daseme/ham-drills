@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 35 (October 27)
+- General gains a Bands and privileges deck: the 32 pool questions on frequencies, modes, sidebands and power limits, under five primers, with a General band chart drawn from Part 97 as its cheat sheet. It does for General what the Symbols deck does for Technician: the near-miss numbers in one place. Questions stay in their sections too; the deck keeps its own review records.
+
 ## 34 (October 27)
 - A practice exam: 35 questions drawn one per group as the real exam draws them, on one scrolling page with the current question popped out and the rest faded, nothing marked until Finish. The result shows the score against the pass mark, the time, what the estimate had said, a row per section and every miss with the answer given, and offers the misses as a drill. The last result shows on home. A reload mid-exam comes back to the same exam.
 - Hardest for you: home offers a drill of the questions missed more than once and not mastered since, hardest first, each card saying how often.
