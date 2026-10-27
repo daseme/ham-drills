@@ -12,6 +12,8 @@ function format(src){
   const head=src.slice(0,at).trimEnd();
   const w={};vm.runInNewContext(src,{window:w});
   if(!Array.isArray(w.DECKS)||!w.EXPLAIN)throw new Error("file sets no DECKS and EXPLAIN");
+  const extra=Object.keys(w).filter(k=>k!=="DECKS"&&k!=="EXPLAIN");
+  if(extra.length)throw new Error("file sets more than DECKS and EXPLAIN ("+extra.join(", ")+"); the layout holds only those");
   const expand=v=>Array.isArray(v)||(v&&typeof v==="object"&&(Object.keys(v).length>8||Object.values(v).some(x=>x&&typeof x==="object")));
   const field=v=>{
     if(!expand(v))return JSON.stringify(v);

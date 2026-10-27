@@ -63,3 +63,19 @@ Red team, resolved. Font rasterisation differs between Windows and Linux, so bas
 ## Version and docs
 
 One version bump covers the app changes; the data reformat and the CI job change no app behaviour and ship under the same number. CHANGELOG, README, and ARCHITECTURE describe the new screens, the backup validation, the badge, the formatter and the screenshot job.
+
+## Red team, second round
+
+A fresh reviewer read the design against the code before the screens were built. What changed as a result:
+
+- Practice exam: an update taking over while an exam was open would have reloaded the page and lost it. The draw, answer orders, picks and start time now sit in sessionStorage and a reload comes back to the same exam. The result has its own hash, `#exam/result`, drawn from the stored result, so Back from the missed-cards drill lands on the result rather than a fresh draw.
+- Keyboard: a card becomes current when focus enters it, so 1 to 4 answer the card the person is on, and focus moves to the next unanswered card after an answer.
+- Faded cards sit at 70% opacity, which keeps the question text above 4.5:1 on the panel, with each card's own question id and `aria-current` on the current one.
+- Chips count "missed at the last answer" (level 0 with `due` still equal to `fail`), so a same-day retry that goes right clears the count; before, it would have stayed until the next day.
+- Validation also runs over stored records on first read, and `last` and `fail` are clamped to today, so a stray future day cannot win every merge.
+- The badge updates from the save path (`saveSrs`), which covers resets and imports as well as answers, and before the reload check on hiding. Chrome for Android has no Badging API, so the About page says iPhone and desktop, and that line appears only where the API exists.
+- Export and import carry the practice exam results.
+- Screenshots: the version number is masked before capture, the progress path's exam date comes from the frozen clock, capture waits for fonts and two frames, the comparison reports a screen missing on either side, and baselines are committed only from a manual run. The demo list gains `exam` and `hard`; General is shot too.
+- The formatter refuses a data.js that sets anything but DECKS and EXPLAIN, rather than silently dropping it.
+
+Accepted as is: a badge showing tomorrow's count all afternoon; Chrome drift on the runner surfacing as a deliberate rebaseline; misses counted per answer rather than per sitting in the hardest drill.
