@@ -1,6 +1,6 @@
 /* Compares two folders of screenshots from tools/screens.mjs, pixel for pixel.
      node tools/compare-screens.mjs <dirA> <dirB>
-   Prints "identical" or the box that differs for each PNG in dirA, and exits 1 if any differ or are missing.
+   Prints "identical" or the box that differs for each PNG, and exits 1 if any differ or either folder lacks one.
    Decodes PNG itself (8-bit RGB/RGBA, non-interlaced, which is what Chrome writes), so it needs no packages. */
 import {readFileSync, readdirSync, existsSync} from "node:fs";
 import {inflateSync} from "node:zlib";
@@ -41,7 +41,9 @@ export function diffBox(a, b) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [A, B] = process.argv.slice(2);
   let bad = 0;
-  for (const f of readdirSync(A).filter(f => f.endsWith(".png"))) {
+  const pngs = d => existsSync(d) ? readdirSync(d).filter(f => f.endsWith(".png")) : [];
+  for (const f of pngs(B)) if (!pngs(A).includes(f)) { console.log(`${f}: missing in ${A}`); bad++ }
+  for (const f of pngs(A)) {
     if (!existsSync(join(B, f))) { console.log(`${f}: missing in ${B}`); bad++; continue }
     const d = diffBox(decodePng(readFileSync(join(A, f))), decodePng(readFileSync(join(B, f))));
     console.log(`${f}: ${d || "identical"}`); if (d) bad++;

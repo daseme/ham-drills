@@ -2,6 +2,12 @@ name: check
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      rebaseline:
+        description: Replace the screenshot baselines in test/screens with this run's
+        type: boolean
+        default: false
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -17,3 +23,43 @@ jobs:
           node tools/data-format.js --check technician/data.js general/data.js
       - name: Tests
         run: node --test "test/*.test.js"
+  # Every screen, shot in the runner's Chrome and compared pixel for pixel with the baselines in test/screens.
+  # Baselines come only from this runner (fonts rasterise differently elsewhere): run the workflow by hand with
+  # rebaseline on, and the job commits the new set to the branch. Otherwise a difference fails the job, and
+  # the screenshots are attached as an artifact to look at.
+  screens:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Serve the repo
+        run: (python3 -m http.server 8812 > /dev/null 2>&1 &) && sleep 1
+      - name: Screenshots
+        env:
+          CHROME: google-chrome
+        run: |
+          node tools/screens.mjs http://127.0.0.1:8812/technician/ private/screens/technician --query "?demo"
+          node tools/screens.mjs http://127.0.0.1:8812/general/ private/screens/general --screens ",g1,about,exam"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: private/screens
+      - name: Compare with the baselines
+        if: github.event_name != 'workflow_dispatch' || !inputs.rebaseline
+        run: |
+          node tools/compare-screens.mjs test/screens/technician private/screens/technician
+          node tools/compare-screens.mjs test/screens/general private/screens/general
+      - name: Rebaseline
+        if: github.event_name == 'workflow_dispatch' && inputs.rebaseline
+        run: |
+          rm -rf test/screens && mkdir -p test/screens && cp -r private/screens/. test/screens/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add test/screens
+          git diff --cached --quiet && echo "baselines unchanged" && exit 0
+          git commit -m "Screenshot baselines from the runner's Chrome"
+          git push origin HEAD:${{ github.ref_name }}
