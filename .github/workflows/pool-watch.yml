@@ -1,10 +1,10 @@
 name: pool watch
-# Once a week, download each official pool from the NCVEC and compare it with the committed snapshot in pools/.
-# A new errata release shows up as a failed run, which GitHub mails to the repository owner; the log says what
-# changed. Then: download the new file, run tools/pool-snapshot.js, fix data.js until tools/pool-check.js passes.
+# Downloads each official pool from the NCVEC and compares it with the committed snapshot in pools/, so a new
+# errata release shows up as a failed run whose log says what changed. The NCVEC's site sits behind Cloudflare,
+# which answers GitHub's runners with 403 (October 2026), so this is not scheduled: run tools/pool-fetch.js by
+# hand instead, and try this by hand now and then in case the block lifts. After a change: download the new file,
+# run tools/pool-snapshot.js, fix data.js until tools/pool-check.js passes.
 on:
-  schedule:
-    - cron: "17 13 * * 1"
   workflow_dispatch:
 jobs:
   watch:
@@ -14,8 +14,5 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - name: Technician pool
-        run: node tools/pool-fetch.js technician
-      - name: General pool
-        if: always()
-        run: node tools/pool-fetch.js general
+      - name: Both pools
+        run: node tools/pool-fetch.js
