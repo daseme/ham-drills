@@ -1233,7 +1233,7 @@ window.DECKS=[
 ["G4D11","How close to the upper edge of a band’s phone segment should your displayed carrier frequency be when using 3 kHz wide USB?",["At least 3 kHz above the edge of the band","At least 3 kHz below the edge of the band","At least 1 kHz above the edge of the segment","At least 1 kHz below the edge of the segment"],1,"On USB, keep the displayed frequency at least 3 kHz below the upper edge of the phone segment."]
 ],
 "P":{
-"chart":["Reading the band chart","<p>General class has every HF band from 160 through 10 meters. On six of them (160, 60, 30, 17, 12 and 10 meters) a General may use the whole band. On the other four (80, 40, 20 and 15 meters) the bottom of the CW and data segment and the bottom of the phone segment are reserved for Amateur Extra, so a General works the upper part of each.</p><p>The chart draws each band as a bar on its own scale: amber is where a General may send CW, RTTY and data, green is phone and image, and grey is Extra only. The gap on 40 meters, 7.125 to 7.175 MHz, is the one the pool asks about: it is Extra-only phone. On 15 meters the General phone segment starts at 21.275 MHz, so 21.300 MHz is inside it.</p>"],
+"chart":["Reading the band chart","<p>General class has every HF band from 160 through 10 meters. On six of them (160, 60, 30, 17, 12 and 10 meters) a General may use the whole band. On the other four (80, 40, 20 and 15 meters) the bottom of the CW and data segment and the bottom of the phone segment are reserved for Amateur Extra, so a General works the upper part of each.</p><p>The chart draws each band as a bar on its own scale: amber is where a General may send CW, RTTY and data, green is phone and image, and grey is Extra only. The gap on 40 meters, 7.125 to 7.175 MHz, is the one the pool asks about: it is Extra-only phone. On 15 meters the General phone segment starts at 21.275 MHz, so 21.300 MHz is inside it.</p><p>To learn the numbers themselves, <a href=\"#edges\">drill the band edges as flash cards</a>.</p>"],
 "modes":["Which modes go where","<p>CW is legal anywhere a General may transmit. RTTY and data live in the lower segment of each band and phone and image in the upper, with two exceptions: 160 meters allows every mode across the whole band, and 30 meters allows only CW, RTTY and data. No phone and no image on 30 meters: it is a narrow band shared with other services.</p><p>Some spots are set aside by rule or by the band plan. Automatically controlled beacons on HF may only use 28.200 to 28.300 MHz, and the international propagation beacons sit on 14.100, 18.110, 21.150, 24.930 and 28.200 MHz, so avoid transmitting there. Repeaters on 10 meters use the top of the band, above 29.5 MHz. Digital modes cluster just above the bottom of each band: on 20 meters between 14.070 and 14.100 MHz, with FT8 at 14.074 to 14.077 MHz.</p>"],
 "sideband":["Lower sideband below, upper above","<p>On 160, 75 and 40 meters, voice uses lower sideband; from 20 meters up (20, 17, 15, 12 and 10 meters) it uses upper sideband, and so does SSB on VHF and UHF. No rule says so; it is accepted amateur practice, dating from early equipment that produced LSB below 9 MHz and USB above. Everyone follows it so that receivers tune to the same sideband.</p><p>Two cases are fixed: 60 meters is upper sideband by rule, and digital modes such as FT8, FT4, JT65 and JT9 use USB on every band, because the software expects the audio tones to map upward from the carrier.</p>"],
 "power":["Power limits and the special bands","<p>The standard limit is 1500 watts PEP output from the transmitter, and that is the limit on 160, 12 and 10 meters and most other HF bands. Two bands are lower. On 30 meters (10.100 to 10.150 MHz) no station may exceed 200 watts PEP. On 60 meters the limit is radiated power: 100 watts ERP on the channels, measured against a half-wave dipole, which is why the rules require a record of the gain of any antenna that is not a dipole. Signals on 60 meters may occupy no more than 2.8 kHz. Beacon stations are limited to 100 watts PEP.</p><p>Part 97 now gives 60 meters four channels (centred on 5.332, 5.348, 5.373 and 5.405 MHz, carrier 1.5 kHz lower for USB) plus a small band from 5.3515 to 5.3665 MHz with a lower ERP limit; the pool, written earlier, asks only about the bandwidth and the antenna record.</p>"],
@@ -1273,6 +1273,25 @@ window.DECKS=[
 "G2B05":"edges",
 "G2B08":"edges"
 }
+},
+{
+"id":"edges",
+"code":"Edges",
+"name":"Band edges",
+"exam":0,
+"intro":"The General segments on each of the ten HF bands, as cards to flip and grade yourself. Amber is CW, RTTY and data; green is phone and image; grey is reserved for Extra. The Bands deck drills the pool's questions on them.",
+"flash":[
+{"n":"160 m","a":"1.800 to 2.000 MHz, every mode, the whole band.","t":"The one HF band with no segments. Voice is LSB here."},
+{"n":"80 m","a":"CW, RTTY and data 3.525 to 3.600 MHz. Phone and image 3.800 to 4.000 MHz.","t":"General starts 25 kHz above the bottom and has the top 200 kHz of phone; 3.600 to 3.800 is reserved for Extra and Advanced. Voice is LSB."},
+{"n":"60 m","a":"Four channels centred on 5.332, 5.348, 5.373 and 5.405 MHz, plus 5.3515 to 5.3665 MHz. USB, CW and data; 100 W ERP; 2.8 kHz wide at most.","t":"Channels, not a band. For USB, set the dial 1.5 kHz below the channel centre. The pool asks about the 2.8 kHz limit and the record of antenna gain."},
+{"n":"40 m","a":"CW, RTTY and data 7.025 to 7.125 MHz. Phone and image 7.175 to 7.300 MHz.","t":"The 50 kHz between them, 7.125 to 7.175, is phone reserved for Extra and Advanced. Voice is LSB."},
+{"n":"30 m","a":"10.100 to 10.150 MHz, CW, RTTY and data only, 200 W PEP.","t":"Fifty kHz, no voice, no image, 200 watts; General and Extra share it on equal terms."},
+{"n":"20 m","a":"CW, RTTY and data 14.025 to 14.150 MHz. Phone and image 14.225 to 14.350 MHz.","t":"25 kHz up, as on 80, 40 and 15; phone starts 75 kHz above the top of CW. Voice is USB from here up."},
+{"n":"17 m","a":"CW, RTTY and data 18.068 to 18.110 MHz. Phone and image 18.110 to 18.168 MHz.","t":"The whole band, split at 18.110, where the propagation beacon sits."},
+{"n":"15 m","a":"CW, RTTY and data 21.025 to 21.200 MHz. Phone and image 21.275 to 21.450 MHz.","t":"25 kHz up; phone from 21.275, so 21.300 is General. 21.200 to 21.275 is reserved for Extra and Advanced."},
+{"n":"12 m","a":"CW, RTTY and data 24.890 to 24.930 MHz. Phone and image 24.930 to 24.990 MHz.","t":"The whole band, 100 kHz, split at 24.930, the beacon frequency."},
+{"n":"10 m","a":"CW, RTTY and data 28.000 to 28.300 MHz. Phone and image 28.300 to 29.700 MHz.","t":"The whole band. Beacons 28.200 to 28.300; repeaters above 29.5 MHz; 1500 W PEP."}
+]
 }
 ];
 window.EXPLAIN={

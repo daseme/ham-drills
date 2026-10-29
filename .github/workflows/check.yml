@@ -43,7 +43,7 @@ jobs:
           CHROME: google-chrome
         run: |
           node tools/screens.mjs http://127.0.0.1:8812/technician/ private/screens/technician --query "?demo"
-          node tools/screens.mjs http://127.0.0.1:8812/general/ private/screens/general --screens ",g1,about,exam,bands/study"
+          node tools/screens.mjs http://127.0.0.1:8812/general/ private/screens/general --screens ",g1,about,exam,bands/study,edges,edges/study"
       - uses: actions/upload-artifact@v4
         with:
           name: screens

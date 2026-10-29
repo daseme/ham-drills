@@ -13,6 +13,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* A deck's cheat sheet: its own text, or one the exam draws (a band chart, say). */
 const cheatOf=d=>d.cheat||(window.EXAM_CONFIG.cheats||{})[d.id]||"";
+/* A flash card's drawing, if the exam draws one for that deck (a band's bar, say). */
+const artOf=(d,n)=>{const a=window.EXAM_CONFIG.art;return a&&a[d.id]?a[d.id](n):""};
 const IV=[0,1,3,7,16,35],MASTER=3;
 const dayNum=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000)};
 const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
@@ -64,7 +66,7 @@ function importDecks(decks){let n=0,dropped=0;
   return {decks:n,dropped}}
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
-const itemIds=d=>d.S?d.S.map(s=>s.n):d.Q.map(q=>q[0]);
+const itemIds=d=>d.S?d.S.map(s=>s.n):d.flash?d.flash.map(c=>c.n):d.Q.map(q=>q[0]);
 const isDue=(id,k)=>{const r=srsOf(id)[k];return !r||r.due<=dayNum()};
 const isMastered=(id,k)=>{const r=srsOf(id)[k];return !!r&&r.lv>=MASTER};
 const isSeen=(id,k)=>!!srsOf(id)[k];
@@ -178,7 +180,7 @@ function saveExam(e){const x=get("exams",[]);put("exams",(Array.isArray(x)?x:[])
 const examMissed=()=>(lastExam()&&Array.isArray(lastExam().missed)?lastExam().missed:[]).map(([d,id])=>({d:DECK[d],q:DECK[d]&&DECK[d].Q.find(q=>q[0]===id)})).filter(x=>x.d&&x.q);
 /* Cards missed at least twice and not yet mastered, hardest first; a math card that is also a pool card is listed once. */
 function hardCards(){const by={};
-  for(const d of DECKS){if(d.S)continue;const s=srsOf(d.id);
+  for(const d of DECKS){if(!d.Q)continue;const s=srsOf(d.id);
     for(const q of d.Q){const r=s[q[0]];if(!r||(r.w||0)<2||r.lv>=MASTER)continue;const o=by[q[0]];if(!o||r.w>o.w||(r.w===o.w&&d.exam&&!o.d.exam))by[q[0]]={d,q,w:r.w,lv:r.lv}}}
   return Object.values(by).sort((a,b)=>b.w-a.w||a.lv-b.lv)}
 
@@ -225,7 +227,7 @@ function armReset(b,what,erase){const label=b.textContent;
     setTimeout(()=>{if(b.dataset.armed){delete b.dataset.armed;b.textContent=label}},5000)}}
 /* In a drill, 1 to 4 or A to D picks an answer; Enter already presses the focused Next button. */
 document.addEventListener("keydown",e=>{
-  if(e.ctrlKey||e.metaKey||e.altKey||e.key.length!==1||(e.target.closest&&e.target.closest("input,textarea,select")))return;
+  if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||e.key.length!==1||(e.target.closest&&e.target.closest("input,textarea,select")))return;
   const n=Math.max("1234".indexOf(e.key),"abcd".indexOf(e.key.toLowerCase())),b=n>=0&&$("ans")&&$("ans").children[n];
   if(b&&!b.disabled){e.preventDefault();b.click()}});
 /* What a screen reader hears after an answer and at the end of a drill; the question itself labels the answer group. */
@@ -249,6 +251,7 @@ function route(){
   else if(m&&DECK[m[1]]&&m[2]==="study")study(DECK[m[1]]);
   else if(m&&DECK[m[1]]&&m[2]==="p"&&DECK[m[1]].P&&DECK[m[1]].P[m[3]])drill({deck:DECK[m[1]],primer:m[3]});
   else if(h==="symbols"&&DECK.symbols)symbols();
+  else if(DECK[h]&&DECK[h].flash)flash(DECK[h]);
   else if(DECK[h])drill({deck:DECK[h]});
   else home();
   window.scrollTo(0,0);
@@ -279,13 +282,13 @@ function home(){
     const m=s.mastered/s.total*100,sn=(s.seen-s.mastered)/s.total*100;
     const how=s.mastered===s.total?`All ${s.total} mastered.`:`${s.seen} of ${s.total} seen, ${s.mastered} mastered.`;
     const meta=d.exam?`${s.seen?`${d.exam} on the exam. ${how}`:`${d.exam} on the exam, ${s.total} questions. Not started.`}`
-      :`${s.seen?how:`${s.total} ${d.S?"symbols":"questions"}. Not started.`}`;
+      :`${s.seen?how:`${s.total} ${d.S?"symbols":d.flash?"cards":"questions"}. Not started.`}`;
     const earned=tierEarned(d);
     return `<li><button class="row${s.seen?"":" untouched"}${earned?" badged":""}" data-go="${d.id}">
       <span class="code${d.code.length>2?" long":""}">${deckBadge(d,32)}${d.code}${earned?`<span class="sr">, ${TIER[earned]} badge</span>`:""}</span><span class="nm">${esc(d.name)}</span>
       <span class="due${due?"":" zero"}">${due||""}<small>${due?"due":""}</small></span>
       <span class="meta">${meta}</span>
-      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S)&&(hinted=true)?`<span class="study-link">New to ${d.code}? <a href="#${d.id}/study">Read its basics first</a>.</span>`:""}</li>`};
+      <span class="meter" aria-hidden="true"><i class="m" style="width:${m}%"></i><i class="s" style="width:${sn}%"></i></span></button>${!s.seen&&!hinted&&(d.P||d.S||d.flash)&&(hinted=true)?`<span class="study-link">New to ${d.code}? <a href="#${d.id}/study">Read its basics first</a>.</span>`:""}</li>`};
   app.innerHTML=`
   <p class="over">${C.over}</p>
   <h1>${C.title}</h1>
@@ -298,7 +301,7 @@ function home(){
   ${planBlock()}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>
-  <div class="sashbox"><ul class="sash" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
+  <div class="sashbox"><ul class="sash${DECKS.length>12?" seven":""}" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
   <p class="sash-cap">${sashCaption()}</p></div>
   <div class="foot">
     <p class="links"><button class="linkbtn" id="exp">${DEMO?"Export sample":"Export progress"}</button>${DEMO?"":`<button class="linkbtn" id="imp">Import progress</button>`}<a href="#study">Study guide</a><a href="#about">About</a>${C.demo&&!DEMO&&DECKS.every(d=>!stats(d).seen)?`<a href="?demo">See it with sample progress</a>`:""}<span>Version ${APP_VERSION}${DEMO?", demo":""}</span></p>
@@ -394,6 +397,9 @@ function studySection(d,{solo}){
     <div class="gallery">${d.S.map(s=>`<div><svg viewBox="0 0 120 60" role="img" aria-label="${esc(s.n)}"><g ${SYM_SW}>${s.d}</g></svg><b>${esc(s.n)}</b>${esc(s.def)}<p>${esc(s.t)}</p></div>`).join("")}</div>
     <h2>${C.symbolText.figsHead}</h2><p>${C.symbolText.figsNote} Each figure also appears on the card for any question that uses it.</p>
     <div class="figs">${Object.keys(FIGS).map(f=>`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}. The pool asks about ${FIG_KEY[f]}.</figcaption></figure>`).join("")}</div>`;
+  }else if(d.flash){
+    body=`<p class="sub">${esc(d.intro||`${d.flash.length} cards.`)}</p>
+    <div class="gallery cards">${d.flash.map(c=>`<div><b>${esc(c.n)}</b>${artOf(d,c.n)}${esc(c.a)}<p>${esc(c.t)}</p></div>`).join("")}</div>`;
   }else{
     const cov={};for(const q of d.Q){const k=d.CON&&d.CON[q[0]];if(k)(cov[k]=cov[k]||[]).push(q[0])}
     const intro=d.exam?`${d.code} supplies ${d.exam} of the ${C.examQ} exam questions, drawn from ${d.Q.length} in the pool.`:d.intro||`${d.Q.length} questions, with the formulas they rest on.`;
@@ -621,6 +627,57 @@ function examResult(){
   ${e.missed.length?`<h2 class="misshead">Missed</h2>${missed}`:""}`;
   $("back").onclick=goHome;if($("missed"))$("missed").onclick=()=>go("exam/missed");
   $("again").onclick=()=>{history.replaceState(history.state,"","#exam");examScreen();window.scrollTo(0,0)};
+}
+
+/* ---------- flash cards ----------
+   A deck of cards to flip and grade yourself (General's band edges). Records are kept by card name, as symbols are.
+   The front's one button and the back's two sit in the answer group, so 1 flips and 1 or 2 grades. */
+function flash(d){
+  const K=d.flash,id=d.id,app=$("app");prefs.dueOnly=true;
+  let items=[],i=0,done=0,fr=0,fd=0,cur=null;
+  app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
+  <h1>${esc(d.name)}</h1><p class="sub">${esc(d.intro||"")}</p>
+  <div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>
+  <p class="srs" id="srsline"></p>
+  <div class="status"><span id="pos"></span><span id="score"></span></div>
+  <div class="bar"><span id="fill"></span></div>
+  <div class="card" id="card"></div><p class="sr" id="said" aria-live="polite"></p>
+  <p class="foot"><button class="linkbtn" id="reset">Reset ${esc(d.code)} progress</button></p>`;
+  $("back").onclick=goHome;
+  $("dueOnly").checked=prefs.dueOnly;$("dueOnly").onchange=()=>{prefs.dueOnly=$("dueOnly").checked;savePrefs();start()};
+  armReset($("reset"),d.code,()=>{SRS[id]={};saveSrs(id);start()});
+  const due=c=>isDue(id,c.n);
+  const tomorrow=()=>K.filter(c=>{const r=srsOf(id)[c.n];return r&&r.due===dayNum()+1}).length;
+  function srsLine(){$("srsline").textContent=`${K.filter(due).length} due today, ${K.filter(c=>isMastered(id,c.n)).length} of ${K.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}.`}
+  function start(){const pool=prefs.dueOnly?K.filter(due):K;items=shuffle(pool).map(c=>({c}));i=0;done=0;fr=0;fd=0;render()}
+  function status(){srsLine();$("pos").textContent=items.length?`Card ${Math.min(i+1,items.length)} of ${items.length}`:"";$("score").textContent=fd?`${fr} of ${fd} right first try`:"";$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
+  const head=c=>`<p class="prompt" id="qtext">General privileges on</p><p class="name" id="qname">${esc(c.n)}</p>`;
+  function render(){
+    status();const c=$("card");keepInView(c);
+    if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
+    if(i>=items.length){const left=K.filter(due).length;
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"card is":"cards are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
+      <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
+      $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);return}
+    cur=items[i].c;
+    c.innerHTML=`${head(cur)}<div class="ans" id="ans" role="group" aria-labelledby="qtext qname"><button data-act="show">Show</button></div>`;
+    wire();
+  }
+  function flip(){
+    const c=$("card");
+    c.innerHTML=`${head(cur)}${artOf(d,cur.n)}<p class="defn" id="qans">${esc(cur.a)}</p><p class="hook" id="qhook">${esc(cur.t)}</p>
+    <div class="ans grade" id="ans" role="group" aria-labelledby="qans qhook"><button data-act="ok">Got it</button><button data-act="no">Missed it</button></div>`;
+    wire();
+  }
+  function wire(){$("ans").onclick=e=>{const b=e.target.closest&&e.target.closest("button");if(!b)return;act(b.dataset.act)};$("ans").querySelector("button").focus({preventScroll:true})}
+  function act(a){
+    if(a==="show")return flip();
+    const ok=a==="ok";
+    done++;if(!items[i].re){fd++;if(ok)fr++}record(id,cur.n,ok);
+    if(!ok&&prefs.dueOnly)items.splice(Math.min(i+4,items.length),0,{...items[i],re:1});
+    i++;render();
+  }
+  start();
 }
 
 /* ---------- symbol drill ---------- */

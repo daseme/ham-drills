@@ -2,6 +2,10 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 36 (October 29)
+- General gains Band edges: ten flash cards, one per HF band, front the band and back its General segments with that band's bar from the chart and a hook. Flip, then grade yourself; the cards are scheduled and badged like everything else, with their own records. The Bands chart primer links to them.
+- Holding a key no longer answers twice: key repeats are ignored in the drills.
+
 ## 35 (October 27)
 - General gains a Bands and privileges deck: the 32 pool questions on frequencies, modes, sidebands and power limits, under five primers, with a General band chart drawn from Part 97 as its cheat sheet. It does for General what the Symbols deck does for Technician: the near-miss numbers in one place. Questions stay in their sections too; the deck keeps its own review records.
 

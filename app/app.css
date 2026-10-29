@@ -63,6 +63,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .badge.lapsed{opacity:.45}
 .sashbox{margin:22px 0 0;padding:14px 8px 10px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
 .sash{list-style:none;display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;margin:0;padding:0}
+.sash.seven{grid-template-columns:repeat(7,1fr)}
 .sash li{text-align:center}
 .sash .badge{margin:0 auto}
 .sash b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;line-height:1.2;margin-top:3px}
@@ -127,6 +128,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .study .gallery svg{width:100%;height:auto;color:var(--ink);display:block;margin-bottom:4px}
 .study .gallery b{display:block;font-size:16px}
 .study .gallery p{margin:4px 0 0;color:var(--muted)}
+.study .cards{grid-template-columns:1fr}.study .cards .bandbar{display:block;width:100%;height:auto;margin:2px 0 6px}
 .study .cheat{margin-top:12px}
 .study .cheat summary{display:none}
 .study .cheat p{margin:0 0 8px}
@@ -182,6 +184,8 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .tiles button{justify-content:center;padding:14px 8px}
 .tiles svg{width:100%;max-width:150px;height:auto;color:var(--ink)}
 .defn{margin:0 0 6px}.hook{margin:0;color:var(--muted);font-size:15px}
+.ans.grade{flex-direction:row;margin-top:14px}.ans.grade button{justify-content:center;font-weight:700}
+.card .bandbar{display:block;width:100%;height:auto;margin:0 0 10px}
 /* footer */
 .foot{font-size:14px;color:var(--muted);margin-top:28px}
 .foot .links{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline}
