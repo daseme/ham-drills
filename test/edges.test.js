@@ -71,7 +71,7 @@ test("the review-all line and the hardest list leave the cards out, and nothing 
   g.run(`srsOf("edges")["40 m"]={lv:0,due:0,last:0,fail:0,n:5,w:4};0`);
   assert.deepEqual(g.run("hardCards().map(c=>c.q[0])"),[]);
   g.run("drill({mixed:true})");
-  assert.match(g.run(`$("app").innerHTML`),/Math, Bands and Edges are reviewed on their own\./);
+  assert.match(g.run(`$("app").innerHTML`),/Math, Bands, Edges and Facts are reviewed on their own\./);
 });
 
 /* Drive the drill through its answer group as a tap would. */

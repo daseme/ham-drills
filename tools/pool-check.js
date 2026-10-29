@@ -47,13 +47,18 @@ for(const d of DECKS.filter(d=>!d.exam&&d.Q))for(const q of d.Q){
   if(!o)fail(`${d.id} ${q[0]}: not in any pool section`);
   else if(JSON.stringify(q.slice(1,4))!==JSON.stringify(o.q.slice(1,4)))fail(`${d.id} ${q[0]}: differs from its copy in ${o.deck}`);
 }
-/* A flash-card deck: cards named once each, with text and a hook. */
+/* A flash-card deck: cards keyed once each (the short key, else the name), with text and a hook; sources, when
+   given, are pool questions. */
 for(const d of DECKS.filter(d=>d.flash)){const seen=new Set();
+  if("prompt" in d&&(typeof d.prompt!=="string"||!d.prompt.trim()))fail(`${d.id}: prompt must be a non-empty string`);
   for(const c of d.flash){
+    const key=c.k||c.n;
     if(typeof c.n!=="string"||!c.n.trim())fail(`${d.id}: a card has no name`);
-    else if(seen.has(c.n))fail(`${d.id}: card ${c.n} appears twice`);
-    seen.add(c.n);
-    if(typeof c.a!=="string"||!c.a.trim()||typeof c.t!=="string")fail(`${d.id}: card ${c.n} needs text and a hook`)}}
+    if("k" in c&&(typeof c.k!=="string"||!/^[a-z0-9-]+$/.test(c.k)))fail(`${d.id}: card ${c.n} has a bad key`);
+    if(seen.has(key))fail(`${d.id}: card key ${key} appears twice`);
+    seen.add(key);
+    if(typeof c.a!=="string"||!c.a.trim()||typeof c.t!=="string")fail(`${d.id}: card ${c.n} needs text and a hook`);
+    for(const q of c.q==null?[]:[].concat(c.q))if(!byId.has(q))fail(`${d.id}: card ${c.n} cites ${q}, not a pool question`)}}
 notes.push(`${C.shortName} data: ${byId.size} pool questions in ${POOL.length} sections${complete?`, exam counts sum to ${examSum}`:` of ${C.sections}`}`);
 
 /* ---------- pool comparison ---------- */

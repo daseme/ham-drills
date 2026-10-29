@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 37 (October 29)
+- General gains Numbers to know: 31 flash cards for the numbers the pool asks for once each and nothing ties together, from the FAA height limit to the RTTY shift. Each card names the questions it comes from, and a test holds every number on a card to the pool's own answer.
+
 ## 36 (October 29)
 - General gains Band edges: ten flash cards, one per HF band, front the band and back its General segments with that band's bar from the chart and a hook. Flip, then grade yourself; the cards are scheduled and badged like everything else, with their own records. The Bands chart primer links to them.
 - Holding a key no longer answers twice: key repeats are ignored in the drills.

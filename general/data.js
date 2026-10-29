@@ -1280,6 +1280,7 @@ window.DECKS=[
 "name":"Band edges",
 "exam":0,
 "intro":"The General segments on each of the ten HF bands, as cards to flip and grade yourself. Amber is CW, RTTY and data; green is phone and image; grey is reserved for Extra. The Bands deck drills the pool's questions on them.",
+"prompt":"General privileges on",
 "flash":[
 {"n":"160 m","a":"1.800 to 2.000 MHz, every mode, the whole band.","t":"The one HF band with no segments. Voice is LSB here."},
 {"n":"80 m","a":"CW, RTTY and data 3.525 to 3.600 MHz. Phone and image 3.800 to 4.000 MHz.","t":"General starts 25 kHz above the bottom and has the top 200 kHz of phone; 3.600 to 3.800 is reserved for Extra and Advanced. Voice is LSB."},
@@ -1291,6 +1292,46 @@ window.DECKS=[
 {"n":"15 m","a":"CW, RTTY and data 21.025 to 21.200 MHz. Phone and image 21.275 to 21.450 MHz.","t":"25 kHz up; phone from 21.275, so 21.300 is General. 21.200 to 21.275 is reserved for Extra and Advanced."},
 {"n":"12 m","a":"CW, RTTY and data 24.890 to 24.930 MHz. Phone and image 24.930 to 24.990 MHz.","t":"The whole band, 100 kHz, split at 24.930, the beacon frequency."},
 {"n":"10 m","a":"CW, RTTY and data 28.000 to 28.300 MHz. Phone and image 28.300 to 29.700 MHz.","t":"The whole band. Beacons 28.200 to 28.300; repeaters above 29.5 MHz; 1500 W PEP."}
+]
+},
+{
+"id":"facts",
+"code":"Facts",
+"name":"Numbers to know",
+"exam":0,
+"intro":"31 cards of numbers the pool asks for and nothing ties together: rules, decibels, spacings, parts and propagation. Each card names the questions it comes from.",
+"flash":[
+{"k":"faa","n":"Antenna height before the FAA must be told","a":"200 feet above ground, away from a public-use airport.","t":"Taller, and the structure needs FAA notification and FCC registration; near an airport it can be lower.","q":"G1B01"},
+{"k":"csce","n":"How long a CSCE is good for","a":"365 days.","t":"A year to use the exam credit toward the next element.","q":"G1D09"},
+{"k":"ve-age","n":"Minimum age for a Volunteer Examiner","a":"18 years.","t":"No minimum age to take an exam; the limit is only for examiners, who hold General or above.","q":"G1D10"},
+{"k":"ss-power","n":"Power limit for spread spectrum","a":"10 watts PEP output.","t":"Far below the 1500 W general limit: a wide signal has to stay quiet.","q":"G1E08"},
+{"k":"beacon-power","n":"Power limit for a beacon","a":"100 watts PEP output.","t":"Beacons run unattended, so the rules keep them small; under automatic control on HF they sit only in the 10 meter beacon segment.","q":"G1B10"},
+{"k":"races","n":"How often RACES may drill","a":"No more than 1 hour a week without special authorization.","t":"RACES is civil defense; routine drills are capped so the frequencies stay free.","q":"G2B11"},
+{"k":"itu","n":"ITU region for the Americas","a":"Region 2.","t":"Region 1 is Europe, Africa, the Middle East and Russia; Region 3 the rest of Asia and the Pacific.","q":"G1E06"},
+{"k":"s-unit","n":"Decibels per S unit","a":"6 dB, about 4 times the power.","t":"S8 to S9 takes roughly four times the power out.","q":["G4D06","G4D07"]},
+{"k":"s9-20","n":"20 dB over S9","a":"100 times the power of S9.","t":"Each 10 dB is ten times; two of them, a hundred.","q":"G4D05"},
+{"k":"3db","n":"Doubling power, in dB","a":"About 3 dB.","t":"Half an S unit; halving power is 3 dB down.","q":"G5B01"},
+{"k":"1db","n":"A 1 dB loss","a":"20.6 percent of the power lost.","t":"About a fifth gone, four fifths through; 3 dB would be half.","q":"G5B10"},
+{"k":"dbi","n":"dBi against dBd","a":"dBi is 2.15 dB higher than dBd for the same antenna.","t":"A dipole has 2.15 dBi; dBd counts the dipole as zero.","q":"G9C04"},
+{"k":"stack","n":"Two three-element Yagis stacked half a wavelength apart, against one","a":"About 3 dB higher.","t":"Doubling the antenna is like doubling the power.","q":"G9C09"},
+{"k":"cw-space","n":"Spacing between CW signals","a":"150 to 500 Hz.","t":"A CW signal is only about 150 Hz wide.","q":"G2B04"},
+{"k":"ssb-space","n":"Spacing between SSB signals","a":"2 to 3 kHz.","t":"One signal width: SSB is about 3 kHz wide.","q":"G2B05"},
+{"k":"rtty","n":"Usual RTTY shift on HF","a":"170 Hz between mark and space.","t":"The two tones are 170 Hz apart.","q":"G2E06"},
+{"k":"carson","n":"Carson's rule for FM bandwidth","a":"Twice the deviation plus the highest audio frequency: 5 kHz and 3 kHz give 16 kHz.","t":"2 × (5 + 3). The sidebands reach past the deviation by the audio frequency.","q":"G8B06"},
+{"k":"digital-20","n":"Digital modes on 20 meters","a":"14.070 to 14.100 MHz; FT8 at about 14.074 to 14.077.","t":"At the low end of the band, inside the CW, RTTY and data segment.","q":["G2E08","G2E15"]},
+{"k":"diode","n":"Diode forward voltage","a":"Silicon 0.7 volts; germanium 0.3 volts.","t":"The forward voltage a diode needs before it conducts.","q":["G6A05","G6A03"]},
+{"k":"solar","n":"Open-circuit voltage of a silicon solar cell","a":"About 0.5 volts in full sun.","t":"Cells go in series to make a useful voltage.","q":"G4E09"},
+{"k":"lead-acid","n":"Lowest safe discharge for a 12 V lead-acid battery","a":"10.5 volts.","t":"Below that the plates sulfate and the battery ages fast.","q":"G6A01"},
+{"k":"flare","n":"Delay from a solar flare's UV and X-rays","a":"About 8 minutes: they arrive at the speed of light.","t":"A sudden ionospheric disturbance: daytime HF blacks out, lower bands first, with no warning possible.","q":"G3A03"},
+{"k":"cme","n":"Delay from a coronal mass ejection","a":"15 hours to several days.","t":"Charged particles are slow; the geomagnetic storm follows a day or more behind.","q":"G3A11"},
+{"k":"hop","n":"Longest single hop","a":"F2 region about 2,500 miles; E region about 1,200 miles.","t":"Higher layer, longer hop.","q":["G3B09","G3B10"]},
+{"k":"window","n":"Window line impedance","a":"450 ohms, nominally.","t":"Bare open wire on spreaders runs nearer 600 ohms; coax is 50 or 75.","q":"G9A03"},
+{"k":"wire-fuse","n":"Wire for a 20 ampere breaker; fuse for AWG 14 wire","a":"AWG 12 wire for 20 amperes; a 15 ampere fuse for AWG 14.","t":"Thinner wire, smaller fuse: the fuse protects the wire.","q":["G0B02","G0B03"]},
+{"k":"rectifier","n":"Rectifier conduction","a":"Half-wave 180 degrees of the AC cycle; full-wave 360.","t":"Half-wave uses one half of each cycle; full-wave both halves.","q":["G7A05","G7A06"]},
+{"k":"dipole","n":"Half-wave dipole for 14.250 and 3.550 MHz","a":"33 feet and 132 feet: 468 divided by MHz.","t":"Halve the frequency, double the wire.","q":["G9B10","G9B11"]},
+{"k":"monopole","n":"Quarter-wave monopole for 28.5 MHz","a":"8 feet: 234 divided by MHz.","t":"Half a dipole; the ground supplies the other half.","q":"G9B12"},
+{"k":"bnc","n":"Upper frequency for low-SWR BNC connectors","a":"About 4 GHz.","t":"Type N goes to about 10 GHz; the PL-259 is fine on HF and VHF but loses its match above.","q":"G6B04"},
+{"k":"iq","n":"Phase between I and Q in an SDR","a":"90 degrees.","t":"In-phase and quadrature: two copies a quarter cycle apart carry both amplitude and phase.","q":"G7C09"}
 ]
 }
 ];

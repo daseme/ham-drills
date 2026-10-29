@@ -13,7 +13,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | technician/exam.js | `window.EXAM_CONFIG`: Technician's names, pool years, question count and pass mark, storage namespace, figures, demo plan |
 | technician/data.js | `window.DECKS` (the twelve sections) and `window.EXPLAIN` (the longer explanation for each question) |
 | technician/sw.js, technician/manifest.webmanifest | Technician's cache name, then the shared worker; its home-screen install |
-| general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, the band chart, no demo) and data.js (G1 to G0, Math, Bands and Edges, 423 pool questions) |
+| general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, the band chart, no demo) and data.js (G1 to G0, Math, Bands, Edges and Facts, 423 pool questions) |
 | forward/ | The content of the daseme/ham-technicians-drills repository: the old address forwards here, and its last service worker retires the old offline copy |
 | version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
 | icons/, fonts/ | Shared icons and bundled typefaces |
@@ -33,7 +33,7 @@ Each deck in `DECKS` has an `id` (`t1` … `t0` or `g1` … `g0`, `math`, and `s
 - `Q`: questions as `[id, stem, [four options], answer index, short note, figure?]`. Text is HTML.
 - `G`: group names, keyed by the three-character group (`T1A`).
 - `P` and `CON`: the primers ("basics") as `[title, html]`, and which primer each question belongs to.
-- Math adds `F` (worked formulas) and `cheat` (a formula sheet). Symbols has `S` instead of `Q`: `{n, def, f, d, t}` per symbol. A flash-card deck has `flash` instead: `{n, a, t}` per card (name, the back's text, a hook); the name is the card's review-record key, so `srs:edges` reads `{"40 m":{...}}`, where the `n` inside is the answer count as on every record. `EXAM_CONFIG.art[deck id]` may map a card name to a drawing: General's Edges deck gets one band's bar from the chart.
+- Math adds `F` (worked formulas) and `cheat` (a formula sheet). Symbols has `S` instead of `Q`: `{n, def, f, d, t}` per symbol. A flash-card deck has `flash` instead: `{n, a, t, k?, q?}` per card (name, the back's text, a hook, a short key, source question ids); the key, or the name when there is none, is the card's review-record key, so `srs:edges` reads `{"40 m":{...}}` and `srs:facts` reads `{"faa":{...}}`, where the `n` inside is the answer count as on every record. Give a card a key when its name might be reworded, since a renamed key resets the card. A flash deck may set `prompt`, the line above the card's name. `EXAM_CONFIG.art[deck id]` may map a card name to a drawing: General's Edges deck gets one band's bar from the chart.
 - A deck with no exam count may set `intro` (its study-page line) and `cheatName` (the label on its cheat sheet). A cheat sheet can also come from exam.js, under `EXAM_CONFIG.cheats[deck id]`: General's Bands deck gets its band chart that way, drawn by `bandChart()` from the `BANDS` table (Part 97 §97.301(d), §97.305(c), §97.313, Region 2), which the config also exposes as `bands` for the tests.
 
 data.js was produced once from the NCVEC pool and is maintained by hand, one question per line so a fix diffs as the lines it touched; `tools/data-format.js` rewrites the layout and CI refuses a file that strays from it. `tools/pool-check.js` is what keeps the content honest: it currently matches the February 19, 2026 errata release exactly.
@@ -80,7 +80,7 @@ Export writes the same records to a JSON file, with the badges, the exam date an
 
 ## Screens
 
-The page is a hash router (`route`): home, a deck's drill (`#t1`), a primer drill (`#t1/p/<key>`), study pages (`#t1/study`, `#study`), `#due`, `#hard`, `#symbols`, a flash-card deck (`#edges`), `#about`, and the practice exam (`#exam`, `#exam/result`, `#exam/missed`). Each screen function rebuilds `#app` from a template string. In-app moves push history entries carrying their depth, so the phone's Back button retraces them.
+The page is a hash router (`route`): home, a deck's drill (`#t1`), a primer drill (`#t1/p/<key>`), study pages (`#t1/study`, `#study`), `#due`, `#hard`, `#symbols`, a flash-card deck (`#edges`, `#facts`), `#about`, and the practice exam (`#exam`, `#exam/result`, `#exam/missed`). Each screen function rebuilds `#app` from a template string. In-app moves push history entries carrying their depth, so the phone's Back button retraces them.
 
 In a drill, reviews come first, shuffled; new cards follow grouped by topic in pool order, each topic's primer shown before its first new card. Answer order is shuffled except where an option reads "All these choices are correct". A list drill (`drill({cards})`, used by `#hard` and `#exam/missed`) runs the cards it is given in that order, due or not. Each group chip in a section drill counts the cards whose last answer was a miss (`lastMissed`: level 0 with `due` still equal to `fail`).
 
