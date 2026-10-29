@@ -1,21 +1,21 @@
-/* Checks an exam's data.js. Without a pool file, the checks that need none: shape, answer range, unique ids, exam
-   counts, and that Math's copies match their pool originals. With the NCVEC pool .docx, also compares every
-   question's id, stem, options and answer against it.
-     node tools/pool-check.js                                   (Technician, no pool file)
-     node tools/pool-check.js technician "private/ncvec/2026-2030 Technician Pool and Syllabus Public Release Feb 19 2026.docx"
+/* Checks an exam's data.js: shape, answer range, unique ids, exam counts, that Math's copies match their pool
+   originals, and every question's id, stem, options and answer against the official pool. The pool is the committed
+   snapshot pools/<exam>.json unless a .docx is given, in which case the snapshot must also be that file's.
+     node tools/pool-check.js                                   (Technician, against pools/technician.json)
+     node tools/pool-check.js general                           (against pools/general.json)
      node tools/pool-check.js general private/ncvec/general-2023-2027-errata6-feb4-2026.docx
    While an exam's sections are still being written, sections absent from data.js are reported as "not yet added",
    not as failures; a section that is present must hold every live question of its pool section. Questions withdrawn
    by errata are skipped. --data <file> checks another data file (for tests). Exits 1 on any failure. */
 "use strict";
 const fs=require("fs"),path=require("path"),vm=require("vm");
-const {parsePool}=require("./pool-parse");
+const {loadPool,sha256,snapshotPath,diffPools}=require("./pool-parse");
 
 const ROOT=path.join(__dirname,"..");
 const args=process.argv.slice(2),flag=k=>{const i=args.indexOf(k);return i<0?null:args.splice(i,2)[1]};
 const dataFile=flag("--data");
 const exam=["technician","general"].includes(args[0])?args.shift():"technician";
-const file=args[0];
+const file=args[0]||(fs.existsSync(snapshotPath(exam))?snapshotPath(exam):null);
 
 const ctx={window:{}};vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(ROOT,exam,"exam.js"),"utf8"),ctx);
@@ -63,8 +63,11 @@ notes.push(`${C.shortName} data: ${byId.size} pool questions in ${POOL.length} s
 
 /* ---------- pool comparison ---------- */
 if(file){
-  const pool=parsePool(file,C.idLetter);
+  const pool=loadPool(file,C.idLetter);
   pool.problems.forEach(fail);
+  /* Given the .docx itself, the committed snapshot must be a snapshot of it, or CI is checking against stale text. */
+  if(!pool.source&&fs.existsSync(snapshotPath(exam))){const snap=loadPool(snapshotPath(exam)),d=diffPools(snap,pool);
+    if(d.length||sha256(file)!==snap.source.sha256)fail(`pools/${exam}.json is not a snapshot of ${path.basename(file)}${d.length?":\n    "+d.join("\n    "):" (same text, different file)"}; run tools/pool-snapshot.js`)}
   /* Typography is compared loosely (curly quotes, dashes, spacing); words, numbers and the answer exactly. */
   const norm=s=>s.normalize("NFKC").replace(/[‘’ʼ′]/g,"'").replace(/[“”″]/g,'"').replace(/[‐-―−]/g,"-").replace(/\s+/g," ").trim();
   /* data.js text is HTML (&sup2;, &times;), so it is compared as a learner sees it. */
@@ -84,7 +87,7 @@ if(file){
   }
   for(const id of byId.keys())if(!pool.questions.has(id))fail(`${id}: in data.js, not in the pool${pool.withdrawn.includes(id)?" (withdrawn)":""}`);
   for(const d of POOL){const s=pool.sections[d.code];if(s&&s.exam!==d.exam)fail(`${d.code}: ${d.exam} exam questions in data.js, ${s.exam} in the pool`)}
-  notes.push(`${path.basename(file)}: ${pool.questions.size} questions (${pool.withdrawn.length} withdrawn); ${exact} match exactly, ${loose} differ only in typography`);
+  notes.push(`${pool.source?`pools/${exam}.json (${pool.source.file})`:path.basename(file)}: ${pool.questions.size} questions (${pool.withdrawn.length} withdrawn); ${exact} match exactly, ${loose} differ only in typography`);
   /* Sections run 1 to 9, then 0. */
   const rank=code=>code[1]==="0"?10:+code[1];
   if(notYet.size)notes.push(`not yet added: ${[...notYet].sort((a,b)=>rank(a)-rank(b)).join(", ")}`);

@@ -1,5 +1,6 @@
 /* The pool tools on the General pool: pool-import reads a section verbatim, and pool-check treats sections not yet
-   written as "not yet added" rather than failures. Needs the NCVEC file in private/ncvec/, which CI does not have. */
+   written as "not yet added" rather than failures. pool-import needs the NCVEC .docx in private/ncvec/, which CI does
+   not have; pool-check runs against the committed snapshot. */
 "use strict";
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
@@ -33,7 +34,7 @@ test("pool-check reports unwritten sections, not failures",{skip},()=>{
   deck.Q.forEach(q=>q[4]="Note.");
   const f=path.join(os.tmpdir(),"general-g1-only.js");
   fs.writeFileSync(f,`window.DECKS=[${JSON.stringify(deck)}];window.EXPLAIN={};`);
-  const r=tool("pool-check.js","general",POOL,"--data",f);
+  const r=tool("pool-check.js","general","--data",f);
   assert.equal(r.status,0,r.stdout);
   assert.match(r.stdout,/not yet added: G2, G3, G4, G5, G6, G7, G8, G9, G0/);
   assert.match(r.stdout,/withdrawn/);
