@@ -28,7 +28,7 @@ test("every segment edge and 60 m channel in the table is on its band's card",()
 });
 
 test("the full chart is byte for byte what it was before one band could be drawn alone",()=>{
-  const fixture=fs.readFileSync(path.join(__dirname,"fixtures","bandchart.svg"),"utf8");
+  const fixture=fs.readFileSync(path.join(__dirname,"fixtures","bandchart.svg"),"utf8").replace(/\r\n/g,"\n");
   assert.equal(app.run("EXAM_CONFIG.cheats.bands").slice(0,fixture.length),fixture);
 });
 
