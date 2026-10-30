@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 39 (October 29)
+- The Band edges cards carry the power limit on the range side: "1.8 to 2.0 MHz, 1500 W PEP", 200 W on 30 meters, 100 W ERP on 60. The reverse card still asks the bare range.
+
 ## 38 (October 29)
 - Band edges is now the pairing, asked both ways: "Frequency range of 160 m" and "Which band is 1.8 to 2.0 MHz", 22 cards for the ten HF bands and 6 meters, each direction with its own record, and a pair never side by side in the shuffle. The hook on each is the arithmetic (300 divided by the MHz is the meters) and the band's one defining fact. The General segments stay on the Bands chart. The old cards' badge is dropped, since it was earned on other cards.
 

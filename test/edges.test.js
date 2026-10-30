@@ -1,5 +1,5 @@
-/* General's Band edges flash cards: eleven bands asked both ways, the numbers held to the band table, the hooks'
-   arithmetic checked, a drill you flip and grade yourself that keeps a pair apart, badges from the old cards
+/* General's Band edges flash cards: eleven bands asked both ways, the numbers held to the band table and the power
+   limit to the pool, the hooks' arithmetic checked, a drill you flip and grade yourself that keeps a pair apart, badges from the old cards
    dropped, and the chart unchanged by the refactor that lets one band be drawn alone. */
 "use strict";
 const {test}=require("node:test");
@@ -13,6 +13,9 @@ const deck=app.run("DECK.edges");
 const nums=s=>(s.match(/\d+(?:\.\d+)?/g)||[]).map(Number);
 const EDGES={...Object.fromEntries(bands.map(b=>[b.band,[b.lo,b.hi]])),"6 m":[50,54]};
 const fwd=deck.flash.filter(c=>c.k.endsWith("-range")),rev=deck.flash.filter(c=>c.k.endsWith("-band"));
+/* The forward answer is the range, then the band's power limit; the reverse card asks the range alone. */
+const split=a=>{const m=a.match(/^(\d+(?:\.\d+)? to \d+(?:\.\d+)? MHz), (\d+ W (?:PEP|ERP))$/);assert.ok(m,a);return {range:m[1],power:m[2]}};
+const POWER={"60 m":"100 W ERP","30 m":"200 W PEP"};
 
 test("22 cards: the ten HF bands and 6 m, each asked both ways, forward then reverse",()=>{
   assert.equal(deck.exam,0);assert.ok(deck.flash);assert.equal(deck.Q,undefined);assert.equal(deck.prompt,undefined);assert.equal(deck.gen,2);
@@ -21,15 +24,18 @@ test("22 cards: the ten HF bands and 6 m, each asked both ways, forward then rev
   for(const [j,f] of fwd.entries()){const r=rev[j],band=f.n.split(" ")[0];
     assert.equal(f.k,`${band}-range`);assert.equal(r.k,`${band}-band`);
     assert.equal(f.p,"Frequency range of");assert.equal(r.p,"Which band is");
-    assert.equal(r.n,f.a,"the reverse card asks the forward card's answer");assert.equal(r.a,f.n);
+    assert.equal(r.n,split(f.a).range,"the reverse card asks the forward card's range, without the power");assert.equal(r.a,f.n);
     assert.ok(f.t.trim());assert.equal(r.t,f.t,"one hook per band")}
   assert.deepEqual(app.run("itemIds(DECK.edges)"),deck.flash.map(c=>c.k));
   assert.equal(app.run("stats(DECK.edges).total"),22);
 });
 
-test("each range is the band table's outer edges, and 6 m is 50 to 54",()=>{
-  for(const f of fwd)assert.deepEqual(nums(f.a),EDGES[f.n],f.n);
-  for(const f of fwd)assert.match(f.a,/^\d+(\.\d+)? to \d+(\.\d+)? MHz$/);
+test("each range is the band table's outer edges, 6 m is 50 to 54, and the power limit is the pool's",()=>{
+  for(const f of fwd){const {range,power}=split(f.a);assert.deepEqual(nums(range),EDGES[f.n],f.n);assert.equal(power,POWER[f.n]||"1500 W PEP",f.n)}
+  /* G1C01 (10.140 MHz), G1C06 (1.8 MHz), G1C05 (28 MHz), G1C02 (12 m): the pool's own limits. */
+  const ans=id=>{const q=app.run(`DECKS.flatMap(d=>d.Q||[]).find(q=>q[0]==="${id}")`);return q[2][q[3]]};
+  assert.equal(ans("G1C01"),"200 watts PEP output");assert.equal(ans("G1C06"),"1500 watts PEP output");
+  assert.equal(ans("G1C05"),"1500 watts PEP output");assert.equal(ans("G1C02"),"1500 watts PEP output");
 });
 
 test("each hook's arithmetic holds: 300 divided by a frequency inside the band gives the band, within a tenth",()=>{
@@ -75,6 +81,7 @@ test("the study pages render every card with its prompt, alone and inside the wh
   assert.equal((html.match(/class="bandchart bandbar"/g)||[]).length,22);
   assert.equal((html.match(/<p class="prompt">Frequency range of<\/p><b>/g)||[]).length,11);
   assert.equal((html.match(/<p class="prompt">Which band is<\/p><b>/g)||[]).length,11);
+  assert.match(html,/<p class="prompt">Frequency range of<\/p><b>160 m<\/b><svg[^]*?<\/svg>1\.8 to 2\.0 MHz, 1500 W PEP<p>/);
   assert.match(html,/<p class="prompt">Which band is<\/p><b>1\.8 to 2\.0 MHz<\/b><svg[^]*?<\/svg>160 m<p>/);
   app.run("study(null)");
   html=app.run(`$("app").innerHTML`);
@@ -110,7 +117,7 @@ test("records and badges from the old cards are dropped: unknown keys on first r
 const tap=(a,act)=>a.run(`$("ans").onclick({target:{closest:()=>({dataset:{act:"${act}"}})}});0`);
 const card=a=>a.run(`$("card").innerHTML`);
 
-const shown=a=>{const m=card(a).match(/id="qtext">([^<]+)<\/p><p class="name" id="qname">([^<]+)</);return m[1]==="Which band is"?fwd.find(c=>c.a===m[2]).n:m[2]};
+const shown=a=>{const m=card(a).match(/id="qtext">([^<]+)<\/p><p class="name" id="qname">([^<]+)</);return m[1]==="Which band is"?fwd.find(c=>split(c.a).range===m[2]).n:m[2]};
 test("the shuffle never puts the two cards of a band side by side",()=>{
   const a=load({exam:"general"});
   for(let run=0;run<40;run++){a.run(`flash(DECK.edges);$("dueOnly").checked=false;$("dueOnly").onchange();0`);
