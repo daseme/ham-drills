@@ -1,5 +1,7 @@
 # Band edges flash cards: design
 
+Superseded the same day by the band-pairs design (2026-10-29-band-pairs-design.md): Kurt did not want the segments on the cards. The drill, the bar and the study page built here are kept; the deck's cards are replaced.
+
 Date: 2026-10-29. Kurt asked for flash cards on the General band plan: "160 m is 1.8 to 2 MHz, 40 m is x, 20 m is y. I just need to be drilled on these."
 
 ## Intent

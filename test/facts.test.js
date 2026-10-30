@@ -1,5 +1,5 @@
 /* General's Numbers to know flash cards: every number on a card is one the pool's own answer gives, each card has a
-   stable key, and the drill renders a card with no prompt line while Edges keeps its own. */
+   stable key, and the drill renders a card with no prompt line while Edges prints each card's own. */
 "use strict";
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
@@ -35,7 +35,7 @@ test("the record key is the card's key, so rewording a card keeps its progress",
   assert.deepEqual(a.run(`Object.keys(srsOf("facts"))`),[key]);
 });
 
-test("a deck without a prompt shows the name alone, labelled by itself; Edges keeps its prompt",()=>{
+test("a deck without a prompt shows the name alone, labelled by itself; Edges prints each card's own",()=>{
   const a=load({exam:"general"});
   a.run("flash(DECK.facts)");
   let html=a.run(`$("card").innerHTML`);
@@ -47,7 +47,7 @@ test("a deck without a prompt shows the name alone, labelled by itself; Edges ke
   assert.doesNotMatch(html,/bandbar/);
   a.run("flash(DECK.edges)");
   html=a.run(`$("card").innerHTML`);
-  assert.match(html,/^<p class="prompt" id="qtext">General privileges on<\/p><p class="name" id="qname">\d+ m<\/p><div class="ans" id="ans" role="group" aria-labelledby="qtext qname">/);
+  assert.match(html,/^<p class="prompt" id="qtext">(Frequency range of|Which band is)<\/p><p class="name" id="qname">[^<]+<\/p><div class="ans" id="ans" role="group" aria-labelledby="qtext qname">/);
   a.run(`$("ans").onclick({target:{closest:()=>({dataset:{act:"show"}})}});0`);
   assert.doesNotMatch(a.run(`$("card").innerHTML`),/class="src"/);
 });

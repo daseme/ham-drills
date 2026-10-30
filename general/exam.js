@@ -109,8 +109,11 @@ const bandChart=()=>{
     <rect x="${X0+226}" y="6" width="12" height="10" fill="var(--line)"/><text x="${X0+242}" y="15">Extra only</text>`;
   return `<svg class="bandchart" viewBox="0 0 380 ${TOP+BANDS.length*ROW}" role="img" aria-label="General class HF privileges, band by band: CW, RTTY and data segments, phone and image segments, and the parts reserved for Amateur Extra">${CHART_STYLE}${legend}${rows}</svg>`;
 };
-/* One band alone, for the Band edges cards. The card's text carries the meaning, so the drawing is hidden from screen readers. */
-const bandBar=name=>{const b=BANDS.find(b=>b.band===name);if(!b)return "";
+/* One band alone, for the Band edges cards: the band the card names or answers with, so both cards of a pair show
+   the same bar. 6 m is drawn for the cards but kept off the HF chart. The card's text carries the meaning, so the
+   drawing is hidden from screen readers. */
+const BARS=BANDS.concat([{band:"6 m",lo:50.000,hi:54.000,seg:[[50.000,50.100,"cw"],[50.100,54.000,"all"]]}]);
+const bandBar=c=>{const b=BARS.find(b=>b.band===c.n||b.band===c.a);if(!b)return "";
   return `<svg class="bandchart bandbar" viewBox="0 0 380 ${BAR_H+18}" aria-hidden="true">${CHART_STYLE}${bandRow(b,2,4,376,false)}</svg>`};
 const BAND_NOTES=`<p>Frequencies in MHz, each band on its own scale. 160 meters allows every mode anywhere. 30 meters is CW, RTTY and data only, 200 W PEP. 60 meters is four channels (centred on 5.332, 5.348, 5.373 and 5.405 MHz; USB, CW and data; 100 W ERP, 2.8 kHz) plus a small band at 5.3515 to 5.3665 MHz. Everywhere else the limit is 1500 W PEP. Beacons: 28.200 to 28.300 MHz, 100 W; propagation beacons at 14.100, 18.110, 21.150, 24.930 and 28.200 MHz. 10 meter repeaters above 29.5 MHz. Voice: LSB on 160, 75 and 40 meters, USB from 20 meters up and on 60 meters.</p>`;
 const FIG_KEY={"G7-1":"1 field effect transistor, 2 NPN junction transistor, 5 Zener diode, 6 solid core transformer, 7 tapped inductor"};
@@ -123,7 +126,7 @@ return {
   figures:{FIGS,FIG_KEY},
   /* The Bands deck's cheat sheet is drawn here rather than kept as text in data.js; bands is the table it is drawn from. */
   cheats:{bands:bandChart()+BAND_NOTES},bands:BANDS,
-  /* Art for a flash-card deck, by deck id: a function from card name to markup. */
+  /* Art for a flash-card deck, by deck id: a function from card to markup. */
   art:{edges:bandBar},
   demo:null
 };

@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 38 (October 29)
+- Band edges is now the pairing, asked both ways: "Frequency range of 160 m" and "Which band is 1.8 to 2.0 MHz", 22 cards for the ten HF bands and 6 meters, each direction with its own record, and a pair never side by side in the shuffle. The hook on each is the arithmetic (300 divided by the MHz is the meters) and the band's one defining fact. The General segments stay on the Bands chart. The old cards' badge is dropped, since it was earned on other cards.
+
 ## 37 (October 29)
 - The official pools are committed as snapshots of the NCVEC files and every push compares every question with them; `node tools/pool-fetch.js` downloads the pools again and fails if the NCVEC has published anything new.
 - General gains Numbers to know: 31 flash cards for the numbers the pool asks for once each and nothing ties together, from the FAA height limit to the RTTY shift. Each card names the questions it comes from, and a test holds every number on a card to the pool's own answer.

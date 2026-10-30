@@ -16,8 +16,8 @@ function element(){
   return new Proxy(o,{get:(t,k)=>k in t?t[k]:k==="querySelectorAll"?()=>[]:typeof k==="string"&&/^[a-z]/.test(k)&&!/^(innerHTML|textContent|hidden|checked|value|className|onclick|onchange)$/.test(k)?()=>element():undefined});
 }
 
-function load({exam="technician",search="",data}={}){
-  const store=new Map(),els={};
+function load({exam="technician",search="",data,storage={}}={}){
+  const store=new Map(Object.entries(storage)),els={};
   const localStorage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k),clear:()=>store.clear()};
   Object.defineProperty(localStorage,"keys",{value:()=>[...store.keys()]});
   const ctx={console,Date,Math,JSON,URLSearchParams,setTimeout:()=>0,Blob:class{},File:class{},localStorage,

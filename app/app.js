@@ -14,7 +14,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 /* A deck's cheat sheet: its own text, or one the exam draws (a band chart, say). */
 const cheatOf=d=>d.cheat||(window.EXAM_CONFIG.cheats||{})[d.id]||"";
 /* A flash card's drawing, if the exam draws one for that deck (a band's bar, say). */
-const artOf=(d,n)=>{const a=window.EXAM_CONFIG.art;return a&&a[d.id]?a[d.id](n):""};
+const artOf=(d,c)=>{const a=window.EXAM_CONFIG.art;return a&&a[d.id]?a[d.id](c):""};
 const IV=[0,1,3,7,16,35],MASTER=3;
 const dayNum=()=>{const d=new Date();return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000)};
 const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
@@ -194,14 +194,17 @@ const TIER=["","Bronze","Silver","Gold"],TIER_WHY=["","every card seen","every c
 const BADGES=get("badges",{});
 const saveBadges=()=>put("badges",BADGES);
 function tierNow(d){const s=srsOf(d.id);let t=3;for(const k of itemIds(d)){const r=s[k];if(!r)return 0;if(r.lv<1)t=Math.min(t,1);else if(r.lv<MASTER)t=Math.min(t,2)}return t}
-const tierEarned=d=>{const b=BADGES[d.id]||{};return b[3]?3:b[2]?2:b[1]?1:0};
+/* A deck rebuilt from different cards carries a generation number; badges earned on the old cards carry the old one
+   and are dropped, since every card seen then is not every card now. */
+const badgesOf=d=>{const b=BADGES[d.id];if(b&&(b.gen||0)!==(d.gen||0)){delete BADGES[d.id];saveBadges();return null}return b};
+const tierEarned=d=>{const b=badgesOf(d)||{};return b[3]?3:b[2]?2:b[1]?1:0};
 function awardBadges(d,quiet){
-  const now=tierNow(d),b=BADGES[d.id]||(BADGES[d.id]={});let top=0;
+  const now=tierNow(d),b=badgesOf(d)||(BADGES[d.id]=d.gen?{gen:d.gen}:{});let top=0;
   for(let t=1;t<=now;t++)if(!b[t]){b[t]=dayNum();top=t}
   if(top){saveBadges();if(!quiet)toast(`${TIER[top]} badge: ${d.code} ${d.name}. ${TIER_WHY[top][0].toUpperCase()+TIER_WHY[top].slice(1)}.`)}
   return top;
 }
-function mergeBadges(src){if(!src||typeof src!=="object")return;for(const id in src){if(!DECK[id]||!src[id]||typeof src[id]!=="object")continue;const b=BADGES[id]||(BADGES[id]={});for(const t of [1,2,3]){const v=src[id][t];if(Number.isInteger(v)&&v>0&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
+function mergeBadges(src){if(!src||typeof src!=="object")return;for(const id in src){const d=DECK[id];if(!d||!src[id]||typeof src[id]!=="object"||(src[id].gen||0)!==(d.gen||0))continue;const b=badgesOf(d)||(BADGES[id]=d.gen?{gen:d.gen}:{});for(const t of [1,2,3]){const v=src[id][t];if(Number.isInteger(v)&&v>0&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
 DECKS.forEach(d=>awardBadges(d,true));
 function badgeSvg(tier,size,{lapsed=false,full=false}={}){
   const arcs=['','<use href="#arc1"/>','<use href="#arc1"/><use href="#arc2"/>','<use href="#arc1"/><use href="#arc2"/><use href="#arc3"/>'][tier];
@@ -401,7 +404,7 @@ function studySection(d,{solo}){
     <div class="figs">${Object.keys(FIGS).map(f=>`<figure class="figbox">${FIGS[f]}<figcaption>Figure ${f}. The pool asks about ${FIG_KEY[f]}.</figcaption></figure>`).join("")}</div>`;
   }else if(d.flash){
     body=`<p class="sub">${esc(d.intro||`${d.flash.length} cards.`)}</p>
-    <div class="gallery cards">${d.flash.map(c=>`<div><b>${esc(c.n)}</b>${artOf(d,c.n)}${esc(c.a)}<p>${esc(c.t)}</p>${c.q?`<p class="src">${[].concat(c.q).map(esc).join(", ")}</p>`:""}</div>`).join("")}</div>`;
+    <div class="gallery cards">${d.flash.map(c=>`<div>${(c.p||d.prompt)?`<p class="prompt">${esc(c.p||d.prompt)}</p>`:""}<b>${esc(c.n)}</b>${artOf(d,c)}${esc(c.a)}<p>${esc(c.t)}</p>${c.q?`<p class="src">${[].concat(c.q).map(esc).join(", ")}</p>`:""}</div>`).join("")}</div>`;
   }else{
     const cov={};for(const q of d.Q){const k=d.CON&&d.CON[q[0]];if(k)(cov[k]=cov[k]||[]).push(q[0])}
     const intro=d.exam?`${d.code} supplies ${d.exam} of the ${C.examQ} exam questions, drawn from ${d.Q.length} in the pool.`:d.intro||`${d.Q.length} questions, with the formulas they rest on.`;
@@ -632,7 +635,7 @@ function examResult(){
 }
 
 /* ---------- flash cards ----------
-   A deck of cards to flip and grade yourself (General's band edges). Records are kept by card name, as symbols are.
+   A deck of cards to flip and grade yourself (General's band edges). Records are kept by card key: the short key, else the name, as symbols are.
    The front's one button and the back's two sit in the answer group, so 1 flips and 1 or 2 grades. */
 function flash(d){
   const K=d.flash,id=d.id,app=$("app");prefs.dueOnly=true;
@@ -651,9 +654,18 @@ function flash(d){
   const due=c=>isDue(id,cardKey(c));
   const tomorrow=()=>K.filter(c=>{const r=srsOf(id)[cardKey(c)];return r&&r.due===dayNum()+1}).length;
   function srsLine(){$("srsline").textContent=`${K.filter(due).length} due today, ${K.filter(c=>isMastered(id,cardKey(c))).length} of ${K.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}.`}
-  function start(){const pool=prefs.dueOnly?K.filter(due):K;items=shuffle(pool).map(c=>({c}));i=0;done=0;fr=0;fd=0;render()}
+  /* Two cards of a pair, one's answer being the other's name, are kept apart: the first's back would give the second away. */
+  const paired=(x,y)=>x.a===y.n||x.n===y.a;
+  function spread(cards){const out=[],rest=cards.slice();
+    while(rest.length){const m=rest.findIndex(c=>!out.length||!paired(out[out.length-1],c));
+      if(m>=0){out.push(rest.splice(m,1)[0]);continue}
+      /* Only its partner is left at the end: slot it in earlier, between two strangers. */
+      const c=rest.shift(),j=out.findIndex((x,k)=>k>0&&!paired(out[k-1],c)&&!paired(c,x));out.splice(j<0?0:j,0,c)}
+    return out}
+  function start(){const pool=prefs.dueOnly?K.filter(due):K;items=spread(shuffle(pool)).map(c=>({c}));i=0;done=0;fr=0;fd=0;render()}
   function status(){srsLine();$("pos").textContent=items.length?`Card ${Math.min(i+1,items.length)} of ${items.length}`:"";$("score").textContent=fd?`${fr} of ${fd} right first try`:"";$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
-  const head=c=>`${d.prompt?`<p class="prompt" id="qtext">${esc(d.prompt)}</p>`:""}<p class="name" id="qname">${esc(c.n)}</p>`;
+  const prompt=c=>c.p||d.prompt;
+  const head=c=>`${prompt(c)?`<p class="prompt" id="qtext">${esc(prompt(c))}</p>`:""}<p class="name" id="qname">${esc(c.n)}</p>`;
   const srcs=c=>c.q?`<p class="src">${[].concat(c.q).map(esc).join(", ")}</p>`:"";
   function render(){
     status();const c=$("card");keepInView(c);
@@ -663,12 +675,12 @@ function flash(d){
       <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
       $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);return}
     cur=items[i].c;
-    c.innerHTML=`${head(cur)}<div class="ans" id="ans" role="group" aria-labelledby="${d.prompt?"qtext qname":"qname"}"><button data-act="show">Show</button></div>`;
+    c.innerHTML=`${head(cur)}<div class="ans" id="ans" role="group" aria-labelledby="${prompt(cur)?"qtext qname":"qname"}"><button data-act="show">Show</button></div>`;
     wire();
   }
   function flip(){
     const c=$("card");
-    c.innerHTML=`${head(cur)}${artOf(d,cur.n)}<p class="defn" id="qans">${esc(cur.a)}</p><p class="hook" id="qhook">${esc(cur.t)}</p>${srcs(cur)}
+    c.innerHTML=`${head(cur)}${artOf(d,cur)}<p class="defn" id="qans">${esc(cur.a)}</p><p class="hook" id="qhook">${esc(cur.t)}</p>${srcs(cur)}
     <div class="ans grade" id="ans" role="group" aria-labelledby="qans qhook"><button data-act="ok">Got it</button><button data-act="no">Missed it</button></div>`;
     wire();
   }
