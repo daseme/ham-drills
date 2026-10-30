@@ -140,16 +140,16 @@ test("flip, grade, requeue a miss, count first tries only, and finish",()=>{
   assert.ok(card(a).includes(`<p class="defn" id="qans">${first.a}</p>`));
   tap(a,"no");
   assert.equal(a.run(`srsOf("edges")[${JSON.stringify(first.k)}].lv`),0);
-  assert.equal(a.run(`$("pos").textContent`),"Card 2 of 23");
-  assert.equal(a.run(`$("score").textContent`),"0 of 1 right first try");
+  assert.equal(a.run(`$("pos").textContent`),"Card 2 of 23, including 1 repeat");
+  assert.equal(a.run(`$("score").textContent`),"0 of 1 card right on the first try");
   for(let k=0;k<3;k++){tap(a,"show");tap(a,"ok")}
-  assert.equal(a.run(`$("score").textContent`),"3 of 4 right first try");
+  assert.equal(a.run(`$("score").textContent`),"3 of 4 cards right on the first try");
   assert.ok(card(a).includes(`id="qname">${first.n}<`),"the missed card returns four places on");
   tap(a,"show");tap(a,"ok");
-  assert.equal(a.run(`$("score").textContent`),"3 of 4 right first try","a requeued card is not a first try");
+  assert.equal(a.run(`$("score").textContent`),"3 of 4 cards right on the first try","a requeued card is not a first try");
   assert.equal(a.run(`srsOf("edges")[${JSON.stringify(first.k)}].lv`),0,"right the same day as a miss stays at level 0, due tomorrow");
   for(let k=0;k<18;k++){tap(a,"show");tap(a,"ok")}
-  assert.equal(a.run(`$("score").textContent`),"21 of 22 right first try");
+  assert.equal(a.run(`$("score").textContent`),"21 of 22 cards right on the first try");
   assert.match(card(a),/<div class="end"><h2>21\/22<\/h2><p>95% right on the first try\.<\/p><p>That's everything due today. 22 will be back tomorrow\.<\/p>/);
   assert.equal(a.run("stats(DECK.edges).mastered"),0);assert.equal(a.run("stats(DECK.edges).seen"),22);
   assert.equal(a.run("tierNow(DECK.edges)"),1);assert.deepEqual(a.run("Object.keys(BADGES.edges).sort()"),["1","gen"]);

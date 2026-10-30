@@ -78,12 +78,12 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .opts label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .opts input{width:18px;height:18px;accent-color:var(--amber)}
 .srs{font-size:15px;margin:0 0 10px}
-.status{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px;color:var(--muted);margin-bottom:6px}
+.status{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 8px;font-size:15px;color:var(--muted);margin-bottom:6px}
 .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:16px}
 .bar span{display:block;height:100%;background:var(--amber);width:0;transition:width .25s}
 .card{scroll-margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
 .qid{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;letter-spacing:.04em;color:var(--amber);margin-right:6px}
-.topic{font-size:14px;color:var(--muted);margin:0 0 12px}
+.topic{font-size:14px;color:var(--muted);margin:0 0 12px}.rep{color:var(--amber);font-weight:600}.topic.rep{margin-bottom:6px}
 .fig{background:var(--amber-bg);border-radius:8px;padding:8px 12px;font-size:15px;margin:0 0 12px}
 .figbox{margin:0 0 14px;padding:10px 12px 6px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
 .figbox svg{display:block;width:100%;height:auto;max-height:240px;margin:0 auto}

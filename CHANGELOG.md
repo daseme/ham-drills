@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 40 (October 30)
+- The drill counters say what they count. The session line reads "46 due today, 4 still to get right, 0 of 52 mastered" (the 46 is what was due when the session began, and a miss stays in the 4 until it is got right); the position reads "Question 49 of 52, including 6 repeats" once a miss has come back; the score reads "37 of 43 questions right on the first try", and counts each question once. A repeat is marked Repeat on the card, for screen readers too. Start over is hidden when nothing is left due. Same in the flash-card and symbol drills.
+
 ## 39 (October 29)
 - The Band edges cards carry the power limit on the range side: "1.8 to 2.0 MHz, 1500 W PEP", 200 W on 30 meters, 100 W ERP on 60. The reverse card still asks the bare range.
 

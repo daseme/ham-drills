@@ -66,6 +66,17 @@ function importDecks(decks){let n=0,dropped=0;
   return {decks:n,dropped}}
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
 
+/* ---------- drill counters ----------
+   The three drills (questions, flash cards, symbols) share three lines. A session's start pool is what was due when
+   it began; the live count is how many of those are still due, so a miss (due again today) keeps counting and a
+   card that becomes due after midnight does not. The position counts the session's list, which grows by one
+   repeat per miss; the score counts distinct items, so a repeat never moves it. */
+const sessionLine=(base,left,tail)=>`${base?`${base} due today, ${left?`${left} still to get right`:"all answered right"}`:"Nothing due today"}${tail}.`;
+const posLine=(noun,i,items,base)=>{const rep=items.length-base;return items.length?`${noun} ${Math.min(i+1,items.length)} of ${items.length}${rep>0?`, including ${rep} ${rep===1?"repeat":"repeats"}`:""}`:""};
+const scoreLine=(noun,fr,fd)=>fd?`${fr} of ${fd} ${fd===1?noun:noun+"s"} right on the first try`:"";
+const repMark=re=>re?`<p class="topic rep" id="qrep">Repeat</p>`:"";
+const repLabel=(re,ids)=>`${re?"qrep ":""}${ids}`;
+
 /* A flash card's record key is its short key when it has one, else its name; a key survives rewording. */
 const cardKey=c=>c.k||c.n;
 const itemIds=d=>d.S?d.S.map(s=>s.n):d.flash?d.flash.map(cardKey):d.Q.map(q=>q[0]);
@@ -465,7 +476,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   const list=!!cards,decks=mixed?POOL:list?[]:[deck];
   const all=list?cards:decks.flatMap(d=>d.Q.map(q=>({d,q})));
   const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
-  let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null;
+  let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null,startPool=[];
   const title=mixed?"Everything due":list?listTitle:deck.exam?`${deck.code}: ${deck.name}`:deck.name;
   const own=DECKS.filter(d=>!d.exam).map(d=>d.S?"Symbols":d.code),ownList=own.length>1?`${own.slice(0,-1).join(", ")} and ${own[own.length-1]}`:own[0];
   const sub=mixed?`Every pool question due today, mixed across sections.${own.length?` ${ownList} ${own.length>1?"are":"is"} reviewed on ${own.length>1?"their":"its"} own.`:""}`:list?listSub:
@@ -500,7 +511,8 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   function srsLine(){
     const g=inGroup(),t=dayNum();
     const n=g.filter(due).length,m=g.filter(x=>isMastered(x.d.id,x.q[0])).length,tom=g.filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-    $("srsline").textContent=mixed?`${n} due today${tom?`, ${tom} coming up tomorrow`:""}.`:list?`${g.length} ${g.length===1?"question":"questions"}, ${n} of them due today.`:`${n} due today, ${m} of ${g.length} mastered${tom?`, ${tom} coming up tomorrow`:""}.`;
+    const tail=`${mixed?"":`, ${m} of ${g.length} mastered`}${tom?`, ${tom} coming up tomorrow`:""}`;
+    $("srsline").textContent=list?`${g.length} ${g.length===1?"question":"questions"}, ${n} of them due today.`:dueOnly()?sessionLine(startPool.length,startPool.filter(due).length,tail):`${n} due today${tail}.`;
     chipCounts();
   }
   /* Reviews come first, shuffled. New cards follow grouped by topic in pool order, and the topic's basics
@@ -509,6 +521,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   function start(){
     let pool=inGroup();
     if(dueOnly())pool=pool.filter(due);
+    startPool=pool;
     if(!list)pool=shuffle(pool);
     const ord=Object.keys(deck&&deck.P||{}),fresh=pool.filter(basicsFor);
     items=pool.filter(x=>!basicsFor(x)).concat(ord.flatMap(k=>fresh.filter(x=>basicsFor(x)===k)));
@@ -516,8 +529,8 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   }
   function status(){
     srsLine();
-    $("pos").textContent=items.length?`Question ${Math.min(i+1,items.length)} of ${items.length}`:"";
-    $("score").textContent=fd?`${fr} of ${fd} right first try`:"";
+    $("pos").textContent=posLine("Question",i,items,startPool.length);
+    $("score").textContent=scoreLine("question",fr,fd);
     $("fill").style.width=items.length?(done/items.length*100)+"%":"0";
   }
   function render(){
@@ -529,8 +542,8 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":` The exam pass mark is ${Math.round(C.pass/C.examQ*100)}%.`}</p>${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
-      <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);
+      <div class="actions"><button class="btn" id="home">Back to all sections</button>${dueOnly()&&!left?"":`<button class="btn ghost" id="again">Start over</button>`}</div>`;
+      $("home").onclick=goHome;if($("again"))$("again").onclick=start;say(c.querySelector(".end").textContent);
       if(fd&&fr===fd)wink(`${fr} out of ${fd}`,"Wouldn't that be just like you?");
       return;
     }
@@ -543,9 +556,9 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     const [id,text,opts,ans,note,fig]=q;
     const hasAll=opts.some(o=>/^All these/.test(o));
     const order=hasAll?[0,1,2,3]:shuffle([0,1,2,3]);
-    c.innerHTML=`<p class="topic"><span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}${items[i].w?` &middot; Missed ${items[i].w} ${items[i].w===1?"time":"times"}`:""}</p>
+    c.innerHTML=`<p class="topic">${items[i].re?`<span class="rep" id="qrep">Repeat</span> &middot; `:""}<span class="qid">${id}</span>${esc(d.G[grpOf(d,id)]||d.name)}${items[i].w?` &middot; Missed ${items[i].w} ${items[i].w===1?"time":"times"}`:""}</p>
       ${fig?figBox(fig):""}
-      <p class="q" id="qtext">${text}</p><div class="ans" id="ans" role="group" aria-labelledby="qtext"></div><div id="after"></div>`;
+      <p class="q" id="qtext">${text}</p><div class="ans" id="ans" role="group" aria-labelledby="${repLabel(items[i].re,"qtext")}"></div><div id="after"></div>`;
     order.forEach((oi,pos)=>{const b=document.createElement("button");b.innerHTML=`<b>${"ABCD"[pos]}</b><span>${opts[oi]}</span>`;b.dataset.oi=oi;b.onclick=()=>pick(oi);$("ans").appendChild(b)});
     $("ans").firstChild.focus({preventScroll:true});
   }
@@ -639,7 +652,7 @@ function examResult(){
    The front's one button and the back's two sit in the answer group, so 1 flips and 1 or 2 grades. */
 function flash(d){
   const K=d.flash,id=d.id,app=$("app");prefs.dueOnly=true;
-  let items=[],i=0,done=0,fr=0,fd=0,cur=null;
+  let items=[],i=0,done=0,fr=0,fd=0,cur=null,startPool=[];
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>${esc(d.name)}</h1><p class="sub">${esc(d.intro||"")}</p>
   <div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>
@@ -653,7 +666,8 @@ function flash(d){
   armReset($("reset"),d.code,()=>{SRS[id]={};saveSrs(id);start()});
   const due=c=>isDue(id,cardKey(c));
   const tomorrow=()=>K.filter(c=>{const r=srsOf(id)[cardKey(c)];return r&&r.due===dayNum()+1}).length;
-  function srsLine(){$("srsline").textContent=`${K.filter(due).length} due today, ${K.filter(c=>isMastered(id,cardKey(c))).length} of ${K.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}.`}
+  function srsLine(){const tail=`, ${K.filter(c=>isMastered(id,cardKey(c))).length} of ${K.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}`;
+    $("srsline").textContent=prefs.dueOnly?sessionLine(startPool.length,startPool.filter(due).length,tail):`${K.filter(due).length} due today${tail}.`}
   /* Two cards of a pair, one's answer being the other's name, are kept apart: the first's back would give the second away. */
   const paired=(x,y)=>x.a===y.n||x.n===y.a;
   function spread(cards){const out=[],rest=cards.slice();
@@ -662,26 +676,26 @@ function flash(d){
       /* Only its partner is left at the end: slot it in earlier, between two strangers. */
       const c=rest.shift(),j=out.findIndex((x,k)=>k>0&&!paired(out[k-1],c)&&!paired(c,x));out.splice(j<0?0:j,0,c)}
     return out}
-  function start(){const pool=prefs.dueOnly?K.filter(due):K;items=spread(shuffle(pool)).map(c=>({c}));i=0;done=0;fr=0;fd=0;render()}
-  function status(){srsLine();$("pos").textContent=items.length?`Card ${Math.min(i+1,items.length)} of ${items.length}`:"";$("score").textContent=fd?`${fr} of ${fd} right first try`:"";$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
+  function start(){const pool=prefs.dueOnly?K.filter(due):K;startPool=pool;items=spread(shuffle(pool)).map(c=>({c}));i=0;done=0;fr=0;fd=0;render()}
+  function status(){srsLine();$("pos").textContent=posLine("Card",i,items,startPool.length);$("score").textContent=scoreLine("card",fr,fd);$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
   const prompt=c=>c.p||d.prompt;
-  const head=c=>`${prompt(c)?`<p class="prompt" id="qtext">${esc(prompt(c))}</p>`:""}<p class="name" id="qname">${esc(c.n)}</p>`;
+  const head=(c,re)=>`${repMark(re)}${prompt(c)?`<p class="prompt" id="qtext">${esc(prompt(c))}</p>`:""}<p class="name" id="qname">${esc(c.n)}</p>`;
   const srcs=c=>c.q?`<p class="src">${[].concat(c.q).map(esc).join(", ")}</p>`:"";
   function render(){
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
     if(i>=items.length){const left=K.filter(due).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"card is":"cards are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
-      <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);return}
+      <div class="actions"><button class="btn" id="home">Back to all sections</button>${prefs.dueOnly&&!left?"":`<button class="btn ghost" id="again">Start over</button>`}</div>`;
+      $("home").onclick=goHome;if($("again"))$("again").onclick=start;say(c.querySelector(".end").textContent);return}
     cur=items[i].c;
-    c.innerHTML=`${head(cur)}<div class="ans" id="ans" role="group" aria-labelledby="${prompt(cur)?"qtext qname":"qname"}"><button data-act="show">Show</button></div>`;
+    c.innerHTML=`${head(cur,items[i].re)}<div class="ans" id="ans" role="group" aria-labelledby="${repLabel(items[i].re,prompt(cur)?"qtext qname":"qname")}"><button data-act="show">Show</button></div>`;
     wire();
   }
   function flip(){
     const c=$("card");
-    c.innerHTML=`${head(cur)}${artOf(d,cur)}<p class="defn" id="qans">${esc(cur.a)}</p><p class="hook" id="qhook">${esc(cur.t)}</p>${srcs(cur)}
-    <div class="ans grade" id="ans" role="group" aria-labelledby="qans qhook"><button data-act="ok">Got it</button><button data-act="no">Missed it</button></div>`;
+    c.innerHTML=`${head(cur,items[i].re)}${artOf(d,cur)}<p class="defn" id="qans">${esc(cur.a)}</p><p class="hook" id="qhook">${esc(cur.t)}</p>${srcs(cur)}
+    <div class="ans grade" id="ans" role="group" aria-labelledby="${repLabel(items[i].re,"qans qhook")}"><button data-act="ok">Got it</button><button data-act="no">Missed it</button></div>`;
     wire();
   }
   function wire(){$("ans").onclick=e=>{const b=e.target.closest&&e.target.closest("button");if(!b)return;act(b.dataset.act)};$("ans").querySelector("button").focus({preventScroll:true})}
@@ -700,7 +714,7 @@ function symbols(){
   const d=DECK.symbols,S=d.S,app=$("app");prefs.dueOnly=true;
   const SW='stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
   const svg=s=>`<svg viewBox="0 0 120 60" role="img" aria-label="Schematic symbol"><g ${SW}>${s.d}</g></svg>`;
-  let mode="name",items=[],i=0,done=0,fr=0,fd=0;
+  let mode="name",items=[],i=0,done=0,fr=0,fd=0,startPool=[];
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>Symbol drill</h1><p class="sub">${C.symbolText.drill}</p>
   <div class="groups" id="modes" role="group" aria-label="Drill mode">${[["name","Name the symbol"],["find","Find the symbol"],["mix","Mixed"]].map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===mode}">${l}</button>`).join("")}</div>
@@ -716,21 +730,22 @@ function symbols(){
   armReset($("reset"),"symbol",()=>{SRS.symbols={};saveSrs("symbols");start()});
   const due=s=>isDue("symbols",s.n);
   const tomorrow=()=>S.filter(s=>{const r=srsOf("symbols")[s.n];return r&&r.due===dayNum()+1}).length;
-  function srsLine(){$("srsline").textContent=`${S.filter(due).length} due today, ${S.filter(s=>isMastered("symbols",s.n)).length} of ${S.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}.`}
+  function srsLine(){const tail=`, ${S.filter(s=>isMastered("symbols",s.n)).length} of ${S.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}`;
+    $("srsline").textContent=prefs.dueOnly?sessionLine(startPool.length,startPool.filter(due).length,tail):`${S.filter(due).length} due today${tail}.`}
   function choices(s){const same=shuffle(S.filter(x=>x!==s&&x.f===s.f)),rest=shuffle(S.filter(x=>x!==s&&x.f!==s.f));return shuffle([s,...same.concat(rest).slice(0,3)])}
-  function start(){const pool=prefs.dueOnly?S.filter(due):S;items=shuffle(pool).map(s=>({s,m:mode==="mix"?(Math.random()<.5?"name":"find"):mode}));i=0;done=0;fr=0;fd=0;render()}
-  function status(){srsLine();$("pos").textContent=items.length?`Symbol ${Math.min(i+1,items.length)} of ${items.length}`:"";$("score").textContent=fd?`${fr} of ${fd} right first try`:"";$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
+  function start(){const pool=prefs.dueOnly?S.filter(due):S;startPool=pool;items=shuffle(pool).map(s=>({s,m:mode==="mix"?(Math.random()<.5?"name":"find"):mode}));i=0;done=0;fr=0;fd=0;render()}
+  function status(){srsLine();$("pos").textContent=posLine("Symbol",i,items,startPool.length);$("score").textContent=scoreLine("symbol",fr,fd);$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
   function render(){
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
     if(i>=items.length){const left=S.filter(due).length;
       c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
-      <div class="actions"><button class="btn" id="home">Back to all sections</button><button class="btn ghost" id="again">Start over</button></div>`;
-      $("home").onclick=goHome;$("again").onclick=start;say(c.querySelector(".end").textContent);return}
-    const {s,m}=items[i],opts=choices(s);
-    if(m==="name"){c.innerHTML=`<p class="prompt" id="qtext">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans" role="group" aria-labelledby="qtext"></div><div id="after"></div>`;
+      <div class="actions"><button class="btn" id="home">Back to all sections</button>${prefs.dueOnly&&!left?"":`<button class="btn ghost" id="again">Start over</button>`}</div>`;
+      $("home").onclick=goHome;if($("again"))$("again").onclick=start;say(c.querySelector(".end").textContent);return}
+    const {s,m,re}=items[i],opts=choices(s);
+    if(m==="name"){c.innerHTML=`${repMark(re)}<p class="prompt" id="qtext">What is this symbol?</p><div class="big">${svg(s)}</div><div class="ans" id="ans" role="group" aria-labelledby="${repLabel(re,"qtext")}"></div><div id="after"></div>`;
       opts.forEach(o=>{const b=document.createElement("button");b.textContent=o.n;b.dataset.n=o.n;b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}
-    else{c.innerHTML=`<p class="prompt" id="qtext">Tap the symbol for</p><p class="name" id="qname">${esc(s.n)}</p><div class="ans tiles" id="ans" role="group" aria-labelledby="qtext qname"></div><div id="after"></div>`;
+    else{c.innerHTML=`${repMark(re)}<p class="prompt" id="qtext">Tap the symbol for</p><p class="name" id="qname">${esc(s.n)}</p><div class="ans tiles" id="ans" role="group" aria-labelledby="${repLabel(re,"qtext qname")}"></div><div id="after"></div>`;
       opts.forEach((o,k)=>{const b=document.createElement("button");b.innerHTML=svg(o);b.dataset.n=o.n;b.setAttribute("aria-label","Option "+"ABCD"[k]);b.onclick=()=>pick(o,s);$("ans").appendChild(b)})}
     $("ans").firstChild.focus({preventScroll:true});
   }
