@@ -4,6 +4,7 @@ The version is `APP_VERSION` in version.js; it shows in the footer, and raising 
 
 ## 42 (October 30)
 - The in-app About is now How it works, on the home footer and as the page heading, since the splash has an About of its own: who built the site and why. Its credits line names KO6PRL.
+- Resources gains a Licensing section: getting an FCC Registration Number, the FCC license search, and QRZ.
 
 ## 41 (October 30)
 - A Resources page off the splash: the ARRL, the San Francisco, East Bay, San Mateo and Millbrae radio clubs, and the SF NERT, Berkeley CERT and Central County Fire CERT volunteer programs. Each app's home footer gains All exams, back to the splash.
