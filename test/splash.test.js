@@ -28,3 +28,25 @@ test("splash uses no storage and registers no worker",()=>{
 test("every file the splash loads exists",()=>{
   for(const m of page().matchAll(/(?:src|href)="([^"#:?]+\.[a-z0-9]+)"/g))assert.ok(fs.existsSync(path.join(ROOT,m[1])),m[1]);
 });
+
+/* The resources page: a second plain page of outward links, reached from the splash and leading back to it. */
+const resources=()=>fs.readFileSync(path.join(ROOT,"resources.html"),"utf8");
+
+test("splash links to the resources page",()=>{
+  assert.match(page(),/href="resources\.html"/);
+});
+
+test("resources page links back to the splash and uses no storage or worker",()=>{
+  assert.match(resources(),/class="back" href="\.\/"/);
+  assert.ok(!/localStorage|serviceWorker|<script/.test(resources()));
+});
+
+test("every outward link on the resources page is https and opens safely in a new tab",()=>{
+  const links=[...resources().matchAll(/<a ([^>]*href="https?:[^"]*"[^>]*)>/g)].map(m=>m[1]);
+  assert.ok(links.length>=8);
+  for(const a of links){assert.match(a,/href="https:/,a);assert.match(a,/target="_blank"/,a);assert.match(a,/rel="noopener"/,a)}
+});
+
+test("every file the resources page loads exists",()=>{
+  for(const m of resources().matchAll(/(?:src|href)="([^"#:?]+\.[a-z0-9]+)"/g))assert.ok(fs.existsSync(path.join(ROOT,m[1])),m[1]);
+});
