@@ -4,6 +4,7 @@ The version is `APP_VERSION` in version.js; it shows in the footer, and raising 
 
 ## 41 (October 30)
 - A Resources page off the splash: the ARRL, the San Francisco, East Bay, San Mateo and Millbrae radio clubs, and the SF NERT, Berkeley CERT and Central County Fire CERT volunteer programs. Each app's home footer gains All exams, back to the splash.
+- An About page off the splash, one paragraph on why the site exists. The splash and its pages are not cached, so neither it nor the Resources page's later wording fixes needed a new version.
 
 ## 40 (October 30)
 - The drill counters say what they count. The session line reads "46 due today, 4 still to get right, 0 of 52 mastered" (the 46 is what was due when the session began, and a miss stays in the 4 until it is got right); the position reads "Question 49 of 52, including 6 repeats" once a miss has come back; the score reads "37 of 43 questions right on the first try", and counts each question once. A repeat is marked Repeat on the card, for screen readers too. Start over is hidden when nothing is left due. Same in the flash-card and symbol drills.

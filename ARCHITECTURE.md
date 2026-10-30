@@ -7,6 +7,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | File | What it holds |
 |---|---|
 | index.html | The splash page at /ham-drills/, linking to each exam's app |
+| about.html | One paragraph on why the site exists, off the splash; no script, not cached |
 | resources.html | A page of outward links off the splash: the ARRL, Bay Area clubs, NERT and CERT; no script, not cached |
 | app/app.js, app/app.css | The whole app: script and styles, shared by every exam; names no exam |
 | app/sw-core.js | The service worker every exam shares |

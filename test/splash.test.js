@@ -50,3 +50,14 @@ test("every outward link on the resources page is https and opens safely in a ne
 test("every file the resources page loads exists",()=>{
   for(const m of resources().matchAll(/(?:src|href)="([^"#:?]+\.[a-z0-9]+)"/g))assert.ok(fs.existsSync(path.join(ROOT,m[1])),m[1]);
 });
+
+/* The about page: one paragraph, in the same style, back to the splash. */
+test("splash links to the about page, which links back and loads only files that exist",()=>{
+  assert.match(page(),/href="about\.html"/);
+  const about=fs.readFileSync(path.join(ROOT,"about.html"),"utf8");
+  assert.match(about,/class="back" href="\.\/"/);
+  assert.match(about,/KO6PRL/);
+  assert.ok(!/localStorage|serviceWorker|<script/.test(about));
+  for(const m of about.matchAll(/(?:src|href)="([^"#:?]+\.[a-z0-9]+)"/g))assert.ok(fs.existsSync(path.join(ROOT,m[1])),m[1]);
+  for(const a of [...about.matchAll(/<a ([^>]*href="https?:[^"]*"[^>]*)>/g)].map(m=>m[1])){assert.match(a,/href="https:/,a);assert.match(a,/rel="noopener"/,a)}
+});
