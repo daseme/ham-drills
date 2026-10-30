@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 42 (October 30)
+- The in-app About is now How it works, on the home footer and as the page heading, since the splash has an About of its own: who built the site and why. Its credits line names KO6PRL.
+
 ## 41 (October 30)
 - A Resources page off the splash: the ARRL, the San Francisco, East Bay, San Mateo and Millbrae radio clubs, and the SF NERT, Berkeley CERT and Central County Fire CERT volunteer programs. Each app's home footer gains All exams, back to the splash.
 - An About page off the splash, one paragraph on why the site exists. The splash and its pages are not cached, so neither it nor the Resources page's later wording fixes needed a new version.

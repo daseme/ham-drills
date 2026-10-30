@@ -320,7 +320,7 @@ function home(){
   <div class="sashbox"><ul class="sash${DECKS.length>12?" seven":""}" aria-label="Section badges">${DECKS.map(d=>{const e=tierEarned(d);return `<li aria-label="${d.code}: ${e?TIER[e]+" badge":"no badge yet"}">${deckBadge(d,44,true)}<b aria-hidden="true">${d.code}</b></li>`}).join("")}</ul>
   <p class="sash-cap">${sashCaption()}</p></div>
   <div class="foot">
-    <p class="links"><button class="linkbtn" id="exp">${DEMO?"Export sample":"Export progress"}</button>${DEMO?"":`<button class="linkbtn" id="imp">Import progress</button>`}<a href="../">All exams</a><a href="#study">Study guide</a><a href="#about">About</a>${C.demo&&!DEMO&&DECKS.every(d=>!stats(d).seen)?`<a href="?demo">See it with sample progress</a>`:""}<span>Version ${APP_VERSION}${DEMO?", demo":""}</span></p>
+    <p class="links"><button class="linkbtn" id="exp">${DEMO?"Export sample":"Export progress"}</button>${DEMO?"":`<button class="linkbtn" id="imp">Import progress</button>`}<a href="../">All exams</a><a href="#study">Study guide</a><a href="#about">How it works</a>${C.demo&&!DEMO&&DECKS.every(d=>!stats(d).seen)?`<a href="?demo">See it with sample progress</a>`:""}<span>Version ${APP_VERSION}${DEMO?", demo":""}</span></p>
   </div>`;
   app.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
   $("exp").onclick=exportProgress;if($("imp"))$("imp").onclick=()=>$("importFile").click();
@@ -444,7 +444,7 @@ function study(deck){
 function about(){
   $("app").innerHTML=`<div class="about">
   <button class="back" id="back">&larr; All sections</button>
-  <p class="over">${C.over}</p><h1>About these drills</h1>
+  <p class="over">${C.over}</p><h1>How these drills work</h1>
   <p>Drills for the ${C.poolYears} ${C.shortName} question pool, worded as on the exam, with spaced review. ${C.aboutFacts}</p>
   <h2>How review works</h2>
   <p>A card comes back after one day, then three, then seven, then longer. Three correct answers on separate days marks it mastered. A miss sends it back to the start. Nothing is scheduled past your exam date if you set one, and inside the last week every card comes back at least once more.</p>
@@ -465,7 +465,7 @@ function about(){
   <h2>Your progress</h2>
   <p>Progress is saved on this phone and nowhere else. Export progress on the home screen makes a backup file; import it on a new phone. Do that before clearing browser data or switching phones.</p>
   <h2>Credits</h2>
-  <p>Pool text from the <a href="https://ncvec.org" target="_blank" rel="noopener">NCVEC</a>; the pool is public domain. Version ${APP_VERSION}.</p>
+  <p>Built by KO6PRL. Pool text from the <a href="https://ncvec.org" target="_blank" rel="noopener">NCVEC</a>; the pool is public domain. Version ${APP_VERSION}.</p>
   </div>`;
   $("back").onclick=goHome;
 }
