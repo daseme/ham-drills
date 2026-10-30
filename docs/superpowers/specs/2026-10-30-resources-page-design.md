@@ -54,4 +54,12 @@ APP_VERSION 40 to 41 (app.js changed). CHANGELOG entry 41. The Technician and Ge
 
 ## Red team
 
-Kurt asked for the build and the push before the fresh reviewer reported. Its findings, and what they changed, follow in a later commit.
+Kurt asked for the build and the push before the fresh reviewer reported, so the review landed on the built page (version 41) and its fixes went out as the next commit.
+
+1. **Berkeley CERT descriptor overstated.** berkeleyca.gov/CERT lands on the city's Disaster Preparedness Trainings page, whose CERT section asks only that you have taken the Berkeley Ready class; it states no age limit or cost. The page now names that landing page and the Berkeley Ready prerequisite, and the "18 or older, lives or works in Berkeley" line is gone.
+2. **ebarc.org redirects to qsl.net.** The exact form linked, https://www.ebarc.org/, was fetched and does 301 to https://www.qsl.net/w6cus; kept, since the club owns the name, and the descriptor now says the site is on qsl.net so the redirect does not look like a hijack.
+3. **Unsourced claims.** millbraearc.org (exam sessions before the monthly meeting at the Millbrae library) and ccfd.specialdistrict.org/cert (Burlingame, Hillsborough and Millbrae) were both fetched and say what the page says. The San Mateo Radio Club's Burlingame-library sessions came from a 2019 newspaper article, not its site, and were replaced with what w6uq.org says: meets in San Mateo and on Zoom, and its Thursday net is for new hams' questions. sfarc.org calls the club the San Francisco Radio Club and shows no club callsign, so none is given.
+4. **Back link colour.** `.about a{color:inherit}` outranks `.back`, so the page's back link was ink rather than muted. The page's own `a.back` rule now sets the muted colour.
+5. **file:// and offline.** `../` and `./` resolve to directory listings when the pages are opened from disk, and an installed copy with no connection gets the browser's error page from All exams, since the splash is outside the app's scope and is not cached. Both accepted: the splash's own links (`technician/`) already assume the pages are served, and the splash is not part of the installed app. Recorded here rather than changed.
+
+No version bump for this commit: resources.html is not precached, so installed copies need nothing new.
