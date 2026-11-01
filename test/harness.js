@@ -27,11 +27,13 @@ function elements(){
   return element;
 }
 
-function load({exam="technician",search="",data,storage={}}={}){
+function load({exam="technician",search="",data,storage={},now}={}){
   const store=new Map(Object.entries(storage)),els={},element=elements();
+  /* now pins the app's clock: new Date() and Date.now() give that instant; a Date built from arguments is untouched. */
+  const Clock=now==null?Date:class extends Date{constructor(...a){super(...(a.length?a:[now]))}static now(){return now}};
   const localStorage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k),clear:()=>store.clear()};
   Object.defineProperty(localStorage,"keys",{value:()=>[...store.keys()]});
-  const ctx={console,Date,Math,JSON,URLSearchParams,setTimeout:()=>0,Blob:class{},File:class{},localStorage,
+  const ctx={console,Date:Clock,Math,JSON,URLSearchParams,setTimeout:()=>0,Blob:class{},File:class{},localStorage,
     sessionStorage:{getItem:()=>null,setItem(){},removeItem(){}},
     location:{search,hash:"",pathname:"/",protocol:"file:"},
     history:{state:null,replaceState(){},pushState(){},go(){}},navigator:{},scrollTo(){},addEventListener(){},

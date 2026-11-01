@@ -106,6 +106,15 @@ function stats(d){const ids=itemIds(d),t=dayNum();
 /* An unseen card counts as due, so untouched decks would swamp the home count. Home counts reviews only. */
 const reviewsDue=d=>itemIds(d).filter(k=>isSeen(d.id,k)&&isDue(d.id,k)).length;
 const dueTomorrow=d=>{const t=dayNum(),s=srsOf(d.id);return itemIds(d).filter(k=>s[k]&&s[k].due===t+1).length};
+/* ---------- the week ----------
+   A goal of 7 days with 2 days off in reserve, so 5 studied days make the week. Weeks run Monday to Sunday: day 0
+   (1970-01-01) was a Thursday, so (day+3)%7 is the weekday with Monday 0. A day is met when a practice exam was
+   finished, or when the distinct items answered reach the floor: 10, or the reviews due at the day's first touch
+   when fewer (and at least one). The amount to study is the scheduler's business; the floor only marks showing up. */
+const weekday=day=>(day+3)%7;
+const weekStart=day=>day-weekday(day);
+const dayFloor=e=>e&&e.d>=1?Math.min(10,e.d):10;
+const dayMet=e=>!!e&&(!!e.x||(e.n||0)>=dayFloor(e));
 /* ---------- app icon badge ----------
    On an installed app the icon carries the pool questions due today, the home headline's number; once those are
    done it carries tomorrow's, so the icon still says something in the morning. With nothing coming, no badge.
