@@ -48,6 +48,16 @@ test("every record is one the scheduler could have written",()=>{
   assert.deepEqual(bad,[]);
 });
 
+test("the sample's day log skips its two days off, and every other day from the second is met",()=>{
+  const T=demo.run("dayNum()"),days=demo.run("DAYS");
+  for(let t=T-21;t<T;t++)assert.ok(days[t],`day ${t-T}`);
+  assert.equal(demo.run(`dayMet(DAYS[${T-9}])`),false);
+  assert.equal(demo.run(`dayMet(DAYS[${T-16}])`),false);
+  for(let t=T-20;t<T;t++)if(t!==T-9&&t!==T-16)assert.equal(demo.run(`dayMet(DAYS[${t}])`),true,`day ${t-T}`);
+  assert.equal(days[T-9].n,0);
+  assert.ok(demo.run("weekState().shown"));
+});
+
 test("the sample is the same on every load",()=>{
   const dump=app=>app.run(`JSON.stringify(DECKS.map(d=>Object.entries(srsOf(d.id)).map(([k,r])=>[k,r.lv,r.due,r.last,r.n,r.w])))`);
   assert.equal(dump(load({search:"?demo"})),dump(demo));

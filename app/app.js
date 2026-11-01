@@ -201,12 +201,15 @@ function seedDemo(){
       s[c.k]=step(r,ok,t,exam);s[c.k].ts=t*864e5+tz+(18+tries)*36e5+Math.floor(c.rnd()*36e5)}while(!ok&&!force&&++tries<3)};
   for(let t=T-21;t<T;t++){
     /* Two days were skipped; yesterday ended with the plan's lapses, which drop a silver section back to bronze. */
+    const due=cards.filter(c=>{const r=srsOf(c.id)[c.k];return r&&r.due<=t}).length;
     if(t!==T-9&&t!==T-16)for(const c of cards){const r=srsOf(c.id)[c.k];if(t>=c.intro&&(!r||r.due<=t))answer(c,t)}
     if(t===T-1)cards.filter(c=>DEMO_LAPSE.includes(c.k)).forEach(c=>answer(c,t,true));
     for(const id in DEMO_PLAN){const b=badges[id]||(badges[id]={});for(let g=1;g<=tierNow(DECK[id]);g++)if(!b[g])b[g]=t}
+    /* The day log, as the app would have written it: the seen cards due at the day's start, the cards answered. */
+    DAYS[t]={d:due,n:cards.filter(c=>{const r=srsOf(c.id)[c.k];return r&&r.last===t}).length};
   }
   for(const id in DEMO_PLAN)saveSrs(id);
-  put("badges",badges);put("examDay",exam);put("prefs",{showDate:true});put("seeded",true);
+  saveDays();put("badges",badges);put("examDay",exam);put("prefs",{showDate:true});put("seeded",true);
 }
 const clearDemo=()=>{try{Object.keys(localStorage).filter(k=>k.startsWith(C.demoNs)).forEach(k=>localStorage.removeItem(k))}catch(e){}};
 seedDemo();
