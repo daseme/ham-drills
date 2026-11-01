@@ -165,3 +165,40 @@ test("home shows the strip after the first answers, after the hard line and befo
   const hh=a.run(`$("app").innerHTML`);
   assert.ok(hh.indexOf('class="reach hard"')<hh.indexOf('class="week"'),"after the hard line");
 });
+
+const card=a=>a.run(`$("card").innerHTML`);
+const basics=a=>{if(card(a).includes('id="go"'))a.run(`$("go").onclick();0`)};
+const answer=a=>a.run(`(()=>{const id=$("card").innerHTML.match(/class="qid">([^<]+)</)[1];const q=POOL.flatMap(d=>d.Q).find(q=>q[0]===id);const b=[...$("ans").children].find(b=>+b.dataset.oi===q[3]);b.onclick();return id})()`);
+const next=a=>a.run(`$("next").onclick();0`);
+const tap=(a,act)=>a.run(`$("ans").onclick({target:{closest:()=>({dataset:{act:"${act}"}})}});0`);
+const answerSym=a=>a.run(`(()=>{const h=$("card").innerHTML,s=DECK.symbols.S.filter(x=>h.includes(x.d)).sort((p,q)=>q.d.length-p.d.length)[0];const b=[...$("ans").children].find(b=>b.dataset.n===s.n);b.onclick();return s.n})()`);
+
+test("the drill's end screen says Today's in once, the session that met the day",()=>{
+  const a=at(MON);a.run("drill({deck:DECK.t1})");
+  const N=a.run("DECK.t1.Q.length");
+  for(let k=0;k<N;k++){basics(a);answer(a);next(a)}
+  assert.match(card(a),/<p class="win">Today's in\. 1 day this week, 2 days off left\.<\/p>/);
+  a.run(`$("dueOnly").checked=false;$("dueOnly").onchange();0`);
+  for(let k=0;k<N;k++){basics(a);answer(a);next(a)}
+  assert.doesNotMatch(card(a),/Today's in/,"already met before this session");
+});
+
+test("the flash and symbol drills say it too",()=>{
+  const f=at(MON,{exam:"general"});f.run("flash(DECK.facts)");
+  const K=f.run("DECK.facts.flash.length");
+  for(let k=0;k<K;k++){tap(f,"show");tap(f,"ok")}
+  assert.match(card(f),/<p class="win">Today's in\. 1 day this week, 2 days off left\.<\/p>/);
+  const s=at(MON);s.run("symbols()");
+  const N=s.run("DECK.symbols.S.length");
+  for(let k=0;k<N;k++){answerSym(s);next(s)}
+  assert.match(card(s),/<p class="win">Today's in\. 1 day this week, 2 days off left\.<\/p>/);
+});
+
+test("the practice exam's result says Today's in from Finish, not when the result is reopened",()=>{
+  /* Finish as the screen's button does, with a draw scored as test/exam.test.js scores one. */
+  const a=at(MON);
+  a.run(`(()=>{const draw=examDraw();examFinish(draw,draw.map(x=>x.q[3]),{t0:Date.now()-60000,est:null})})()`);
+  assert.match(a.run(`$("app").innerHTML`),/<p class="win">Today's in\. 1 day this week, 2 days off left\.<\/p>/);
+  a.run("examResult()");
+  assert.doesNotMatch(a.run(`$("app").innerHTML`),/Today's in/);
+});

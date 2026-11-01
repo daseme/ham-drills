@@ -150,7 +150,7 @@ test("flip, grade, requeue a miss, count first tries only, and finish",()=>{
   assert.equal(a.run(`srsOf("edges")[${JSON.stringify(first.k)}].lv`),0,"right the same day as a miss stays at level 0, due tomorrow");
   for(let k=0;k<18;k++){tap(a,"show");tap(a,"ok")}
   assert.equal(a.run(`$("score").textContent`),"21 of 22 cards right on the first try");
-  assert.match(card(a),/<div class="end"><h2>21\/22<\/h2><p>95% right on the first try\.<\/p><p>That's everything due today. 22 will be back tomorrow\.<\/p>/);
+  assert.match(card(a),/<div class="end"><h2>21\/22<\/h2><p>95% right on the first try\.<\/p>(<p class="win">[^<]*<\/p>)?<p>That's everything due today. 22 will be back tomorrow\.<\/p>/);
   assert.equal(a.run("stats(DECK.edges).mastered"),0);assert.equal(a.run("stats(DECK.edges).seen"),22);
   assert.equal(a.run("tierNow(DECK.edges)"),1);assert.deepEqual(a.run("Object.keys(BADGES.edges).sort()"),["1","gen"]);
 });

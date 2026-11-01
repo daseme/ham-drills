@@ -162,6 +162,8 @@ function weekState(t=dayNum()){
   const small=back?"The cards waited. A missed stretch doesn't undo the spacing.":w>=2?`${w} weeks in a row.`:"";
   return {shown,made,dots,line,small};
 }
+/* The end of the session that filled today's dot says so; a session that began with the day already met says nothing. */
+const todayLine=was=>!was&&todayMet()?`<p class="win">Today's in. ${weekState().line}</p>`:"";
 function weekBlock(){const w=weekState();if(!w.shown)return "";
   return `<div class="week"><ul class="days" aria-label="This week">${w.dots.map(d=>`<li class="d${d.cls?" "+d.cls:""}" aria-label="${d.label}"><i></i>${d.wd}</li>`).join("")}</ul><p class="wl">${w.line}${w.small?`<small>${w.small}</small>`:""}</p></div>`}
 /* ---------- app icon badge ----------
@@ -537,7 +539,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   const list=!!cards,decks=mixed?POOL:list?[]:[deck];
   const all=list?cards:decks.flatMap(d=>d.Q.map(q=>({d,q})));
   const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
-  let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null,startPool=[];
+  let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null,startPool=[],metAtStart=false;
   const title=mixed?"Everything due":list?listTitle:deck.exam?`${deck.code}: ${deck.name}`:deck.name;
   const own=DECKS.filter(d=>!d.exam).map(d=>d.S?"Symbols":d.code),ownList=own.length>1?`${own.slice(0,-1).join(", ")} and ${own[own.length-1]}`:own[0];
   const sub=mixed?`Every pool question due today, mixed across sections.${own.length?` ${ownList} ${own.length>1?"are":"is"} reviewed on ${own.length>1?"their":"its"} own.`:""}`:list?listSub:
@@ -586,7 +588,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     if(!list)pool=shuffle(pool);
     const ord=Object.keys(deck&&deck.P||{}),fresh=pool.filter(basicsFor);
     items=pool.filter(x=>!basicsFor(x)).concat(ord.flatMap(k=>fresh.filter(x=>basicsFor(x)===k)));
-    shown=null;i=0;done=0;fr=0;fd=0;render();
+    metAtStart=todayMet();shown=null;i=0;done=0;fr=0;fd=0;render();
   }
   function status(){
     srsLine();
@@ -602,7 +604,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     if(i>=items.length){
       const pct=Math.round(fr/Math.max(fd,1)*100),left=inGroup().filter(due).length,t=dayNum();
       const tom=inGroup().filter(x=>{const r=srsOf(x.d.id)[x.q[0]];return r&&r.due===t+1}).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":` The exam pass mark is ${Math.round(C.pass/C.examQ*100)}%.`}</p>${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${pct}% right on the first try.${fd&&fr===fd?"":` The exam pass mark is ${Math.round(C.pass/C.examQ*100)}%.`}</p>${todayLine(metAtStart)}${dueOnly()?`<p>${left?`${left} more ${left===1?"question is":"questions are"} due today.`:"That's everything due today."} ${tom} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button>${dueOnly()&&!left?"":`<button class="btn ghost" id="again">Start over</button>`}</div>`;
       $("home").onclick=goHome;if($("again"))$("again").onclick=start;say(c.querySelector(".end").textContent);
       if(fd&&fr===fd)wink(`${fr} out of ${fd}`,"Wouldn't that be just like you?");
@@ -686,20 +688,24 @@ function examScreen(){
   $("exam").addEventListener("focusin",e=>{const li=e.target.closest(".xcard");if(li&&+li.dataset.i!==cur)setCurrent(+li.dataset.i,{scroll:false})});
   $("finish").onclick=()=>{const left=draw.length-answered();
     if(left&&!$("finish").dataset.armed){$("finish").dataset.armed="1";$("finish").textContent=`Finish anyway, ${left} unanswered`;setCurrent(picks.findIndex(p=>p==null),{focus:true});return}
-    const r=examScore(draw,picks);
-    saveExam({day:dayNum(),right:r.right,missed:r.missed.map(m=>[m.d,m.id,m.given]),secs:Math.round((Date.now()-s.t0)/1000),est:s.est});
-    examClear();history.replaceState(history.state,"","#exam/result");examResult();window.scrollTo(0,0)};
+    examFinish(draw,picks,s)};
   status();setCurrent(cur,{scroll:cur>0});
 }
+/* Scores and saves the exam and shows the result; the result learns whether this exam filled today's dot. */
+function examFinish(draw,picks,s){
+  const r=examScore(draw,picks),was=todayMet();
+  saveExam({day:dayNum(),right:r.right,missed:r.missed.map(m=>[m.d,m.id,m.given]),secs:Math.round((Date.now()-s.t0)/1000),est:s.est});
+  examClear();history.replaceState(history.state,"","#exam/result");examResult(!was&&todayMet());window.scrollTo(0,0);
+}
 /* The last exam's result: the score against the pass mark, a row per section, and every miss with the answer given. */
-function examResult(){
+function examResult(won=false){
   const e=lastExam(),app=$("app"),pass=e.right>=C.pass,mins=Math.round((e.secs||0)/60);
   const rows=POOL.map(d=>{const miss=e.missed.filter(m=>m[0]===d.id).length;return `<li><b>${d.code}</b><span class="nm">${esc(d.name)}</span><span class="n${miss?" short":""}">${d.exam-miss} of ${d.exam}</span></li>`}).join("");
   const missed=e.missed.map(([d,id,given])=>{const deck=DECK[d],q=deck&&deck.Q.find(q=>q[0]===id);if(!q)return "";
     return `<div class="miss"><p class="topic"><span class="qid">${id}</span>${esc(deck.G[id.slice(0,3)]||deck.name)}</p><p class="q">${q[1]}</p>
     <p class="given">${given==null||!q[2][given]?"No answer.":`Your answer: ${q[2][given]}`}</p><p class="note"><strong class="ok">Correct:</strong> ${q[2][q[3]]}. ${q[4]}</p></div>`}).join("");
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button><h1>Practice exam</h1>
-  <div class="card"><div class="end"><h2>${e.right}/${C.examQ}</h2><p>${pass?`That passes; ${C.pass} is the mark.`:`Short of the ${C.pass} needed to pass.`} ${mins?`${mins} ${mins===1?"minute":"minutes"}.`:"Under a minute."}</p>
+  <div class="card"><div class="end"><h2>${e.right}/${C.examQ}</h2><p>${pass?`That passes; ${C.pass} is the mark.`:`Short of the ${C.pass} needed to pass.`} ${mins?`${mins} ${mins===1?"minute":"minutes"}.`:"Under a minute."}</p>${todayLine(!won)}
   ${e.est?`<p class="muted">The home screen's estimate was ${e.est.lo===e.est.hi?e.est.lo:`${e.est.lo} to ${e.est.hi}`}.</p>`:""}</div>
   <ul class="secs" aria-label="Right by section">${rows}</ul>
   <div class="actions">${e.missed.length?`<button class="btn" id="missed">Drill the ${e.missed.length} you missed</button>`:""}<button class="btn ghost" id="again">Another exam</button></div></div>
@@ -713,7 +719,7 @@ function examResult(){
    The front's one button and the back's two sit in the answer group, so 1 flips and 1 or 2 grades. */
 function flash(d){
   const K=d.flash,id=d.id,app=$("app");prefs.dueOnly=true;
-  let items=[],i=0,done=0,fr=0,fd=0,cur=null,startPool=[];
+  let items=[],i=0,done=0,fr=0,fd=0,cur=null,startPool=[],metAtStart=false;
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>${esc(d.name)}</h1><p class="sub">${esc(d.intro||"")}</p>
   <div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>
@@ -737,7 +743,7 @@ function flash(d){
       /* Only its partner is left at the end: slot it in earlier, between two strangers. */
       const c=rest.shift(),j=out.findIndex((x,k)=>k>0&&!paired(out[k-1],c)&&!paired(c,x));out.splice(j<0?0:j,0,c)}
     return out}
-  function start(){const pool=prefs.dueOnly?K.filter(due):K;startPool=pool;items=spread(shuffle(pool)).map(c=>({c}));i=0;done=0;fr=0;fd=0;render()}
+  function start(){const pool=prefs.dueOnly?K.filter(due):K;startPool=pool;items=spread(shuffle(pool)).map(c=>({c}));metAtStart=todayMet();i=0;done=0;fr=0;fd=0;render()}
   function status(){srsLine();$("pos").textContent=posLine("Card",i,items,startPool.length);$("score").textContent=scoreLine("card",fr,fd);$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
   const prompt=c=>c.p||d.prompt;
   const head=(c,re)=>`${repMark(re)}${prompt(c)?`<p class="prompt" id="qtext">${esc(prompt(c))}</p>`:""}<p class="name" id="qname">${esc(c.n)}</p>`;
@@ -746,7 +752,7 @@ function flash(d){
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
     if(i>=items.length){const left=K.filter(due).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"card is":"cards are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${todayLine(metAtStart)}${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"card is":"cards are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button>${prefs.dueOnly&&!left?"":`<button class="btn ghost" id="again">Start over</button>`}</div>`;
       $("home").onclick=goHome;if($("again"))$("again").onclick=start;say(c.querySelector(".end").textContent);return}
     cur=items[i].c;
@@ -775,7 +781,7 @@ function symbols(){
   const d=DECK.symbols,S=d.S,app=$("app");prefs.dueOnly=true;
   const SW='stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"';
   const svg=s=>`<svg viewBox="0 0 120 60" role="img" aria-label="Schematic symbol"><g ${SW}>${s.d}</g></svg>`;
-  let mode="name",items=[],i=0,done=0,fr=0,fd=0,startPool=[];
+  let mode="name",items=[],i=0,done=0,fr=0,fd=0,startPool=[],metAtStart=false;
   app.innerHTML=`<button class="back" id="back">&larr; All sections</button>
   <h1>Symbol drill</h1><p class="sub">${C.symbolText.drill}</p>
   <div class="groups" id="modes" role="group" aria-label="Drill mode">${[["name","Name the symbol"],["find","Find the symbol"],["mix","Mixed"]].map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===mode}">${l}</button>`).join("")}</div>
@@ -794,13 +800,13 @@ function symbols(){
   function srsLine(){const tail=`, ${S.filter(s=>isMastered("symbols",s.n)).length} of ${S.length} mastered${tomorrow()?`, ${tomorrow()} coming up tomorrow`:""}`;
     $("srsline").textContent=prefs.dueOnly?sessionLine(startPool.length,startPool.filter(due).length,tail):`${S.filter(due).length} due today${tail}.`}
   function choices(s){const same=shuffle(S.filter(x=>x!==s&&x.f===s.f)),rest=shuffle(S.filter(x=>x!==s&&x.f!==s.f));return shuffle([s,...same.concat(rest).slice(0,3)])}
-  function start(){const pool=prefs.dueOnly?S.filter(due):S;startPool=pool;items=shuffle(pool).map(s=>({s,m:mode==="mix"?(Math.random()<.5?"name":"find"):mode}));i=0;done=0;fr=0;fd=0;render()}
+  function start(){const pool=prefs.dueOnly?S.filter(due):S;startPool=pool;items=shuffle(pool).map(s=>({s,m:mode==="mix"?(Math.random()<.5?"name":"find"):mode}));metAtStart=todayMet();i=0;done=0;fr=0;fd=0;render()}
   function status(){srsLine();$("pos").textContent=posLine("Symbol",i,items,startPool.length);$("score").textContent=scoreLine("symbol",fr,fd);$("fill").style.width=items.length?(done/items.length*100)+"%":"0"}
   function render(){
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=`<p class="q">Nothing is due here today.</p><p>Come back tomorrow, or turn off Due today to practice anyway.</p>`;return}
     if(i>=items.length){const left=S.filter(due).length;
-      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
+      c.innerHTML=`<div class="end"><h2>${fr}/${fd}</h2><p>${Math.round(fr/Math.max(fd,1)*100)}% right on the first try.</p>${todayLine(metAtStart)}${prefs.dueOnly?`<p>${left?`${left} more ${left===1?"symbol is":"symbols are"} due today.`:"That's everything due today."} ${tomorrow()} will be back tomorrow.</p>`:""}</div>
       <div class="actions"><button class="btn" id="home">Back to all sections</button>${prefs.dueOnly&&!left?"":`<button class="btn ghost" id="again">Start over</button>`}</div>`;
       $("home").onclick=goHome;if($("again"))$("again").onclick=start;say(c.querySelector(".end").textContent);return}
     const {s,m,re}=items[i],opts=choices(s);
