@@ -34,3 +34,51 @@ test("the floor is 10, or what was due when fewer, and a practice exam meets the
   assert.equal(a.run("dayMet({d:87,n:10})"),true);
   assert.equal(a.run("dayMet({d:87,n:0,x:true})"),true);
 });
+
+const rec=(T,o={})=>JSON.stringify({lv:1,due:T+1,last:T,fail:null,n:1,w:0,...o});
+
+test("the first touch of a day records what was due; answers count distinct items and never go down",()=>{
+  const a=at(THU),T=a.run("dayNum()");
+  a.run("home()");
+  assert.equal(a.run("get('days',null)"),null,"nothing seen, nothing written");
+  a.run("record('t1','T1A01',true);record('t1','T1A01',false);record('t1','T1A02',true)");
+  assert.deepEqual(a.run(`DAYS[${T}]`),{d:0,n:2},"two distinct items; a repeat is not a third");
+  a.run("SRS.t1={};saveSrs('t1');record('t2','T2A01',true)");
+  assert.equal(a.run(`DAYS[${T}].n`),2,"a section reset cannot lower n");
+  a.run("saveExam({day:dayNum(),right:30,missed:[],secs:60})");
+  assert.equal(a.run(`DAYS[${T}].x`),true);
+  assert.equal(a.run("todayMet()"),true);
+  assert.deepEqual(a.run("get('days')"),a.run("DAYS"),"saved");
+});
+
+test("home takes the due count once a card has been seen, and a new day gets its own entry",()=>{
+  const T=load({now:THU}).run("dayNum()");
+  const a=at(THU,{storage:{"hamdrill:srs:t1":JSON.stringify({T1A01:JSON.parse(rec(T-1)),T1A02:JSON.parse(rec(T-3,{due:T+4}))})}});
+  a.run("home()");
+  assert.deepEqual(a.run(`DAYS[${T}]`),{d:1,n:0});
+  const b=at(THU+86400000,{storage:{"hamdrill:srs:t1":JSON.stringify({T1A01:JSON.parse(rec(T-1))}),"hamdrill:days":JSON.stringify({[T]:{d:1,n:1}})}});
+  b.run("record('t1','T1A01',true)");
+  assert.deepEqual(b.run(`DAYS[${T}]`),{d:1,n:1},"yesterday is untouched");
+  assert.deepEqual(b.run(`DAYS[${T+1}]`),{d:1,n:1});
+});
+
+test("a damaged log is dropped entry by entry, and old entries fall away on save",()=>{
+  const T=load({now:THU}).run("dayNum()");
+  const bad={[T-1]:{d:2,n:3},[T-2]:{n:-1},[T-3]:"x",[T-4]:{n:2,d:-1,x:1},[T-500]:{n:5},abc:{n:1}};
+  const a=at(THU,{storage:{"hamdrill:days":JSON.stringify(bad)}});
+  assert.deepEqual(a.run("DAYS"),{[T-1]:{d:2,n:3},[T-4]:{n:2},[T-500]:{n:5}});
+  a.run("saveDays()");
+  assert.deepEqual(Object.keys(a.run("get('days')")),[String(T-4),String(T-1)]);
+  assert.deepEqual(at(THU,{storage:{"hamdrill:days":"[1,2]"}}).run("DAYS"),{});
+});
+
+test("with no log, the last fourteen days are rebuilt from the records",()=>{
+  const T=load({now:THU}).run("dayNum()");
+  const srs={T1A01:JSON.parse(rec(T-2)),T1A02:JSON.parse(rec(T-2)),T1A03:JSON.parse(rec(T-14,{due:T+20}))};
+  const a=at(THU,{storage:{"hamdrill:srs:t1":JSON.stringify(srs)}});
+  assert.deepEqual(a.run(`DAYS[${T-2}]`),{n:2});
+  assert.equal(a.run(`DAYS[${T-14}]`),undefined,"fourteen days back is outside the window");
+  assert.deepEqual(a.run(`get('days')[${T-2}]`),{n:2});
+  assert.deepEqual(a.run(`DAYS[${T}]`),{d:2,n:0},"the startup visit to home touched today");
+  assert.deepEqual(load({now:THU}).keys(),[],"nothing to rebuild writes nothing");
+});

@@ -94,7 +94,7 @@ function step(r0,ok,t,exam=EXAM.day){
   r.last=t;r.n=(r.n||0)+1;if(!ok)r.w=(r.w||0)+1;return r;
 }
 function record(id,k,ok){
-  const s=srsOf(id);s[k]=step(s[k],ok,dayNum());s[k].ts=Date.now();saveSrs(id);
+  const t=dayNum(),s=srsOf(id);s[k]=step(s[k],ok,t);s[k].ts=Date.now();saveSrs(id);noteAnswer(t);
   if(ok)awardBadges(DECK[id]);
 }
 /* True if this card has ever been answered correctly; a miss on such a card gets the Lemon line instead of "Not quite." */
@@ -115,6 +115,25 @@ const weekday=day=>(day+3)%7;
 const weekStart=day=>day-weekday(day);
 const dayFloor=e=>e&&e.d>=1?Math.min(10,e.d):10;
 const dayMet=e=>!!e&&(!!e.x||(e.n||0)>=dayFloor(e));
+/* The log, under `days`: {<day>: {d, n, x}}. d is the pool reviews due at the day's first touch, n the distinct
+   items answered that day (recounted from the records' `last` and never lowered, so a section reset cannot empty
+   a dot), x true once a practice exam was finished. Damaged entries are dropped on load; old ones on save. */
+function loadDays(){const raw=get("days",null),out={};if(!raw||typeof raw!=="object"||Array.isArray(raw))return out;
+  for(const k in raw){const v=raw[k];if(!/^\d+$/.test(k)||!v||typeof v!=="object"||!isInt(v.n)||v.n<0)continue;
+    const e={n:v.n};if(isInt(v.d)&&v.d>=0)e.d=v.d;if(v.x===true)e.x=true;out[k]=e}
+  return out}
+let DAYS=loadDays();
+const saveDays=()=>{const old=dayNum()-400;for(const k in DAYS)if(+k<old)delete DAYS[k];put("days",DAYS)};
+const poolDue=()=>POOL.reduce((a,d)=>a+reviewsDue(d),0);
+const answeredOn=t=>DECKS.reduce((a,d)=>a+Object.values(srsOf(d.id)).filter(r=>r.last===t).length,0);
+function touchDay(t=dayNum()){let e=DAYS[t];if(!e){e=DAYS[t]={d:poolDue(),n:0};saveDays()}return e}
+const noteAnswer=(t=dayNum())=>{const e=touchDay(t);e.n=Math.max(e.n,answeredOn(t));saveDays()};
+const todayMet=()=>dayMet(DAYS[dayNum()]);
+/* Before the log existed, the records' last days are all there is: two weeks of them become entries, once. */
+function backfillDays(){if(get("days",null)!=null)return;const t=dayNum();let any=false;
+  for(let k=t-13;k<=t;k++){const n=answeredOn(k);if(n>0){DAYS[k]={n};any=true}}
+  if(any)saveDays()}
+backfillDays();
 /* ---------- app icon badge ----------
    On an installed app the icon carries the pool questions due today, the home headline's number; once those are
    done it carries tomorrow's, so the icon still says something in the morning. With nothing coming, no badge.
@@ -198,7 +217,7 @@ function examScore(draw,picks){let right=0;const missed=[],bySection={};
 /* The last ten practice exams: {day, right, missed:[[deck id, question id, answer given or null]...], secs, est}. */
 const validExam=e=>!!e&&typeof e==="object"&&Number.isInteger(e.day)&&Number.isInteger(e.right)&&Array.isArray(e.missed)&&e.missed.every(m=>Array.isArray(m)&&typeof m[0]==="string"&&typeof m[1]==="string");
 const lastExam=()=>{const x=get("exams",[]);return Array.isArray(x)&&x.length&&validExam(x[x.length-1])?x[x.length-1]:null};
-function saveExam(e){const x=get("exams",[]);put("exams",(Array.isArray(x)?x:[]).concat([e]).slice(-10))}
+function saveExam(e){const x=get("exams",[]);put("exams",(Array.isArray(x)?x:[]).concat([e]).slice(-10));touchDay(e.day).x=true;saveDays()}
 const examMissed=()=>(lastExam()&&Array.isArray(lastExam().missed)?lastExam().missed:[]).map(([d,id])=>({d:DECK[d],q:DECK[d]&&DECK[d].Q.find(q=>q[0]===id)})).filter(x=>x.d&&x.q);
 /* Cards missed at least twice and not yet mastered, hardest first; a math card that is also a pool card is listed once. */
 function hardCards(){const by={};
@@ -293,6 +312,8 @@ document.addEventListener("visibilitychange",()=>{
 function home(){
   if(updateReady){location.reload();return}
   const app=$("app");demoBar(true);
+  /* The day's first visit records what was due, once there is anything to count. */
+  if(POOL.some(d=>stats(d).seen))touchDay();
   const reviews=DECKS.map(d=>[d,reviewsDue(d),stats(d)]);
   const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0);
   const poolSeen=POOL.reduce((a,d)=>a+stats(d).seen,0),poolTotal=POOL.reduce((a,d)=>a+stats(d).total,0);
