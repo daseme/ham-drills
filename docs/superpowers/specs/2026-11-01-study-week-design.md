@@ -98,6 +98,8 @@ A fresh reviewer read the design against the code and replayed the demo seed und
 - The print rule hides only the buttons, footer and toast, not "home chrome"; `.week` joins that list.
 - The mockup says "A day with nothing due counts on its own" and "Week made. 5 days, and Saturday on top."; the design, which drops the rest day and reads "Week made, 6 days.", wins.
 
+Found by the whole-branch review after the build: when an answer was the day's first touch (the app left open past midnight, or opened at a bookmarked section), the due count was taken after that answer had moved its card, so a learner with one card due could not meet the day; `record` now touches the day before the step. The review also corrected which screenshots the rebaseline should change: Technician home and both About pages, not General home.
+
 Found while planning: a learner whose first study day is a Thursday would have seen Monday to Wednesday as days off, and "1 day this week, 2 days off left" for a week that cannot reach five days. Days before the log's first day are now neutral, and winnable is computed from the days actually left.
 
 ## Left to the builder

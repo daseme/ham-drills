@@ -547,4 +547,4 @@ git commit -m "The week in How it works, ARCHITECTURE and the changelog; the des
 ### After the build
 
 - `node --test "test/*.test.js"` green; `node tools/data-format.js --check` and `node tools/pool-check.js technician` unchanged and green.
-- Push, then run the check workflow by hand with rebaseline on: the demo home screenshot (`technician` and `general`) changes because the strip appears. That is Kurt's push.
+- Push, then run the check workflow by hand with rebaseline on. Three screens should change: `test/screens/technician/home.png` (the demo's strip appears), `test/screens/technician/about.png` and `test/screens/general/about.png` (the new section). General's home is shot without the demo and with nothing seen, so it does not change; nor do the drill, exam and study screens. That is Kurt's push.

@@ -62,6 +62,14 @@ test("home takes the due count once a card has been seen, and a new day gets its
   assert.deepEqual(b.run(`DAYS[${T+1}]`),{d:1,n:1});
 });
 
+test("when an answer is the day's first touch, the due count is taken before that answer moves the card",()=>{
+  const T=load({now:THU}).run("dayNum()");
+  const a=at(THU,{storage:{"hamdrill:srs:t1":JSON.stringify({T1A01:JSON.parse(rec(T-1))})}});
+  a.run(`delete DAYS[${T}];record('t1','T1A01',true)`);
+  assert.deepEqual(a.run(`DAYS[${T}]`),{d:1,n:1});
+  assert.equal(a.run("todayMet()"),true,"one due, one answered: the day is in");
+});
+
 test("a damaged log is dropped entry by entry, and old entries fall away on save",()=>{
   const T=load({now:THU}).run("dayNum()");
   const bad={[T-1]:{d:2,n:3},[T-2]:{n:-1},[T-3]:"x",[T-4]:{n:2,d:-1,x:1},[T-500]:{n:5},abc:{n:1}};

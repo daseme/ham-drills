@@ -94,7 +94,8 @@ function step(r0,ok,t,exam=EXAM.day){
   r.last=t;r.n=(r.n||0)+1;if(!ok)r.w=(r.w||0)+1;return r;
 }
 function record(id,k,ok){
-  const t=dayNum(),s=srsOf(id);s[k]=step(s[k],ok,t);s[k].ts=Date.now();saveSrs(id);noteAnswer(t);
+  /* The day is touched before the step, so a first answer that is the day's first touch counts as due, not done. */
+  const t=dayNum();touchDay(t);const s=srsOf(id);s[k]=step(s[k],ok,t);s[k].ts=Date.now();saveSrs(id);noteAnswer(t);
   if(ok)awardBadges(DECK[id]);
 }
 /* True if this card has ever been answered correctly; a miss on such a card gets the Lemon line instead of "Not quite." */
