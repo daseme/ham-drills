@@ -194,6 +194,17 @@ test("the flash and symbol drills say it too",()=>{
   assert.match(card(s),/<p class="win">Today's in\. 1 day this week, 2 days off left\.<\/p>/);
 });
 
+test("export carries the log; import merges it day by day and rebuilds days a backup never had",()=>{
+  const a=at(THU,{storage:{"hamdrill:days":JSON.stringify({[T-1]:{d:4,n:4},[T-2]:{d:2,n:1}})}});
+  assert.deepEqual(JSON.parse(a.run("JSON.stringify(exportData())")).days,{[T-1]:{d:4,n:4},[T-2]:{d:2,n:1}});
+  a.run(`mergeDays(${JSON.stringify({[T-1]:{d:6,n:2,x:true},[T-2]:{n:5},[T-3]:"bad",[T-4]:{n:1}})})`);
+  assert.deepEqual(a.run("DAYS"),{[T-1]:{d:4,n:4,x:true},[T-2]:{d:2,n:5},[T-4]:{n:1}});
+  assert.deepEqual(a.run("get('days')"),a.run("DAYS"),"saved");
+  const b=at(THU,{storage:{"hamdrill:days":"{}"}});
+  b.run(`importDecks({t1:{T1A01:${rec(T-5)},T1A02:${rec(T-5)}}});mergeDays(undefined)`);
+  assert.deepEqual(b.run("DAYS"),{[T-5]:{n:2}},"a backup from before the log still fills the week");
+});
+
 test("the practice exam's result says Today's in from Finish, not when the result is reopened",()=>{
   /* Finish as the screen's button does, with a draw scored as test/exam.test.js scores one. */
   const a=at(MON);

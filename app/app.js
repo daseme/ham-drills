@@ -118,11 +118,11 @@ const dayMet=e=>!!e&&(!!e.x||(e.n||0)>=dayFloor(e));
 /* The log, under `days`: {<day>: {d, n, x}}. d is the pool reviews due at the day's first touch, n the distinct
    items answered that day (recounted from the records' `last` and never lowered, so a section reset cannot empty
    a dot), x true once a practice exam was finished. Damaged entries are dropped on load; old ones on save. */
-function loadDays(){const raw=get("days",null),out={};if(!raw||typeof raw!=="object"||Array.isArray(raw))return out;
+function cleanDays(raw){const out={};if(!raw||typeof raw!=="object"||Array.isArray(raw))return out;
   for(const k in raw){const v=raw[k];if(!/^\d+$/.test(k)||!v||typeof v!=="object"||!isInt(v.n)||v.n<0)continue;
     const e={n:v.n};if(isInt(v.d)&&v.d>=0)e.d=v.d;if(v.x===true)e.x=true;out[k]=e}
   return out}
-let DAYS=loadDays();
+let DAYS=cleanDays(get("days",null));
 const saveDays=()=>{const old=dayNum()-400;for(const k in DAYS)if(+k<old)delete DAYS[k];put("days",DAYS)};
 const poolDue=()=>POOL.reduce((a,d)=>a+reviewsDue(d),0);
 const answeredOn=t=>DECKS.reduce((a,d)=>a+Object.values(srsOf(d.id)).filter(r=>r.last===t).length,0);
@@ -134,6 +134,13 @@ function backfillDays(){if(get("days",null)!=null)return;const t=dayNum();let an
   for(let k=t-13;k<=t;k++){const n=answeredOn(k);if(n>0){DAYS[k]={n};any=true}}
   if(any)saveDays()}
 backfillDays();
+/* A backup's log merges day by day: the larger count, an exam from either, the due count from whichever has one
+   (the smaller when both do). Days the backup never logged are rebuilt from the records just imported. */
+function mergeDays(src){const t=dayNum(),s=cleanDays(src);
+  for(const k in s){const a=DAYS[k],b=s[k];if(!a){DAYS[k]=b;continue}
+    a.n=Math.max(a.n,b.n);if(b.x)a.x=true;if(b.d!=null)a.d=a.d==null?b.d:Math.min(a.d,b.d)}
+  for(let k=t-13;k<=t;k++)if(!DAYS[k]){const n=answeredOn(k);if(n>0)DAYS[k]={n}}
+  saveDays()}
 /* The strip: this week's seven dots and the line under them. A week is made by five met days; weeks in a row
    counts made weeks back from last week, plus this one once made. Days before the log began are neither studied
    nor days off, so a learner who starts on a Thursday is not shown three days off they never took; they do use
@@ -436,8 +443,9 @@ function sashCaption(){
   const parts=[3,2,1].filter(t=>c[t]).map(t=>`${c[t]} ${TIER[t].toLowerCase()}`);
   return parts.length?`${parts.join(", ")} of ${DECKS.length} sections.`:"No badges yet. Bronze comes when every card in a section has been seen once.";
 }
+const exportData=()=>({app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day,exams:get("exams",[]),days:DAYS});
 function exportProgress(){
-  const data={app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day,exams:get("exams",[])};
+  const data=exportData();
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
   const d=new Date(),name=`${C.exportName}-${DEMO?"sample":"progress"}-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}.json`;
   const file=new File([blob],name,{type:"application/json"});
@@ -457,7 +465,7 @@ $("importFile").onchange=async e=>{
     if(d&&d.decks&&/^hamdrill/.test(d.app)&&d.app!==C.exportApp){toast("That backup is from another exam's drills.");return}
     if(!d||d.app!==C.exportApp||!d.decks)throw 0;
     if(d.sample){toast("That's the demo's sample progress, not a backup of yours.");return}
-    const {decks:n,dropped}=importDecks(d.decks);mergeBadges(d.badges);if(Number.isInteger(d.examDay)&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));
+    const {decks:n,dropped}=importDecks(d.decks);mergeDays(d.days);mergeBadges(d.badges);if(Number.isInteger(d.examDay)&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));
     if(Array.isArray(d.exams)&&!lastExam())put("exams",d.exams.filter(validExam).slice(-10));
     toast(`Imported progress for ${n} ${n===1?"section":"sections"}${dropped?`; ${dropped} damaged ${dropped===1?"record was":"records were"} skipped`:""}.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
