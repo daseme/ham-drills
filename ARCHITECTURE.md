@@ -53,6 +53,7 @@ Progress lives in `localStorage` on the device and nowhere else. Every read and 
 | `examDay` | The exam date, or absent |
 | `prefs` | `showEst`, `showDate`, `haveFRN` |
 | `exams` | The last ten practice exams: `{day, right, missed:[[deck, id, answer given]], secs, est}` |
+| `days` | `{<day>: {d, n, x}}`: for each day touched, the pool reviews due at its first touch, the distinct items answered (never lowered), and whether a practice exam was finished |
 | `seeded` | Demo mode only: the sample has been created |
 
 A practice exam in progress sits in `sessionStorage` under `<namespace>exam` (ids, answer orders, picks, start time), so a reload comes back to it; Finish and Back clear it.
@@ -73,6 +74,10 @@ Export writes the same records to a JSON file, with the badges, the exam date an
 - Right later the same day as a miss: still level 0, due tomorrow.
 
 `capInterval` applies the exam date: nothing is scheduled on or past the exam, and inside the last week each interval is at most half the days left, so every card comes back at least once more.
+
+## Week
+
+`days` is the log the home strip reads. A day is met when `x`, or `n >= floor`, with `floor = d >= 1 ? min(10, d) : 10`; the week runs Monday to Sunday (`weekday = (day + 3) % 7`), five met days make it, and `weeksInARow` counts made weeks back from last week, plus this one once made. Days before the log's first entry are neither studied nor days off, but they use up the week's slack. `record`, `saveExam` and home's first visit of a day write the log; with no log at all, the last fourteen days are rebuilt from the records' `last`, at startup and after an import.
 
 ## Estimate
 

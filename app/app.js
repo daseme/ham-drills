@@ -524,6 +524,8 @@ function about(){
   <p>A card comes back after one day, then three, then seven, then longer. Three correct answers on separate days marks it mastered. A miss sends it back to the start. Nothing is scheduled past your exam date if you set one, and inside the last week every card comes back at least once more.</p>
   <h2>Badges</h2>
   <p>A section earns bronze when every card has been seen, silver when every card has been answered correctly at least once, and gold when every card is mastered. A rung, once earned, stays; the badge dims while the section's current standing is below its best rung.</p>
+  <h2>The week</h2>
+  <p>Home shows the week as seven dots, Monday to Sunday. The goal is 7 days with 2 days off in reserve, so 5 studied days make the week; a missed day spends a day off on its own. A day counts once you've answered 10 questions in any section, or everything due when fewer are due, or finished a practice exam. Weeks made in a row are counted. A missed week just starts over on Monday: missing days doesn't undo the spacing, the cards wait.</p>
   <h2>The estimated score</h2>
   <p>Each section is weighed by how many of the ${C.examQ} exam questions it supplies and by how far along its cards are: mastered cards count almost fully, cards answered right once count partly, unseen cards count as a guess. It's a rough gauge, not a prediction. Hide it from the home screen if it's unwelcome.</p>
   <h2>Practice exam</h2>

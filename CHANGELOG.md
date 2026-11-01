@@ -2,6 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 43 (November 1)
+- Home shows the week: seven dots, Monday to Sunday, under a goal of 7 days with 2 days off in reserve, so 5 studied days make the week. A day counts at 10 questions in any section, or everything due when fewer are due, or a practice exam; a missed day spends a day off on its own; weeks made in a row are counted. The session that fills today's dot says "Today's in." on its end screen. Nothing is shown until the first answers, no line ever names a lost week, and a learner coming back after a gap is told the cards waited. The design and the research behind it are in docs/superpowers/specs/2026-11-01-study-week-design.md.
+- The day log travels with export and import; a backup from before it rebuilds the last two weeks from the records. The demo's sample shows the week.
+- How it works explains the week.
+
 ## 42 (October 30)
 - The in-app About is now How it works, on the home footer and as the page heading, since the splash has an About of its own: who built the site and why. Its credits line names KO6PRL.
 - Resources gains a Licensing section: getting an FCC Registration Number, the FCC license search, and QRZ. And an Exam sessions section: the W5YI VEC and the HamStudy session finder.

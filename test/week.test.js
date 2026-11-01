@@ -205,6 +205,11 @@ test("export carries the log; import merges it day by day and rebuilds days a ba
   assert.deepEqual(b.run("DAYS"),{[T-5]:{n:2}},"a backup from before the log still fills the week");
 });
 
+test("How it works explains the week",()=>{
+  const a=at(THU);a.run("about()");
+  assert.match(a.run(`$("app").innerHTML`),/<h2>The week<\/h2>\s*<p>Home shows the week as seven dots/);
+});
+
 test("the practice exam's result says Today's in from Finish, not when the result is reopened",()=>{
   /* Finish as the screen's button does, with a draw scored as test/exam.test.js scores one. */
   const a=at(MON);
