@@ -134,6 +134,36 @@ function backfillDays(){if(get("days",null)!=null)return;const t=dayNum();let an
   for(let k=t-13;k<=t;k++){const n=answeredOn(k);if(n>0){DAYS[k]={n};any=true}}
   if(any)saveDays()}
 backfillDays();
+/* The strip: this week's seven dots and the line under them. A week is made by five met days; weeks in a row
+   counts made weeks back from last week, plus this one once made. Days before the log began are neither studied
+   nor days off, so a learner who starts on a Thursday is not shown three days off they never took; they do use
+   up the slack, since the week still needs five days. No line ever names a lost week: an unwinnable week just
+   counts its days, and Monday starts fresh. */
+function weekMade(ws){let n=0;for(let k=0;k<7;k++)if(dayMet(DAYS[ws+k]))n++;return n>=5}
+function weeksInARow(t){let n=0,ws=weekStart(t);if(weekMade(ws))n++;for(ws-=7;weekMade(ws);ws-=7)n++;return n}
+const DAY_NAMES=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+function weekState(t=dayNum()){
+  const keys=Object.keys(DAYS),start=keys.length?Math.min(...keys.map(Number)):Infinity;
+  const shown=Object.values(DAYS).some(e=>e.n>=1||e.x),ws=weekStart(t),todayMet=dayMet(DAYS[t]);
+  let done=0,off=0,neutral=0,nth=0;const dots=[];
+  for(let i=0;i<7;i++){const d=ws+i,met=dayMet(DAYS[d]);let cls="",label=DAY_NAMES[i];
+    if(met){done++;nth++;cls=nth>5?"bonus":"done";label+=", studied"}
+    else if(d<t){if(d>=start){off++;cls="off";label+=", day off"}else neutral++}
+    if(d===t){cls=cls?cls+" now":"now";label=`${DAY_NAMES[i]}, today, ${met?"studied":"not yet"}`}
+    dots.push({wd:"MTWTFSS"[i],cls,label})}
+  const left=2-off-neutral,remaining=6-weekday(t)+(todayMet?0:1),winnable=done+remaining>=5,k=5-done,s=n=>n===1?"":"s";
+  const made=done>=5,sofar=done?`${done} day${s(done)} this week`:"Nothing yet this week";
+  const line=made?`<span class="ok">Week made,</span> ${done} days.`
+    :!winnable?`${sofar}.`
+    :left>0?`${sofar}, ${left} day${s(left)} off left.`
+    :todayMet?`${sofar}; ${k===1?"the next one makes it.":`the next ${k} make it.`}`
+    :k===1?"Today makes this week.":k===2?"Today and tomorrow make this week.":`Today and the next ${k-1} days make this week.`;
+  const back=!todayMet&&![1,2,3].some(b=>dayMet(DAYS[t-b]))&&Object.values(DAYS).some(dayMet),w=weeksInARow(t);
+  const small=back?"The cards waited. A missed stretch doesn't undo the spacing.":w>=2?`${w} weeks in a row.`:"";
+  return {shown,made,dots,line,small};
+}
+function weekBlock(){const w=weekState();if(!w.shown)return "";
+  return `<div class="week"><ul class="days" aria-label="This week">${w.dots.map(d=>`<li class="d${d.cls?" "+d.cls:""}" aria-label="${d.label}"><i></i>${d.wd}</li>`).join("")}</ul><p class="wl">${w.line}${w.small?`<small>${w.small}</small>`:""}</p></div>`}
 /* ---------- app icon badge ----------
    On an installed app the icon carries the pool questions due today, the home headline's number; once those are
    done it carries tomorrow's, so the icon still says something in the morning. With nothing coming, no badge.
@@ -344,6 +374,7 @@ function home(){
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due question":`Review all ${poolDue} due questions`}</button></div>`
   :next?`<div class="actions"><button class="btn" data-go="${next.id}">${stats(next).seen?"Keep going with":"Start with"} ${next.code}: ${esc(next.name)}</button></div>`:""}
   ${hard?`<p class="reach hard">${hard} ${hard===1?"question":"questions"} you've missed more than once. <a href="#hard">Drill the hardest</a>.</p>`:""}
+  ${weekBlock()}
   ${planBlock()}
   <ul class="decks">${reviews.filter(([d])=>d.exam).map(row).join("")}</ul>
   <ul class="decks section-gap">${reviews.filter(([d])=>!d.exam).map(row).join("")}</ul>

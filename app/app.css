@@ -69,6 +69,23 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .sash b{display:block;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:17px;line-height:1.2;margin-top:3px}
 .sash .lapsed+b{color:var(--muted)}
 .sash-cap{font-size:14px;color:var(--muted);margin:10px 6px 0;text-align:center}
+/* the week: seven dots, Monday to Sunday; filled when studied, dashed for a day off, a heavy ring for today */
+.week{margin:16px 0 0;padding:12px 0 0;border-top:1px solid var(--line)}
+.week+.plan{margin-top:14px}
+.days{list-style:none;display:flex;justify-content:space-between;gap:4px;margin:0 0 6px;padding:0}
+.d{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font-size:13px;letter-spacing:.04em;color:var(--muted)}
+.d i{display:block;width:30px;height:30px;border-radius:50%;border:2px solid var(--none);position:relative}
+.d.done i{background:var(--amber);border-color:var(--amber)}
+.d.done i::after,.d.bonus i::after{content:"";position:absolute;left:9px;top:5px;width:7px;height:13px;border:solid var(--bg);border-width:0 3px 3px 0;transform:rotate(45deg)}
+.d.off i{border-style:dashed;border-color:var(--muted)}
+.d.off i::after{content:"";position:absolute;left:8px;top:12px;width:10px;height:2px;background:var(--muted)}
+.d.now i{border-color:var(--ink);border-width:3px}
+.d.now{color:var(--ink)}
+.d.bonus i{background:var(--ok-bg);border-color:var(--ok)}
+.d.bonus i::after{border-color:var(--ok)}
+.wl{margin:0;font-size:15px}
+.wl .ok{color:var(--ok);font-weight:700}
+.wl small{display:block;color:var(--muted);font-size:14px}
 .section-gap{margin-top:8px}
 /* drill */
 .groups{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
@@ -141,7 +158,7 @@ h1{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;font
 .only a{color:inherit}
 @media print{
   body{background:#fff;color:#000;font-size:12pt}
-  .back,.tools,.actions,.btn,.linkbtn,.foot,.toast,.demobar{display:none!important}
+  .back,.tools,.actions,.btn,.linkbtn,.foot,.toast,.demobar,.week{display:none!important}
   .study .cover a{text-decoration:none}
   .study .sec{break-before:page;border-top:0;margin-top:0;padding-top:0}
   .study .sec:first-of-type{break-before:auto}
