@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 49 (November 2)
+- The splash's No account line reads "Stays on your phone and nowhere else".
+
 ## 48 (November 2)
 - The splash keeps two of version 47's four facts, No account and Works offline, and moves them to the footer; Free and Spaced review are gone from the page. The share image is unchanged.
 
