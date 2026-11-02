@@ -2,6 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 45 (November 2)
+- A first visit settles sooner. The explanations behind "Explain this more" now live in explain.js and load after the first screen, a third less to download before home; the four fonts are asked for with the page, so home paints in its own typefaces instead of swapping them in afterwards; and the scripts no longer pause the page's parse. The service worker's first precache waits for the explanations. On a slow link, home paints a quarter second later than before but is finished a third of a second sooner; on a fast one the difference is a few tens of milliseconds. Repeat visits and installed copies are unchanged.
+- On a first visit, a card answered in the moment before the explanations arrive shows no "Explain this more" until the next card; the Basics panel stays behind the button whenever its topic has one.
+- tools/data-format.js formats data.js and explain.js separately, and CI checks all four files.
+
 ## 44 (November 1)
 - Fixes a blank screen on the first open after version 43 in browsers with the Badging API (Chrome, Edge, Safari) when a stored record needed tidying on load: the day log's rebuild now runs just before the first screen, after everything it touches exists.
 - A rebuilt day, from before the log or from a backup without one, takes what was answered as its floor, so a steady learner's recent days keep their credit instead of showing as days off.

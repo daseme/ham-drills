@@ -2,7 +2,7 @@
    Caches belong to the whole origin, shared with every other site on daseme.github.io, so each app clears only
    its own older caches. */
 const VERSION=self.EXAM_CACHE+APP_VERSION;
-const FILES=["./","index.html","exam.js","data.js","manifest.webmanifest","../version.js","../app/app.js","../app/app.css",
+const FILES=["./","index.html","exam.js","data.js","explain.js","manifest.webmanifest","../version.js","../app/app.js","../app/app.css",
   "../icons/icon-192.png","../icons/icon-512.png","../icons/icon-maskable-512.png",
   "../fonts/atkinson-hyperlegible-latin-400-normal.woff2","../fonts/atkinson-hyperlegible-latin-700-normal.woff2",
   "../fonts/barlow-condensed-latin-500-normal.woff2","../fonts/barlow-condensed-latin-600-normal.woff2"];

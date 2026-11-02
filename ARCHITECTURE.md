@@ -11,9 +11,10 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | resources.html | A page of outward links off the splash: the ARRL, Bay Area clubs, NERT and CERT; no script, not cached |
 | app/app.js, app/app.css | The whole app: script and styles, shared by every exam; names no exam |
 | app/sw-core.js | The service worker every exam shares |
-| technician/index.html | The Technician page: loads version.js, its exam.js and data.js, then app.js |
+| technician/index.html | The Technician page: preloads the fonts, then loads version.js, its exam.js and data.js, then app.js, all deferred |
 | technician/exam.js | `window.EXAM_CONFIG`: Technician's names, pool years, question count and pass mark, storage namespace, figures, demo plan |
-| technician/data.js | `window.DECKS` (the twelve sections) and `window.EXPLAIN` (the longer explanation for each question) |
+| technician/data.js | `window.DECKS` (the twelve sections) |
+| technician/explain.js | `window.EXPLAIN` (the longer explanation for each question); app.js fetches it after the first screen, so a first visit has less to download before home |
 | technician/sw.js, technician/manifest.webmanifest | Technician's cache name, then the shared worker; its home-screen install |
 | general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, the band chart, no demo) and data.js (G1 to G0, Math, Bands, Edges and Facts, 423 pool questions) |
 | forward/ | The content of the daseme/ham-technicians-drills repository: the old address forwards here, and its last service worker retires the old offline copy |
@@ -22,7 +23,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | pools/ | A snapshot of each exam's official pool, parsed from the NCVEC .docx with its source recorded (file, SHA-256, link, the page's file list); one question per line |
 | tools/pool-check.js | Checks an exam's data.js (`technician` or `general`) against its snapshot, every question; given the .docx, also checks the snapshot is that file's |
 | tools/pool-snapshot.js, tools/pool-fetch.js | Write a snapshot from a .docx; download the pools from the NCVEC and compare them with the snapshots (by hand: the NCVEC's Cloudflare refuses GitHub's runners, so the pool-watch workflow is manual) |
-| tools/data-format.js | Writes data.js in its fixed layout, one question per line; `--check` is what CI runs |
+| tools/data-format.js | Writes data.js and explain.js in their fixed layout, one question or explanation per line; `--check` is what CI runs |
 | tools/pool-parse.js, tools/pool-import.js | Read an NCVEC pool .docx; print one section as a data.js deck skeleton, stems and options verbatim |
 | tools/docx-text.js | Reads a .docx's paragraphs with no dependencies (a .docx is a zip) |
 | test/ | Node tests; test/harness.js loads app/app.js with an exam's files into a stub page |
@@ -40,7 +41,7 @@ Each deck in `DECKS` has an `id` (`t1` … `t0` or `g1` … `g0`, `math`, and `s
 - Math adds `F` (worked formulas) and `cheat` (a formula sheet). Symbols has `S` instead of `Q`: `{n, def, f, d, t}` per symbol. A flash-card deck has `flash` instead: `{n, a, t, k?, p?, q?}` per card (name, the back's text, a hook, a short key, the card's own prompt line, source question ids); the key, or the name when there is none, is the card's review-record key, so `srs:edges` reads `{"40-range":{...}}` and `srs:facts` reads `{"faa":{...}}`, where the `n` inside is the answer count as on every record. Give a card a key when its name might be reworded, since a renamed key resets the card. A flash deck may set `prompt`, the line above every card's name, which a card's `p` overrides. A deck rebuilt from different cards sets `gen` (Edges is 2): badges carry the deck's generation, and one from another generation is dropped at startup and ignored on import, since "every card seen" meant other cards. `EXAM_CONFIG.art[deck id]` may map a card to a drawing: General's Edges deck gets the bar of the band a card names or answers with.
 - A deck with no exam count may set `intro` (its study-page line) and `cheatName` (the label on its cheat sheet). A cheat sheet can also come from exam.js, under `EXAM_CONFIG.cheats[deck id]`: General's Bands deck gets its band chart that way, drawn by `bandChart()` from the `BANDS` table (Part 97 §97.301(d), §97.305(c), §97.313, Region 2), which the config also exposes as `bands` for the tests.
 
-data.js was produced once from the NCVEC pool and is maintained by hand, one question per line so a fix diffs as the lines it touched; `tools/data-format.js` rewrites the layout and CI refuses a file that strays from it. `tools/pool-check.js` is what keeps the content honest: every push compares every question with the committed snapshot of the official pool, and both exams match their current release exactly. `tools/pool-fetch.js`, run by hand, re-downloads the pools from the NCVEC and fails when a file or the NCVEC's file list changes.
+data.js and explain.js were produced once from the NCVEC pool and are maintained by hand, one question or explanation per line so a fix diffs as the lines it touched; `tools/data-format.js` rewrites the layout and CI refuses a file that strays from it. `tools/pool-check.js` is what keeps the content honest: every push compares every question with the committed snapshot of the official pool, and both exams match their current release exactly. `tools/pool-fetch.js`, run by hand, re-downloads the pools from the NCVEC and fails when a file or the NCVEC's file list changes.
 
 ## Storage
 

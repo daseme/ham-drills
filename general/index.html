@@ -9,6 +9,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="../icons/icon-192.png">
 <link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="preload" href="../fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/atkinson-hyperlegible-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/barlow-condensed-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/barlow-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../app/app.css">
 </head>
 <body>
@@ -16,9 +20,9 @@
 <main id="app"></main>
 <!-- No accept filter: some Android pickers grey out a backup that came back through Drive or email under another file type. The import checks the contents instead. -->
 <input type="file" id="importFile" hidden>
-<script src="../version.js"></script>
-<script src="exam.js"></script>
-<script src="data.js"></script>
-<script src="../app/app.js"></script>
+<script defer src="../version.js"></script>
+<script defer src="exam.js"></script>
+<script defer src="data.js"></script>
+<script defer src="../app/app.js"></script>
 </body>
 </html>

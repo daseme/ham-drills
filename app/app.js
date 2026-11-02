@@ -1,5 +1,5 @@
 "use strict";
-/* The shared app: one exam's drills, from that exam's exam.js and data.js. Loaded by each exam's index.html. */
+/* The shared app: one exam's drills, from that exam's exam.js and data.js, with its explain.js fetched after the first screen. Loaded by each exam's index.html. */
 /* Shapes the badges draw from, placed first in the page. */
 document.body.insertAdjacentHTML("afterbegin",`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
  <g id="tower" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -649,10 +649,11 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     const lemon=!ok&&hadRight(d.id,id);record(d.id,id,ok);
     if(!ok&&retry()){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
     status();
-    const F=d.F&&d.F[id],ex=EXPLAIN[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
+    loadExplain();
+    const F=d.F&&d.F[id],ex=(window.EXPLAIN||{})[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
     $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> ${note}</p>
       ${F?`<div class="fx"><p class="eq">${F[0]}</p><ul class="leg">${F[1].map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
-      <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
+      <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex||pr?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
       <div class="explain" id="exbox" hidden>${ex?ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""):""}
       ${pr?`<details><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
     say($("after").querySelector(".note").textContent);
@@ -846,8 +847,26 @@ function symbols(){
   start();
 }
 
+/* The explanations (explain.js, window.EXPLAIN) come after the first screen: on a first visit over a slow link they
+   would otherwise sit between the learner and home. A card answered before they land does without "Explain this
+   more"; a fetch that fails, or lands without EXPLAIN, is asked for again at the next answer. then() runs once,
+   when the file is there, when it is not coming, or after four seconds. */
+let explainTag;
+function loadExplain(then){
+  const go=()=>{if(then){const f=then;then=null;f()}};
+  if(window.EXPLAIN||explainTag)return go();
+  const s=document.createElement("script");s.src="explain.js";
+  s.onload=()=>{if(!window.EXPLAIN){explainTag=null;s.remove()}go()};
+  s.onerror=()=>{explainTag=null;s.remove();go()};
+  explainTag=s;document.body.appendChild(s);
+  if(then)setTimeout(go,4000);
+}
+
 backfillDays();
 route();
+/* The worker's precache (every file again, bypassing the HTTP cache) waits for the explanations, so on a first visit
+   it does not share the link with the one file the learner may need next. */
+loadExplain(()=>{
 if("serviceWorker" in navigator&&location.protocol!=="file:"){
   const had=!!navigator.serviceWorker.controller;
   /* A new version has taken over. Reload now if on home, where nothing is in progress; otherwise at the next
@@ -858,3 +877,4 @@ if("serviceWorker" in navigator&&location.protocol!=="file:"){
   try{if(sessionStorage.getItem(NS+"updated")){sessionStorage.removeItem(NS+"updated");toast(`Updated to version ${APP_VERSION}.`)}}catch(e){}
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).catch(()=>{});
 }
+});
