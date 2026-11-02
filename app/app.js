@@ -118,9 +118,9 @@ const dayFloor=e=>e&&e.d>=1?Math.min(10,e.d):10;
 const dayMet=e=>!!e&&(!!e.x||(e.n||0)>=dayFloor(e));
 /* The log, under `days`: {<day>: {d, n, x}}. d is the pool reviews due at the day's first touch, n the distinct
    items answered that day (recounted from the records' `last` and never lowered, so a section reset cannot empty
-   a dot), x true once a practice exam was finished. Damaged entries are dropped on load; old ones on save. */
-function cleanDays(raw){const out={};if(!raw||typeof raw!=="object"||Array.isArray(raw))return out;
-  for(const k in raw){const v=raw[k];if(!/^\d+$/.test(k)||!v||typeof v!=="object"||!isInt(v.n)||v.n<0)continue;
+   a dot), x true once a practice exam was finished. Damaged entries, and days that haven't come, are dropped on load; old ones on save. */
+function cleanDays(raw,t=dayNum()){const out={};if(!raw||typeof raw!=="object"||Array.isArray(raw))return out;
+  for(const k in raw){const v=raw[k];if(!/^\d+$/.test(k)||+k>t||!v||typeof v!=="object"||!isInt(v.n)||v.n<0)continue;
     const e={n:v.n};if(isInt(v.d)&&v.d>=0)e.d=v.d;if(v.x===true)e.x=true;out[k]=e}
   return out}
 let DAYS=cleanDays(get("days",null));
@@ -130,17 +130,18 @@ const answeredOn=t=>DECKS.reduce((a,d)=>a+Object.values(srsOf(d.id)).filter(r=>r
 function touchDay(t=dayNum()){let e=DAYS[t];if(!e){e=DAYS[t]={d:poolDue(),n:0};saveDays()}return e}
 const noteAnswer=(t=dayNum())=>{const e=touchDay(t);e.n=Math.max(e.n,answeredOn(t));saveDays()};
 const todayMet=()=>dayMet(DAYS[dayNum()]);
-/* Before the log existed, the records' last days are all there is: two weeks of them become entries, once. */
+/* Before the log existed, the records' last days are all there is: two weeks of them become entries, once. What was
+   due on such a day is unknown, so its floor is what was answered: a day the learner showed up keeps its credit.
+   Runs just before the first screen, once everything it may touch (a deck's save updates the icon badge) exists. */
 function backfillDays(){if(get("days",null)!=null)return;const t=dayNum();let any=false;
-  for(let k=t-13;k<=t;k++){const n=answeredOn(k);if(n>0){DAYS[k]={n};any=true}}
+  for(let k=t-13;k<=t;k++){const n=answeredOn(k);if(n>0){DAYS[k]={d:n,n};any=true}}
   if(any)saveDays()}
-backfillDays();
 /* A backup's log merges day by day: the larger count, an exam from either, the due count from whichever has one
    (the smaller when both do). Days the backup never logged are rebuilt from the records just imported. */
 function mergeDays(src){const t=dayNum(),s=cleanDays(src);
   for(const k in s){const a=DAYS[k],b=s[k];if(!a){DAYS[k]=b;continue}
     a.n=Math.max(a.n,b.n);if(b.x)a.x=true;if(b.d!=null)a.d=a.d==null?b.d:Math.min(a.d,b.d)}
-  for(let k=t-13;k<=t;k++)if(!DAYS[k]){const n=answeredOn(k);if(n>0)DAYS[k]={n}}
+  for(let k=t-13;k<=t;k++)if(!DAYS[k]){const n=answeredOn(k);if(n>0)DAYS[k]={d:n,n}}
   saveDays()}
 /* The strip: this week's seven dots and the line under them. A week is made by five met days; weeks in a row
    counts made weeks back from last week, plus this one once made. Days before the log began are neither studied
@@ -189,9 +190,11 @@ const badgeAsk=()=>!DEMO&&navigator.standalone===true&&!!navigator.setAppBadge&&
 /* ---------- demo seed ----------
    A learner three weeks in, simulated day by day through step from a fixed seed, so every record follows the
    interval table and exam cap, badge dates are the days they were earned, and every visitor sees the same
-   history dated from the day of the visit. The plan, lapses and seeds come from exam.js. */
+   history dated from the day of the visit. The plan, lapses and seeds come from exam.js. A sample seeded before the
+   day log existed is cleared and seeded again, so it has one. */
 function seedDemo(){
-  if(!DEMO||get("seeded",false))return;
+  if(!DEMO||(get("seeded",false)&&get("days",null)!=null))return;
+  clearDemo();for(const k in SRS)delete SRS[k];DAYS={};
   const rng=x=>()=>{x=x+0x6D2B79F5|0;let z=Math.imul(x^x>>>15,1|x);z=z+Math.imul(z^z>>>7,61|z)^z;return((z^z>>>14)>>>0)/4294967296};
   const T=dayNum(),exam=T+16,tz=new Date().getTimezoneOffset()*60000,badges={};
   const cards=Object.entries(DEMO_PLAN).flatMap(([id,[from,to,acc,part=1]])=>{const ids=itemIds(DECK[id]),n=Math.round(ids.length*part),rnd=rng(DEMO_SEED[id]);
@@ -843,6 +846,7 @@ function symbols(){
   start();
 }
 
+backfillDays();
 route();
 if("serviceWorker" in navigator&&location.protocol!=="file:"){
   const had=!!navigator.serviceWorker.controller;

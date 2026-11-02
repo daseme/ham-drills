@@ -70,9 +70,9 @@ test("when an answer is the day's first touch, the due count is taken before tha
   assert.equal(a.run("todayMet()"),true,"one due, one answered: the day is in");
 });
 
-test("a damaged log is dropped entry by entry, and old entries fall away on save",()=>{
+test("a damaged log is dropped entry by entry, a day that hasn't come with it, and old entries fall away on save",()=>{
   const T=load({now:THU}).run("dayNum()");
-  const bad={[T-1]:{d:2,n:3},[T-2]:{n:-1},[T-3]:"x",[T-4]:{n:2,d:-1,x:1},[T-500]:{n:5},abc:{n:1}};
+  const bad={[T-1]:{d:2,n:3},[T-2]:{n:-1},[T-3]:"x",[T-4]:{n:2,d:-1,x:1},[T-500]:{n:5},abc:{n:1},[T+1]:{n:1}};
   const a=at(THU,{storage:{"hamdrill:days":JSON.stringify(bad)}});
   assert.deepEqual(a.run("DAYS"),{[T-1]:{d:2,n:3},[T-4]:{n:2},[T-500]:{n:5}});
   a.run("saveDays()");
@@ -80,13 +80,14 @@ test("a damaged log is dropped entry by entry, and old entries fall away on save
   assert.deepEqual(at(THU,{storage:{"hamdrill:days":"[1,2]"}}).run("DAYS"),{});
 });
 
-test("with no log, the last fourteen days are rebuilt from the records",()=>{
+test("with no log, the last fourteen days are rebuilt from the records, each day's floor what was answered",()=>{
   const T=load({now:THU}).run("dayNum()");
   const srs={T1A01:JSON.parse(rec(T-2)),T1A02:JSON.parse(rec(T-2)),T1A03:JSON.parse(rec(T-14,{due:T+20}))};
   const a=at(THU,{storage:{"hamdrill:srs:t1":JSON.stringify(srs)}});
-  assert.deepEqual(a.run(`DAYS[${T-2}]`),{n:2});
+  assert.deepEqual(a.run(`DAYS[${T-2}]`),{d:2,n:2});
+  assert.equal(a.run(`dayMet(DAYS[${T-2}])`),true,"a day the learner showed up keeps its credit: what was due is unknown, so what was answered is the floor");
   assert.equal(a.run(`DAYS[${T-14}]`),undefined,"fourteen days back is outside the window");
-  assert.deepEqual(a.run(`get('days')[${T-2}]`),{n:2});
+  assert.deepEqual(a.run(`get('days')[${T-2}]`),{d:2,n:2});
   assert.deepEqual(a.run(`DAYS[${T}]`),{d:2,n:0},"the startup visit to home touched today");
   assert.deepEqual(load({now:THU}).keys(),[],"nothing to rebuild writes nothing");
 });
@@ -152,7 +153,7 @@ test("weeks in a row: a missed week drops it, this week counts once made",()=>{
   const row=(n,extra=[])=>{const d={};for(let w=1;w<=n;w++)for(let k=0;k<5;k++)d[MO-7*w+k]={d:3,n:3};for(const t of extra)d[t]={d:3,n:3};return d};
   const a=at(THU,{storage:{"hamdrill:days":JSON.stringify(row(5))}});
   assert.equal(a.run("weeksInARow(dayNum())"),5);
-  assert.equal(at(THU,{storage:{"hamdrill:days":JSON.stringify(row(5,[MO,MO+1,MO+2,MO+3,MO+4]))}}).run("weeksInARow(dayNum())"),6);
+  assert.equal(at(SUN,{storage:{"hamdrill:days":JSON.stringify(row(5,[MO,MO+1,MO+2,MO+3,MO+4]))}}).run("weeksInARow(dayNum())"),6,"this week counts once made");
   const gap=row(3);for(let k=0;k<5;k++)delete gap[MO-7+k];
   assert.equal(at(THU,{storage:{"hamdrill:days":JSON.stringify(gap)}}).run("weeksInARow(dayNum())"),0);
   assert.equal(state(THU,row(1,[MO])).small,"");
@@ -210,7 +211,7 @@ test("export carries the log; import merges it day by day and rebuilds days a ba
   assert.deepEqual(a.run("get('days')"),a.run("DAYS"),"saved");
   const b=at(THU,{storage:{"hamdrill:days":"{}"}});
   b.run(`importDecks({t1:{T1A01:${rec(T-5)},T1A02:${rec(T-5)}}});mergeDays(undefined)`);
-  assert.deepEqual(b.run("DAYS"),{[T-5]:{n:2}},"a backup from before the log still fills the week");
+  assert.deepEqual(b.run("DAYS"),{[T-5]:{d:2,n:2}},"a backup from before the log still fills the week");
 });
 
 test("How it works explains the week",()=>{
@@ -225,4 +226,16 @@ test("the practice exam's result says Today's in from Finish, not when the resul
   assert.match(a.run(`$("app").innerHTML`),/<p class="win">Today's in\. 1 day this week, 2 days off left\.<\/p>/);
   a.run("examResult()");
   assert.doesNotMatch(a.run(`$("app").innerHTML`),/Today's in/);
+});
+
+test("the first run after the log shipped survives a deck being normalised on load, Badging API present",()=>{
+  /* The rebuild reads every deck; a record for an id no longer in the deck is dropped and the deck saved, which
+     updates the app icon's badge. That must not run before everything it needs exists. */
+  const T=load({now:THU}).run("dayNum()");
+  const srs={T1A01:JSON.parse(rec(T-1)),T1Z99:JSON.parse(rec(T-1))};
+  const badge={setAppBadge:()=>Promise.resolve(),clearAppBadge:()=>Promise.resolve()};
+  const a=at(THU,{storage:{"hamdrill:srs:t1":JSON.stringify(srs)},navigator:badge});
+  assert.match(a.run('$("app").innerHTML'),/questions? due today/,"home rendered");
+  assert.deepEqual(a.run(`DAYS[${T-1}]`),{d:1,n:1},"the rebuild ran");
+  assert.deepEqual(Object.keys(a.run("srsOf('t1')")),["T1A01"],"the stray record went");
 });

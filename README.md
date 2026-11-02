@@ -1,6 +1,6 @@
 # Technician drills
 
-[![check](https://github.com/daseme/ham-technicians-drills/actions/workflows/check.yml/badge.svg)](https://github.com/daseme/ham-technicians-drills/actions/workflows/check.yml)
+[![check](https://github.com/daseme/ham-drills/actions/workflows/check.yml/badge.svg)](https://github.com/daseme/ham-drills/actions/workflows/check.yml)
 
 <p>
 <img src="docs/screenshots/home.png" width="300" alt="Home screen with sample progress: 54 questions due, an estimate of 25 to 29 of 35, an exam 16 days out">

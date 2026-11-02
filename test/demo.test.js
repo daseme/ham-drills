@@ -62,3 +62,12 @@ test("the sample is the same on every load",()=>{
   const dump=app=>app.run(`JSON.stringify(DECKS.map(d=>Object.entries(srsOf(d.id)).map(([k,r])=>[k,r.lv,r.due,r.last,r.n,r.w])))`);
   assert.equal(dump(load({search:"?demo"})),dump(demo));
 });
+
+test("a demo seeded before the day log existed gets the log on its next visit, the same as a fresh seed",()=>{
+  const fresh=demo.run("DAYS");
+  assert.equal(Object.keys(fresh).length,22,"the sample's three weeks, and today's visit to home");
+  const old=demo.run('Object.fromEntries(localStorage.keys().filter(k=>k!=="hamdemo:days").map(k=>[k,localStorage.getItem(k)]))');
+  const again=load({search:"?demo",storage:old});
+  assert.deepEqual(again.run("DAYS"),fresh);
+  assert.deepEqual(standing(again),standing(demo));
+});

@@ -1,7 +1,8 @@
 /* Loads the app's own script (app/app.js, after an exam's exam.js and data.js) into a sandbox with a stub DOM and
    in-memory localStorage, so the tests run the code the app runs, with no build step. load() returns a fresh app
    each time; app.run("expression") evaluates inside it, where the script's top-level consts and functions live.
-   load({data}) replaces the exam's data.js with the given source, for tests on sample decks. */
+   load({data}) replaces the exam's data.js with the given source, for tests on sample decks; load({navigator}) gives the page
+   a navigator with, say, the Badging API. */
 "use strict";
 const fs=require("fs"),path=require("path"),vm=require("vm");
 
@@ -27,16 +28,17 @@ function elements(){
   return element;
 }
 
-function load({exam="technician",search="",data,storage={},now}={}){
+function load({exam="technician",search="",data,storage={},now,navigator={}}={}){
   const store=new Map(Object.entries(storage)),els={},element=elements();
   /* now pins the app's clock: new Date() and Date.now() give that instant; a Date built from arguments is untouched. */
   const Clock=now==null?Date:class extends Date{constructor(...a){super(...(a.length?a:[now]))}static now(){return now}};
-  const localStorage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k),clear:()=>store.clear()};
-  Object.defineProperty(localStorage,"keys",{value:()=>[...store.keys()]});
+  /* As in a browser, Object.keys(localStorage) lists the stored keys; keys() is the tests' own shortcut. */
+  const api={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k),clear:()=>store.clear(),keys:()=>[...store.keys()]};
+  const localStorage=new Proxy(api,{ownKeys:()=>[...store.keys()],getOwnPropertyDescriptor:(t,k)=>store.has(k)?{value:store.get(k),enumerable:true,configurable:true,writable:true}:Object.getOwnPropertyDescriptor(t,k)});
   const ctx={console,Date:Clock,Math,JSON,URLSearchParams,setTimeout:()=>0,Blob:class{},File:class{},localStorage,
     sessionStorage:{getItem:()=>null,setItem(){},removeItem(){}},
     location:{search,hash:"",pathname:"/",protocol:"file:"},
-    history:{state:null,replaceState(){},pushState(){},go(){}},navigator:{},scrollTo(){},addEventListener(){},
+    history:{state:null,replaceState(){},pushState(){},go(){}},navigator,scrollTo(){},addEventListener(){},
     document:{getElementById:id=>els[id]||(els[id]=element(true)),createElement:()=>element(),addEventListener(){},body:element(),hidden:false}};
   ctx.window=ctx;
   vm.createContext(ctx);

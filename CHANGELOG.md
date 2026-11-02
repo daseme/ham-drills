@@ -2,6 +2,13 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 44 (November 1)
+- Fixes a blank screen on the first open after version 43 in browsers with the Badging API (Chrome, Edge, Safari) when a stored record needed tidying on load: the day log's rebuild now runs just before the first screen, after everything it touches exists.
+- A rebuilt day, from before the log or from a backup without one, takes what was answered as its floor, so a steady learner's recent days keep their credit instead of showing as days off.
+- A demo sample seeded before version 43 is seeded again, so it has the day log.
+- A day log entry dated after today, from a damaged backup, is dropped on load.
+- The README's workflow badge points at this repository.
+
 ## 43 (November 1)
 - Home shows the week: seven dots, Monday to Sunday, under a goal of 7 days with 2 days off in reserve, so 5 studied days make the week. A day counts at 10 questions in any section, or everything due when fewer are due, or a practice exam; a missed day spends a day off on its own; weeks made in a row are counted. The session that fills today's dot says "Today's in." on its end screen. Nothing is shown until the first answers, no line ever names a lost week, and a learner coming back after a gap is told the cards waited. The design and the research behind it are in docs/superpowers/specs/2026-11-01-study-week-design.md.
 - The day log travels with export and import; a backup from before it rebuilds the last two weeks from the records. The demo's sample shows the week.

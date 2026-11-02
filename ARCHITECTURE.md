@@ -77,7 +77,7 @@ Export writes the same records to a JSON file, with the badges, the exam date an
 
 ## Week
 
-`days` is the log the home strip reads. A day is met when `x`, or `n >= floor`, with `floor = d >= 1 ? min(10, d) : 10`; the week runs Monday to Sunday (`weekday = (day + 3) % 7`), five met days make it, and `weeksInARow` counts made weeks back from last week, plus this one once made. Days before the log's first entry are neither studied nor days off, but they use up the week's slack. `record`, `saveExam` and home's first visit of a day write the log; with no log at all, the last fourteen days are rebuilt from the records' `last`, at startup and after an import.
+`days` is the log the home strip reads. A day is met when `x`, or `n >= floor`, with `floor = d >= 1 ? min(10, d) : 10`; the week runs Monday to Sunday (`weekday = (day + 3) % 7`), five met days make it, and `weeksInARow` counts made weeks back from last week, plus this one once made. Days before the log's first entry are neither studied nor days off, but they use up the week's slack. `record`, `saveExam` and home's first visit of a day write the log; with no log at all, the last fourteen days are rebuilt from the records' `last`, at startup (just before the first screen, since a deck saved on the way updates the icon badge) and after an import, each with `d = n`: what was due is unknown, and a day the learner showed up keeps its credit. An entry dated after today is dropped on load.
 
 ## Estimate
 

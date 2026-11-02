@@ -105,3 +105,5 @@ Found while planning: a learner whose first study day is a Thursday would have s
 ## Left to the builder
 
 Where in app.js the week helpers sit (a `week` block after the drill counters is natural); whether `n` is recounted on every `record` or batched per session end, so long as the dot is right by the end screen and after a reload; the exact SVG or CSS for the check and dash; how the harness fakes the day for the fixed-log tests.
+
+Found in review, version 44: a rebuilt day with no `d` had the floor of 10, so a steady learner whose days had fewer answers saw them as days off, against the intent above; rebuilt days now carry `d = n`. The backfill also ran at load before `badgeCount` was defined, so a deck rewritten on the way (a withdrawn id, say) crashed startup in browsers with the Badging API; it now runs just before the first screen. A demo sample seeded before the log is seeded again, and a log entry dated after today is dropped.
