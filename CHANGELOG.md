@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 50 (November 2)
+- A miss of a card answered right before now alternates between "Good God, Lemon!" and "Difficult difficult, lemon difficult.", taking turns through the visit; the symbol drill too. A miss of a card never yet answered right still says "Not quite."
+
 ## 49 (November 2)
 - The splash's No account line reads "Stays on your phone and nowhere else".
 

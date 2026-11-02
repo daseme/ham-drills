@@ -98,9 +98,11 @@ function record(id,k,ok){
   const t=dayNum();touchDay(t);const s=srsOf(id);s[k]=step(s[k],ok,t);s[k].ts=Date.now();saveSrs(id);noteAnswer(t);
   if(ok)awardBadges(DECK[id]);
 }
-/* True if this card has ever been answered correctly; a miss on such a card gets the Lemon line instead of "Not quite." */
+/* True if this card has ever been answered correctly; a miss on such a card gets a Lemon line instead of "Not quite."
+   The two Lemon lines take turns within a visit: Jack Donaghy, then Malcolm Tucker, then Jack again. */
 const hadRight=(id,k)=>{const r=srsOf(id)[k];return !!r&&((r.n||0)>(r.w||0)||r.lv>0)};
-const missText=lemon=>lemon?"Good God, Lemon!":"Not quite.";
+const LEMONS=["Good God, Lemon!","Difficult difficult, lemon difficult."];let lemonTurn=0;
+const missText=lemon=>lemon?LEMONS[lemonTurn++%LEMONS.length]:"Not quite.";
 function stats(d){const ids=itemIds(d),t=dayNum();
   return{total:ids.length,due:ids.filter(k=>isDue(d.id,k)).length,seen:ids.filter(k=>isSeen(d.id,k)).length,
     mastered:ids.filter(k=>isMastered(d.id,k)).length,tomorrow:ids.filter(k=>{const r=srsOf(d.id)[k];return r&&r.due===t+1}).length}}
