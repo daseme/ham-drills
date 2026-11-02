@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 48 (November 2)
+- The splash keeps two of version 47's four facts, No account and Works offline, and moves them to the footer; Free and Spaced review are gone from the page. The share image is unchanged.
+
 ## 47 (November 2)
 - The front door, for visitors who arrive from a search or a shared link. The splash states what the drills are: free, no account, works offline, spaced review; and offers the Technician demo to anyone not sure yet. The About page says who built the site and why, what it is and is not, that nothing leaves the phone, and where to report a problem. Every page has a description, a canonical address and a share image (icons/og.png, drawn by tools/og-image.mjs), so a link pasted into a chat shows a card; sitemap.xml lists the five pages for Google Search Console. Nothing in the apps' screens changes. The design is in docs/superpowers/specs/2026-11-02-front-door-design.md.
 

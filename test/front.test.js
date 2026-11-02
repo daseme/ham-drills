@@ -1,5 +1,5 @@
-/* The front door: what a stranger, a search engine or a link preview sees. The splash states the four facts and
-   links to the demo; every page has a description, a canonical address for its own path and Open Graph tags that
+/* The front door: what a stranger, a search engine or a link preview sees. The splash's footer states two facts and
+   the splash links to the demo; every page has a description, a canonical address for its own path and Open Graph tags that
    agree with it, all naming one share image; the sitemap lists the pages that exist and nothing else. */
 "use strict";
 const {test}=require("node:test");
@@ -15,9 +15,10 @@ const meta=(html,attr,name)=>{const m=html.match(new RegExp(`<meta ${attr}="${na
 const link=(html,rel)=>{const m=html.match(new RegExp(`<link rel="${rel}" href="([^"]*)">`));return m&&m[1]};
 const config=exam=>{const ctx={window:{}};vm.createContext(ctx);vm.runInContext(read(exam+"/exam.js"),ctx);return ctx.window.EXAM_CONFIG};
 
-test("the splash states the four facts and links to the demo",()=>{
-  const h=read("index.html");
-  for(const f of ["Free.","No account.","Works offline.","Spaced review."])assert.ok(h.includes(`<b>${f}</b>`),f);
+test("the splash's footer states the two facts, and the splash links to the demo",()=>{
+  const h=read("index.html"),foot=h.indexOf('<div class="foot">');assert.ok(foot>0);
+  for(const f of ["No account.","Works offline."])assert.ok(h.indexOf(`<b>${f}</b>`)>foot,f);
+  for(const f of ["Free.","Spaced review."])assert.ok(!h.includes(`<b>${f}</b>`),f);
   assert.match(h,/href="technician\/\?demo"/);
 });
 

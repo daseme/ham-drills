@@ -101,6 +101,10 @@ The existing splash tests ("every file the splash loads exists") read `src` and 
 
 The absolute URLs are only in: each page's canonical and `og:url`, every page's `og:image`, and the sitemap. A move to a custom domain is a search-and-replace of `https://daseme.github.io/ham-drills/` across the five HTML files and sitemap.xml, plus a new robots.txt at the new origin's root. The test that checks the canonical path against the page keeps the paths honest through that move.
 
+## After shipping
+
+Version 48, the same day: Kurt kept two of the four facts, No account and Works offline, and moved them to the footer above the Resources and About links; Free and Spaced review are off the page. The share image still shows all four.
+
 ## Red team
 
 A fresh reviewer read the design against the repo before anything was built. What it changed:
