@@ -6,9 +6,10 @@ One shared app, and a folder per exam holding that exam's settings and questions
 
 | File | What it holds |
 |---|---|
-| index.html | The splash page at /ham-drills/, linking to each exam's app |
-| about.html | One paragraph on why the site exists, off the splash; no script, not cached |
+| index.html | The splash page at /ham-drills/: the four facts (free, no account, works offline, spaced review), a link to each exam's app and to the Technician demo |
+| about.html | Who built the site and why, what it is and is not, where progress lives, where to report a problem; off the splash, no script, not cached |
 | resources.html | A page of outward links off the splash: the ARRL, Bay Area clubs, NERT and CERT; no script, not cached |
+| sitemap.xml | The five pages, with absolute addresses, for Google Search Console; nothing links to it |
 | app/app.js, app/app.css | The whole app: script and styles, shared by every exam; names no exam |
 | app/sw-core.js | The service worker every exam shares |
 | technician/index.html | The Technician page: preloads the fonts, then loads version.js, its exam.js and data.js, then app.js, all deferred |
@@ -19,17 +20,20 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, the band chart, no demo) and data.js (G1 to G0, Math, Bands, Edges and Facts, 423 pool questions) |
 | forward/ | The content of the daseme/ham-technicians-drills repository: the old address forwards here, and its last service worker retires the old offline copy |
 | version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
-| icons/, fonts/ | Shared icons and bundled typefaces |
+| icons/, fonts/ | Shared icons and bundled typefaces; icons/og.png is the 1200 by 630 share image every page's Open Graph tags name, not precached |
 | pools/ | A snapshot of each exam's official pool, parsed from the NCVEC .docx with its source recorded (file, SHA-256, link, the page's file list); one question per line |
 | tools/pool-check.js | Checks an exam's data.js (`technician` or `general`) against its snapshot, every question; given the .docx, also checks the snapshot is that file's |
 | tools/pool-snapshot.js, tools/pool-fetch.js | Write a snapshot from a .docx; download the pools from the NCVEC and compare them with the snapshots (by hand: the NCVEC's Cloudflare refuses GitHub's runners, so the pool-watch workflow is manual) |
 | tools/data-format.js | Writes data.js and explain.js in their fixed layout, one question or explanation per line; `--check` is what CI runs |
 | tools/pool-parse.js, tools/pool-import.js | Read an NCVEC pool .docx; print one section as a data.js deck skeleton, stems and options verbatim |
 | tools/docx-text.js | Reads a .docx's paragraphs with no dependencies (a .docx is a zip) |
+| tools/og-image.mjs | Draws icons/og.png in headless Chrome from the bundled fonts; run by hand when its wording changes |
 | test/ | Node tests; test/harness.js loads app/app.js with an exam's files into a stub page |
 | tools/screens.mjs, tools/compare-screens.mjs | Screenshots of every screen in headless Chrome, compared pixel for pixel; the clock stands still and the version is masked, so a screen changes only when the app does |
 | test/screens/ | The screenshot baselines, made only by the CI runner's Chrome: run the workflow by hand with rebaseline on |
 | .github/workflows/check.yml | Runs the pool check, the layout check and the tests on every push and pull request, and shoots the screens and compares them with the baselines |
+
+Every page's head carries a description, a canonical address and Open Graph tags. Those tags and sitemap.xml are the only places the site names its host (https://daseme.github.io/ham-drills/), so a move is a search and replace across the five HTML files and the sitemap; test/front.test.js keeps each canonical's path matching its page.
 
 ## Data
 

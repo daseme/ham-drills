@@ -3,8 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ham drills</title>
-<meta name="description" content="Spaced-review drills for the US amateur radio license exams.">
+<title>Ham drills: Technician and General exam practice</title>
+<meta name="description" content="Free drills for the ham radio Technician and General exams: every pool question, worded as on the exam, with spaced review and an explanation for each answer. No account; works offline.">
+<link rel="canonical" href="https://daseme.github.io/ham-drills/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ham drills: Technician and General exam practice">
+<meta property="og:description" content="Free drills for the ham radio Technician and General exams: every pool question, worded as on the exam, with spaced review and an explanation for each answer. No account; works offline.">
+<meta property="og:url" content="https://daseme.github.io/ham-drills/">
+<meta property="og:image" content="https://daseme.github.io/ham-drills/icons/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="License exam drills: free, no account, works offline, spaced review">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#EDF0F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#11171D" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icons/icon-192.png">
@@ -14,17 +24,29 @@
 /* The splash borrows the app's styles; its rows are links rather than buttons. */
 a.row{text-decoration:none;color:inherit}
 .row .code{font-size:30px}
+.why{list-style:none;margin:10px 0 0;padding:0;font-size:15px;color:var(--muted)}
+.why li{margin:0 0 6px}
+.why b{color:var(--ink)}
+.try{font-size:15px;color:var(--muted);margin:14px 0 0}
+.try a{color:inherit}
 </style>
 </head>
 <body>
 <main>
   <p class="over">Amateur Radio Service</p>
   <h1>License exam drills</h1>
-  <p class="sub">Every question in the pool, worded as on the exam, with spaced review and an explanation for each answer. Choose your exam; it installs to your phone's home screen and works offline.</p>
+  <p class="sub">Every question in the Technician and General pools, worded exactly as on the exam, with a short note and a longer explanation for each answer. Choose your exam; it installs to your phone's home screen.</p>
+  <ul class="why">
+    <li><b>Free.</b> No ads, no upsell, no paid tier; the code is open under the MIT license.</li>
+    <li><b>No account.</b> Progress stays on your phone and nowhere else; export a backup file whenever you like.</li>
+    <li><b>Works offline.</b> Installed to the home screen, it runs with no signal.</li>
+    <li><b>Spaced review.</b> A card comes back after one day, then three, then seven; three right answers on separate days master it.</li>
+  </ul>
   <ul class="decks">
     <li><a class="row" href="technician/"><span class="code">Tech</span><span class="nm">Technician</span><span class="meta">The first license. 35 exam questions from a pool of 409.</span></a></li>
     <li><a class="row" href="general/"><span class="code">Gen</span><span class="nm">General</span><span class="meta">Most of HF. 35 exam questions from a pool of 423.</span></a></li>
   </ul>
+  <p class="try">Not sure yet? <a href="technician/?demo">See it with three weeks of sample progress</a>.</p>
   <div class="foot"><p class="links"><a href="resources.html">Resources</a><span>The ARRL, Bay Area clubs, NERT and CERT.</span><a href="about.html">About</a></p></div>
 </main>
 </body>
