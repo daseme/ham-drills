@@ -34,7 +34,7 @@ if(require.main===module){
   if(!files.length){console.error("usage: node tools/data-format.js [--check] <data.js|explain.js ...>");process.exit(2)}
   let bad=0;
   for(const f of files){
-    /* Git on Windows may check the file out with CRLF; the layout is judged on LF, which is what the index holds. */
+    /* An editor may save the file with CRLF; the layout is judged on LF, which is what the index holds. */
     const src=fs.readFileSync(f,"utf8").replace(/\r\n/g,"\n"),out=format(src);
     if(check){if(out!==src){console.log(`${f}: not formatted; run node tools/data-format.js ${f}`);bad++}else console.log(`${f}: formatted`)}
     else if(out!==src){fs.writeFileSync(f,out);console.log(`${f}: formatted`)}

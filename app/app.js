@@ -329,7 +329,7 @@ let updateReady=false;
 
 /* ---------- router ---------- */
 function route(){
-  const h=location.hash.slice(1);demoBar(false);
+  const h=location.hash.slice(1);demoBar(false);afterQ=null;
   const m=h.match(/^([a-z0-9]+)\/(study|p)(?:\/([a-z0-9_-]+))?$/);
   if(h==="due")drill({mixed:true});
   else if(h==="hard")drill({cards:hardCards(),title:"Hardest for you",sub:"Questions you've missed more than once and haven't mastered, hardest first, due or not. Each shows how often it's been missed."});
@@ -357,6 +357,7 @@ document.addEventListener("visibilitychange",()=>{
 /* ---------- home ---------- */
 function home(){
   if(updateReady){location.reload();return}
+  afterQ=null;
   const app=$("app");demoBar(true);
   /* The day's first visit records what was due, once there is anything to count. */
   if(POOL.some(d=>stats(d).seen))touchDay();
@@ -614,6 +615,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     $("fill").style.width=items.length?(done/items.length*100)+"%":"0";
   }
   function render(){
+    afterQ=null;
     status();const c=$("card");keepInView(c);
     if(!items.length){c.innerHTML=mixed?`<p class="q">Nothing is due for review today.</p><p>Spacing works best when cards rest. Come back tomorrow, or go back to all sections and open one to practice anyway.</p>`
       :list?`<p class="q">Nothing here.</p><p>No question has been missed more than once without being mastered since.</p>`
@@ -658,8 +660,9 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
       ${pr?`<details><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
     say($("after").querySelector(".note").textContent);
     $("next").onclick=()=>{i++;render()};
-    if($("more"))$("more").onclick=function(){const box=$("exbox"),open=box.hidden;box.hidden=!open;this.setAttribute("aria-expanded",open);this.textContent=open?"Hide explanation":"Explain this more"};
+    if($("more"))$("more").onclick=toggleExplain;
     $("next").focus({preventScroll:true});
+    afterQ={id,ex:!!ex,more:!!(ex||pr)};
   }
   start();
 }
@@ -852,11 +855,22 @@ function symbols(){
    more"; a fetch that fails, or lands without EXPLAIN, is asked for again at the next answer. then() runs once,
    when the file is there, when it is not coming, or after four seconds. */
 let explainTag;
+/* The answered card on screen, {id, ex, more}: its question, whether its explanation is in the box, whether it has the
+   button. Set at the end of pick(); null once the card is gone (the drill's render, route, home). */
+let afterQ=null;
+function toggleExplain(){const b=$("more"),box=$("exbox"),open=box.hidden;box.hidden=!open;b.setAttribute("aria-expanded",open);b.textContent=open?"Hide explanation":"Explain this more"}
+/* The explanations landed while an answered card was showing: the card gets its text and, if it had none, its button. */
+function fillExplain(){
+  const q=afterQ,ex=q&&!q.ex&&(window.EXPLAIN||{})[q.id],box=ex&&$("exbox");
+  if(!box)return;
+  q.ex=true;box.insertAdjacentHTML("afterbegin",ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""));
+  if(!q.more){q.more=true;$("next").insertAdjacentHTML("afterend",`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`);$("more").onclick=toggleExplain}
+}
 function loadExplain(then){
   const go=()=>{if(then){const f=then;then=null;f()}};
   if(window.EXPLAIN||explainTag)return go();
   const s=document.createElement("script");s.src="explain.js";
-  s.onload=()=>{if(!window.EXPLAIN){explainTag=null;s.remove()}go()};
+  s.onload=()=>{if(window.EXPLAIN)fillExplain();else{explainTag=null;s.remove()}go()};
   s.onerror=()=>{explainTag=null;s.remove();go()};
   explainTag=s;document.body.appendChild(s);
   if(then)setTimeout(go,4000);

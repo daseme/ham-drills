@@ -2,6 +2,10 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 46 (November 2)
+- On a first visit, a card answered before the explanations arrive now gets its explanation, and its "Explain this more" button, the moment they land, instead of waiting for the next card.
+- The repository's text files are LF in the working tree on every platform (.gitattributes); nothing in the app changes.
+
 ## 45 (November 2)
 - A first visit settles sooner. The explanations behind "Explain this more" now live in explain.js and load after the first screen, a third less to download before home; the four fonts are asked for with the page, so home paints in its own typefaces instead of swapping them in afterwards; and the scripts no longer pause the page's parse. The service worker's first precache waits for the explanations. On a slow link, home paints a quarter second later than before but is finished a third of a second sooner; on a fast one the difference is a few tens of milliseconds. Repeat visits and installed copies are unchanged.
 - On a first visit, a card answered in the moment before the explanations arrive shows no "Explain this more" until the next card; the Basics panel stays behind the button whenever its topic has one.

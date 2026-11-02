@@ -1,0 +1,3 @@
+# Text files are LF in the working tree as in the index, on any platform and whatever core.autocrlf says; binaries
+# (text=auto detects them) are left alone.
+* text=auto eol=lf

@@ -54,6 +54,34 @@ test("a failed fetch, or one that lands without EXPLAIN, is asked for again at t
   assert.deepEqual(made().filter(s=>s==="explain.js"),["explain.js","explain.js"],"loaded: not asked again");
 });
 
+test("a card answered before the explanations land gets its text, and its button, when they do",()=>{
+  const a=load({explain:false});
+  const state=()=>a.run("afterQ&&{id:afterQ.id,ex:afterQ.ex,more:afterQ.more}");
+  assert.equal(state(),null,"nothing answered yet");
+  a.run("drill({deck:DECK.t1})");basics(a);const id=answer(a);
+  const before=state();
+  assert.deepEqual(before,{id,ex:false,more:a.run(`!!(DECK.t1.CON&&DECK.t1.CON[${JSON.stringify(id)}])`)});
+  a.run(`window.EXPLAIN={[${JSON.stringify(id)}]:"The reason.\\n\\nMore of it."};explainTag.onload();0`);
+  assert.deepEqual(state(),{id,ex:true,more:true});
+  a.run("explainTag.onload();0");
+  assert.deepEqual(state(),{id,ex:true,more:true},"a second arrival changes nothing");
+  a.run(`$("next").onclick();0`);
+  assert.equal(state(),null,"the next card starts clean");
+  a.run("home();0");
+  assert.equal(state(),null);
+});
+
+test("an arrival with no explanation for the card, or with no card showing, changes nothing",()=>{
+  const a=load({explain:false});
+  a.run("drill({deck:DECK.t1})");basics(a);const id=answer(a);
+  a.run("window.EXPLAIN={};explainTag.onload();0");
+  assert.equal(a.run("afterQ.ex"),false);
+  a.run("route();0");
+  assert.equal(a.run("afterQ"),null);
+  a.run(`window.EXPLAIN={[${JSON.stringify(id)}]:"Late."};fillExplain();0`);
+  assert.equal(a.run("afterQ"),null);
+});
+
 test("whatever follows the load runs once, on load, on error or when the file is already there",()=>{
   const a=load({explain:false});
   a.run("explainTag.onload();0");
