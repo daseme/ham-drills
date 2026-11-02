@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 51 (November 2)
+- Resources gains a FEMA courses section: how to get a FEMA Student ID, and the four independent study courses the ARRL's ARES task book requires (IS-100, IS-200, IS-700, IS-800), each with a line on what it covers. The page's intro and description, and the splash's footer line, name it.
+
 ## 50 (November 2)
 - A miss of a card answered right before now alternates between "Good God, Lemon!" and "Difficult difficult, lemon difficult.", taking turns through the visit; the symbol drill too. A miss of a card never yet answered right still says "Not quite."
 
