@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 52 (November 2)
+- The splash's footer links to HamTube, the amateur radio video catalog at daseme.github.io/hamtube. The links back to the splash, from About, Resources and each app's home footer, now read Home instead of All exams.
+
 ## 51 (November 2)
 - Resources gains a FEMA courses section: how to get a FEMA Student ID, and the four independent study courses the ARRL's ARES task book requires (IS-100, IS-200, IS-700, IS-800), each with a line on what it covers. The page's intro and description, and the splash's footer line, name it.
 

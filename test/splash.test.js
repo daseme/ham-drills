@@ -36,6 +36,15 @@ test("splash links to the resources page",()=>{
   assert.match(page(),/href="resources\.html"/);
 });
 
+test("splash links to HamTube",()=>{
+  assert.match(page(),/<a href="https:\/\/daseme\.github\.io\/hamtube\/">HamTube<\/a>/);
+});
+
+test("the back links to the splash read Home",()=>{
+  assert.match(resources(),/class="back" href="\.\/">&larr; Home</);
+  assert.match(fs.readFileSync(path.join(ROOT,"about.html"),"utf8"),/class="back" href="\.\/">&larr; Home</);
+});
+
 test("resources page links back to the splash and uses no storage or worker",()=>{
   assert.match(resources(),/class="back" href="\.\/"/);
   assert.ok(!/localStorage|serviceWorker|<script/.test(resources()));
