@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 53 (November 3)
+- Each app's home footer link to the splash reads Ham drills, the site's name, rather than Home, which is also what the app calls its own first screen. About and Resources keep Home.
+
 ## 52 (November 2)
 - The splash's footer links to HamTube, the amateur radio video catalog at daseme.github.io/hamtube. The links back to the splash, from About, Resources and each app's home footer, now read Home instead of All exams.
 
