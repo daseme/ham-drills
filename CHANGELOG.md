@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 54 (November 4)
+- The splash's HamTube link now points at hamtube.org, the catalog's own domain.
+
 ## 53 (November 3)
 - Each app's home footer link to the splash reads Ham drills, the site's name, rather than Home, which is also what the app calls its own first screen. About and Resources keep Home.
 

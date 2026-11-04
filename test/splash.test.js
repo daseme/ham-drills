@@ -37,7 +37,7 @@ test("splash links to the resources page",()=>{
 });
 
 test("splash links to HamTube",()=>{
-  assert.match(page(),/<a href="https:\/\/daseme\.github\.io\/hamtube\/">HamTube<\/a>/);
+  assert.match(page(),/<a href="https:\/\/hamtube\.org\/">HamTube<\/a>/);
 });
 
 test("the back links to the splash read Home",()=>{
