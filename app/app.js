@@ -288,7 +288,7 @@ const tierEarned=d=>{const b=badgesOf(d)||{};return b[3]?3:b[2]?2:b[1]?1:0};
 function awardBadges(d,quiet){
   const now=tierNow(d),b=badgesOf(d)||(BADGES[d.id]=d.gen?{gen:d.gen}:{});let top=0;
   for(let t=1;t<=now;t++)if(!b[t]){b[t]=dayNum();top=t}
-  if(top){saveBadges();if(!quiet)toast(`${TIER[top]} badge: ${d.code} ${d.name}. ${TIER_WHY[top][0].toUpperCase()+TIER_WHY[top].slice(1)}.`)}
+  if(top){saveBadges();if(!quiet)toast(`${TIER[top]} badge: ${d.code} ${d.name}. ${TIER_WHY[top][0].toUpperCase()+TIER_WHY[top].slice(1)}.`,BADGE_TOAST_MS)}
   return top;
 }
 function mergeBadges(src){if(!src||typeof src!=="object")return;for(const id in src){const d=DECK[id];if(!d||!src[id]||typeof src[id]!=="object"||(src[id].gen||0)!==(d.gen||0))continue;const b=badgesOf(d)||(BADGES[id]=d.gen?{gen:d.gen}:{});for(const t of [1,2,3]){const v=src[id][t];if(Number.isInteger(v)&&v>0&&(!b[t]||v<b[t]))b[t]=v}}saveBadges()}
@@ -311,7 +311,10 @@ const go=h=>{history.pushState({d:depth()+1},"","#"+h);route()};
 const goHome=()=>{const d=depth();if(d>0){history.go(-d);if(updateReady)return}else if(location.hash)history.replaceState(null,"",location.pathname+location.search);home();window.scrollTo(0,0)};
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();go(a.getAttribute("href").slice(1))});
 function wink(top,msg){const w=document.createElement("div");w.className="wink";w.setAttribute("role","status");const t=document.createElement("b"),m=document.createElement("span");t.textContent=top;m.textContent=msg;w.append(t,m);document.body.appendChild(w);setTimeout(()=>w.remove(),4800)}
-function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60))}
+/* A toast stays long enough to be read, longer for a long message. A badge award stays eight seconds, long enough to
+   read twice or take a screenshot. */
+const BADGE_TOAST_MS=8000;
+function toast(msg,ms){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(ms||2600,msg.length*60))}
 /* A reset takes two taps; unless the second comes within five seconds, the button goes back to how it was. */
 function armReset(b,what,erase){const label=b.textContent;
   b.onclick=()=>{if(b.dataset.armed){delete b.dataset.armed;erase();b.textContent="Progress reset";return}

@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 55 (November 5)
+- The badge toast (Bronze, Silver, Gold) stays eight seconds instead of about three, long enough to read and take a screenshot. Other toasts are unchanged.
+
 ## 54 (November 4)
 - The splash's HamTube link now points at hamtube.org, the catalog's own domain.
 
