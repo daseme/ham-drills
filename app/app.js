@@ -368,6 +368,8 @@ function home(){
   if(POOL.some(d=>stats(d).seen))touchDay();
   const reviews=DECKS.map(d=>[d,reviewsDue(d),stats(d)]);
   const poolDue=POOL.reduce((a,d)=>a+reviewsDue(d),0);
+  /* Once today's reviews are done the tile carries tomorrow's count, the number the icon badge shows then. */
+  const poolTom=POOL.reduce((a,d)=>a+dueTomorrow(d),0);
   const poolSeen=POOL.reduce((a,d)=>a+stats(d).seen,0),poolTotal=POOL.reduce((a,d)=>a+stats(d).total,0);
   const untouched=POOL.filter(d=>stats(d).seen===0);
   const untouchedQs=untouched.reduce((a,d)=>a+d.exam,0);
@@ -390,8 +392,8 @@ function home(){
   app.innerHTML=`
   <p class="over">${C.over}</p>
   <h1>${C.title}</h1>
-  ${poolSeen?`<div class="today"><b>${poolDue}</b><span>${poolDue===1?"question":"questions"} due today</span></div>
-  <p class="reach">${poolSeen} of ${poolTotal} seen.${untouched.length?` Untouched sections hold ${untouchedQs} exam questions.`:""}</p>`
+  ${poolSeen?`<div class="today">${!poolDue&&poolTom?`<b>${poolTom}</b><span>will be back tomorrow</span>`:`<b>${poolDue}</b><span>${poolDue===1?"question":"questions"} due today</span>`}</div>
+  <p class="reach">${!poolDue&&poolTom?"That's all for today. ":""}${poolSeen} of ${poolTotal} seen.${untouched.length?` Untouched sections hold ${untouchedQs} exam questions.`:""}</p>`
   :`<p class="reach">${poolTotal} questions in ${NUMBER[POOL.length]||POOL.length} ${POOL.length===1?"section":"sections"}. Start with ${POOL[0].code}; each answer shows why.</p>`}
   ${poolDue?`<div class="actions"><button class="btn" data-go="due">${poolDue===1?"Review the 1 due question":`Review all ${poolDue} due questions`}</button></div>`
   :next?`<div class="actions"><button class="btn" data-go="${next.id}">${stats(next).seen?"Keep going with":"Start with"} ${next.code}: ${esc(next.name)}</button></div>`:""}

@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 57 (November 5)
+- Once today's reviews are done, home's headline reads what comes back tomorrow, "23 will be back tomorrow", with "That's all for today." on the line under it, instead of a zero due today. That is the number the icon badge already shows at that point. With nothing due tomorrow either, the zero stays.
+
 ## 56 (November 5)
 - A tap on any toast dismisses it early. Taps no longer pass through it to what sits underneath, so a tap meant for a button under the toast closes the toast instead, and the next tap lands.
 

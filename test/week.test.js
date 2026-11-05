@@ -239,3 +239,25 @@ test("the first run after the log shipped survives a deck being normalised on lo
   assert.deepEqual(a.run(`DAYS[${T-1}]`),{d:1,n:1},"the rebuild ran");
   assert.deepEqual(Object.keys(a.run("srsOf('t1')")),["T1A01"],"the stray record went");
 });
+
+/* Home's headline tile: today's due count while there is one; once today's are done, what comes back tomorrow,
+   the number the icon badge also carries. With nothing tomorrow either, the tile keeps its zero. Both counts
+   cover the pool sections only, as the badge does: Math is not in the pool. */
+test("home says that's all for today and what comes back tomorrow once today's reviews are done",()=>{
+  const a=load();const T=a.run("dayNum()");
+  const rec=(due,last)=>`{lv:1,due:${due},last:${last},fail:null,n:1}`;
+  a.run(`SRS.t1={T1A01:${rec(T+1,T)},T1A02:${rec(T+1,T)},T1A03:${rec(T+5,T-2)}};SRS.math={T5B01:${rec(T+1,T)}};saveSrs("t1");saveSrs("math");home()`);
+  let h=a.run(`$("app").innerHTML`);
+  assert.match(h,/<div class="today"><b>2<\/b><span>will be back tomorrow<\/span><\/div>\s*<p class="reach">That's all for today\. 3 of \d+ seen\./);
+  assert.doesNotMatch(h,/due today/);
+  /* One review still due: the tile counts today, and tomorrow is not mentioned. */
+  a.run(`SRS.t2={T2A01:${rec(T,T-1)}};saveSrs("t2");home()`);
+  h=a.run(`$("app").innerHTML`);
+  assert.match(h,/<div class="today"><b>1<\/b><span>question due today<\/span><\/div>\s*<p class="reach">4 of \d+ seen\./);
+  assert.doesNotMatch(h,/tomorrow|all for today/);
+  /* Nothing due today or tomorrow: the plain zero. */
+  a.run(`SRS.t1={T1A03:${rec(T+5,T-2)}};SRS.math={};SRS.t2={};saveSrs("t1");saveSrs("math");saveSrs("t2");home()`);
+  h=a.run(`$("app").innerHTML`);
+  assert.match(h,/<div class="today"><b>0<\/b><span>questions due today<\/span><\/div>\s*<p class="reach">1 of \d+ seen\./);
+  assert.doesNotMatch(h,/tomorrow|all for today/);
+});
