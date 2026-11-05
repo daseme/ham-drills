@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 56 (November 5)
+- A tap on any toast dismisses it early. Taps no longer pass through it to what sits underneath, so a tap meant for a button under the toast closes the toast instead, and the next tap lands.
+
 ## 55 (November 5)
 - The badge toast (Bronze, Silver, Gold) stays eight seconds instead of about three, long enough to read and take a screenshot. Other toasts are unchanged.
 

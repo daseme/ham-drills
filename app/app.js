@@ -311,10 +311,10 @@ const go=h=>{history.pushState({d:depth()+1},"","#"+h);route()};
 const goHome=()=>{const d=depth();if(d>0){history.go(-d);if(updateReady)return}else if(location.hash)history.replaceState(null,"",location.pathname+location.search);home();window.scrollTo(0,0)};
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a||e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();go(a.getAttribute("href").slice(1))});
 function wink(top,msg){const w=document.createElement("div");w.className="wink";w.setAttribute("role","status");const t=document.createElement("b"),m=document.createElement("span");t.textContent=top;m.textContent=msg;w.append(t,m);document.body.appendChild(w);setTimeout(()=>w.remove(),4800)}
-/* A toast stays long enough to be read, longer for a long message. A badge award stays eight seconds, long enough to
-   read twice or take a screenshot. */
+/* A toast stays long enough to be read, longer for a long message, and a tap ends it early. A badge award stays eight
+   seconds, long enough to read twice or take a screenshot. */
 const BADGE_TOAST_MS=8000;
-function toast(msg,ms){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(ms||2600,msg.length*60))}
+function toast(msg,ms){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.appendChild(t);const h=setTimeout(()=>t.remove(),Math.max(ms||2600,msg.length*60));t.onclick=()=>{clearTimeout(h);t.remove()}}
 /* A reset takes two taps; unless the second comes within five seconds, the button goes back to how it was. */
 function armReset(b,what,erase){const label=b.textContent;
   b.onclick=()=>{if(b.dataset.armed){delete b.dataset.armed;erase();b.textContent="Progress reset";return}
