@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 61 (November 25)
+- From the third miss of a question on, the feedback suggests coming at it another way: say in your own words why the right answer is right and the picked one is not, make a memory hook, or drill the questions of the topic it belongs to, with a link to that topic's drill.
+
 ## 60 (November 25)
 - Every math question, in both exams, now shows its working the way the Ohm's law drill does: each step said in words, then the formula with the numbers in it, with unit conversions as steps of their own and, where there are two routes, the short way and the long way. After a miss the steps are open; after a right answer they wait behind Show the work.
 - A wrong option that a common mistake produces is named when picked: the current where the power was asked, a ratio upside down, series added where parallel was meant, peak-to-peak taken for peak, a decibel read as the ratio itself, and so on. Options no single slip explains get no note.

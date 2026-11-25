@@ -47,3 +47,22 @@ test("a wrong option with no known mistake gets the steps and no note",()=>{
   assert.match(h,/<div class="work">/);
   assert.doesNotMatch(h,/class="why"/);
 });
+
+/* Misses one card n times in a section drill, list-drilling it so it is offered each time. */
+function missTimes(exam,deck,id,n){
+  const a=load({exam});
+  for(let i=0;i<n;i++){
+    a.run(`drill({cards:[{d:DECK.${deck},q:DECK.${deck}.Q.find(q=>q[0]==="${id}")}],title:"t",sub:"s"})`);
+    const wrong=a.run(`(DECK.${deck}.Q.find(q=>q[0]==="${id}")[3]+1)%4`);
+    a.run(`[...$("ans").children].find(b=>+b.dataset.oi===${wrong}).onclick();0`);
+  }
+  return a.run(`$("after").innerHTML`);
+}
+
+test("the third miss of a question suggests other ways in, with a drill of its topic",()=>{
+  assert.doesNotMatch(missTimes("technician","t1","T1A01",2),/class="stuck"/);
+  const h=missTimes("technician","t1","T1A01",3);
+  assert.match(h,/<b>Missed 3 times\.<\/b>/);
+  assert.match(h,/Make a hook/);
+  assert.match(h,/<a href="#t1\/p\/[^"]+">Drill the \d+ questions on /);
+});
