@@ -20,16 +20,29 @@ const mathF=(d,id)=>(d.F&&d.F[id])||(DECK.math&&DECK.math.F&&DECK.math.F[id])||n
 /* The worked steps: open after a miss, behind Show the work after a right answer. */
 const workBox=(steps,ok)=>{const h=steps.map(s=>typeof s==="string"?`<p class="shead">${s}</p>`:`<div class="step"><p class="rule">${s[0]}</p>${s[1]?`<p class="calc">${s[1]}</p>`:""}</div>`).join("");
   return ok?`<details class="work"><summary>Show the work</summary>${h}</details>`:`<div class="work">${h}</div>`};
-/* After the third miss of a question, ways to come at it differently: explaining the answer, a memory hook, and the
-   drill of the topic it belongs to. */
+/* A question is a struggle when it has been missed at least STUCK times and on at least half its tries, so a card
+   missed often long ago but answered right since does not count. */
 const STUCK=3;
-function stuckBox(d,id){
-  const r=srsOf(d.id)[id],w=r&&r.w||0;if(w<STUCK)return "";
-  const ck=d.CON&&d.CON[id],pr=ck&&d.P&&d.P[ck],n=pr?d.Q.filter(q=>d.CON[q[0]]===ck).length:0;
-  return `<div class="stuck"><p><b>Missed ${w} times.</b> Another pass the same way may not stick. Try one of these:</p><ul>
+const isStuck=r=>!!r&&(r.w||0)>=STUCK&&2*(r.w||0)>=(r.n||0);
+/* On a miss of a struggling card, ways to come at it differently: explaining the answer, a memory hook written
+   here, and the drill of the topic it belongs to. The explanation below opens with it. */
+function stuckBox(d,id,opened){
+  const r=srsOf(d.id)[id],ck=d.CON&&d.CON[id],pr=ck&&d.P&&d.P[ck],n=pr?d.Q.filter(q=>d.CON[q[0]]===ck).length:0,had=!!HOOKS[id];
+  return `<div class="stuck"><p><b>Missed ${r.w} of ${r.n} tries.</b> Another pass the same way may not stick.${opened?" The explanation is open below.":""} Try one of these:</p><ul>
     <li>Say in your own words why the right answer is right, and why the one you picked is not.</li>
-    <li>Make a hook: a picture, a rhyme, or a link to something you already know.</li>
-    ${pr&&n>1?`<li><a href="#${d.id}/p/${ck}">Drill the ${n} questions on ${pr[0]}</a>, the topic this one belongs to.</li>`:""}</ul></div>`}
+    <li>${had?"Your hook hasn't held yet; try a different one":"Make a hook"}: a picture, a rhyme, or a link to something you already know. <button class="linkbtn" id="writeHook">${had?"Change your hook":"Write it here"}</button> It shows after this question each time it comes back.</li>
+    ${pr&&n>1?`<li><a href="#${d.id}/p/${ck}">Drill the ${n} questions on ${pr[0]}</a>, the topic this one belongs to. This leaves the current drill.</li>`:""}</ul></div>`}
+/* The learner's hook under an answered card: shown with Edit, or the box to write it in. */
+function hookArea(id,editing){
+  const box=$("hookArea");if(!box)return;
+  box.innerHTML=editing?`<div class="hookedit"><label for="hookText">Your hook for ${esc(id)}</label><textarea id="hookText" rows="2" maxlength="${HOOK_MAX}"></textarea>
+    <div class="hookbtns"><button class="btn ghost" id="saveHook">Save hook</button><button class="linkbtn" id="cancelHook">Cancel</button></div></div>`
+    :HOOKS[id]?`<p class="hook"><b>Your hook:</b> ${esc(HOOKS[id])} <button class="linkbtn" id="editHook">Edit</button></p>`:"";
+  if(editing){const t=$("hookText");t.value=HOOKS[id]||"";t.focus();
+    $("saveHook").onclick=()=>{saveHook(id,$("hookText").value);hookArea(id,false);toast(HOOKS[id]?"Hook saved.":"Hook removed.")};
+    $("cancelHook").onclick=()=>hookArea(id,false)}
+  else if($("editHook"))$("editHook").onclick=()=>hookArea(id,true);
+}
 /* A page beside the app that a deck points to, from EXAM_CONFIG.extras[deck id]: {href, text}. */
 const extraOf=d=>{const x=(window.EXAM_CONFIG.extras||{})[d.id];return x?`<a href="${x.href}">${esc(x.text)}</a>`:""};
 /* A flash card's drawing, if the exam draws one for that deck (a band's bar, say). */
@@ -299,6 +312,17 @@ function hardCards(){const by={};
 const TIER=["","Bronze","Silver","Gold"],TIER_WHY=["","every card seen","every card answered correctly","every card mastered"];
 const BADGES=get("badges",{});
 const saveBadges=()=>put("badges",BADGES);
+
+/* ---------- hooks ----------
+   A learner's own memory hook for a question, by question id (the same question in its pool section and in Math
+   shares one), shown after the question each time it is answered. Written from the box a stuck card shows; travels
+   in the backup. */
+const HOOK_MAX=280,QIDS=new Set(DECKS.flatMap(d=>(d.Q||[]).map(q=>q[0])));
+function cleanHooks(o){const out={};if(o&&typeof o==="object"&&!Array.isArray(o))for(const k in o){const v=o[k];if(QIDS.has(k)&&typeof v==="string"&&v.trim())out[k]=v.trim().slice(0,HOOK_MAX)}return out}
+const HOOKS=cleanHooks(get("hooks",{}));
+function saveHook(id,t){t=String(t||"").trim().slice(0,HOOK_MAX);if(t)HOOKS[id]=t;else delete HOOKS[id];put("hooks",HOOKS)}
+/* An import adds the backup's hooks for questions that have none here; one written on this device is kept. */
+function mergeHooks(src){const h=cleanHooks(src);let n=0;for(const k in h)if(!HOOKS[k]){HOOKS[k]=h[k];n++}if(n)put("hooks",HOOKS)}
 function tierNow(d){const s=srsOf(d.id);let t=3;for(const k of itemIds(d)){const r=s[k];if(!r)return 0;if(r.lv<1)t=Math.min(t,1);else if(r.lv<MASTER)t=Math.min(t,2)}return t}
 /* A deck rebuilt from different cards carries a generation number; badges earned on the old cards carry the old one
    and are dropped, since every card seen then is not every card now. */
@@ -477,7 +501,7 @@ function sashCaption(){
   const parts=[3,2,1].filter(t=>c[t]).map(t=>`${c[t]} ${TIER[t].toLowerCase()}`);
   return parts.length?`${parts.join(", ")} of ${DECKS.length} sections.`:"No badges yet. Bronze comes when every card in a section has been seen once.";
 }
-const exportData=()=>({app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day,exams:get("exams",[]),days:DAYS});
+const exportData=()=>({app:C.exportApp,version:2,...(DEMO?{sample:true}:{}),exported:Date.now(),decks:Object.fromEntries(DECKS.map(d=>[d.id,srsOf(d.id)])),badges:BADGES,examDay:EXAM.day,exams:get("exams",[]),days:DAYS,hooks:HOOKS});
 function exportProgress(){
   const data=exportData();
   const blob=new Blob([JSON.stringify(data)],{type:"application/json"});
@@ -499,7 +523,7 @@ $("importFile").onchange=async e=>{
     if(d&&d.decks&&/^hamdrill/.test(d.app)&&d.app!==C.exportApp){toast("That backup is from another exam's drills.");return}
     if(!d||d.app!==C.exportApp||!d.decks)throw 0;
     if(d.sample){toast("That's the demo's sample progress, not a backup of yours.");return}
-    const {decks:n,dropped}=importDecks(d.decks);mergeDays(d.days);mergeBadges(d.badges);if(Number.isInteger(d.examDay)&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));
+    const {decks:n,dropped}=importDecks(d.decks);mergeDays(d.days);mergeBadges(d.badges);mergeHooks(d.hooks);if(Number.isInteger(d.examDay)&&EXAM.day==null&&d.examDay>=dayNum())setExamDay(d.examDay);DECKS.forEach(x=>awardBadges(x,true));
     if(Array.isArray(d.exams)&&!lastExam())put("exams",d.exams.filter(validExam).slice(-10));
     toast(`Imported progress for ${n} ${n===1?"section":"sections"}${dropped?`; ${dropped} damaged ${dropped===1?"record was":"records were"} skipped`:""}.`);route()}
   catch(err){toast("That file isn't a drill progress export.")}
@@ -585,6 +609,8 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   const all=list?cards:decks.flatMap(d=>d.Q.map(q=>({d,q})));
   const grpOf=(d,id)=>d.id==="math"?(C.mathGroups.includes(id.slice(0,3))?id.slice(0,3):"X"):id.slice(0,3);
   let group="all",items=[],i=0,done=0,fr=0,fd=0,shown=null,startPool=[],metAtStart=false;
+  /* Cards whose stuck box has shown in this drill: once per card per drill is enough. */
+  const stuckSeen=new Set();
   const title=mixed?"Everything due":list?listTitle:deck.exam?`${deck.code}: ${deck.name}`:deck.name;
   const own=DECKS.filter(d=>!d.exam).map(d=>d.S?"Symbols":d.code),ownList=own.length>1?`${own.slice(0,-1).join(", ")} and ${own[own.length-1]}`:own[0];
   const sub=mixed?`Every pool question due today, mixed across sections.${own.length?` ${ownList} ${own.length>1?"are":"is"} reviewed on ${own.length>1?"their":"its"} own.`:""}`:list?listSub:
@@ -680,16 +706,19 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     status();
     loadExplain();
     const F=mathF(d,id),why=!ok&&F&&F[3]&&F[3][oi],ex=(window.EXPLAIN||{})[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
+    const stuck=!ok&&isStuck(srsOf(d.id)[id])&&!stuckSeen.has(d.id+"/"+id);if(stuck)stuckSeen.add(d.id+"/"+id);
     $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> ${note}</p>
       ${why?`<p class="why">${why}</p>`:""}
-      ${ok?"":stuckBox(d,id)}
+      ${stuck?stuckBox(d,id,!!(ex||pr)):""}
+      <div id="hookArea"></div>
       ${F?`<div class="fx"><p class="eq">${F[0]}</p><ul class="leg">${F[1].map(x=>`<li>${x}</li>`).join("")}</ul>${F[2]?workBox(F[2],ok):""}</div>`:""}
       <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex||pr?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
       <div class="explain" id="exbox" hidden>${ex?ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""):""}
-      ${pr?`<details><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
+      ${pr?`<details${stuck?" open":""}><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
     say($("after").querySelector(".note").textContent);
     $("next").onclick=()=>{i++;render()};
-    if($("more"))$("more").onclick=toggleExplain;
+    if($("more")){$("more").onclick=toggleExplain;if(stuck)setExplain(true)}
+    hookArea(id,false);if($("writeHook"))$("writeHook").onclick=()=>hookArea(id,true);
     $("next").focus({preventScroll:true});
     afterQ={id,ex:!!ex,more:!!(ex||pr)};
   }
@@ -887,7 +916,8 @@ let explainTag;
 /* The answered card on screen, {id, ex, more}: its question, whether its explanation is in the box, whether it has the
    button. Set at the end of pick(); null once the card is gone (the drill's render, route, home). */
 let afterQ=null;
-function toggleExplain(){const b=$("more"),box=$("exbox"),open=box.hidden;box.hidden=!open;b.setAttribute("aria-expanded",open);b.textContent=open?"Hide explanation":"Explain this more"}
+function toggleExplain(){setExplain($("exbox").hidden)}
+function setExplain(open){const b=$("more");$("exbox").hidden=!open;b.setAttribute("aria-expanded",open);b.textContent=open?"Hide explanation":"Explain this more"}
 /* The explanations landed while an answered card was showing: the card gets its text and, if it had none, its button. */
 function fillExplain(){
   const q=afterQ,ex=q&&!q.ex&&(window.EXPLAIN||{})[q.id],box=ex&&$("exbox");

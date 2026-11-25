@@ -2,6 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 62 (November 25)
+- The box for a question that keeps being missed now shows only for a real struggle: three misses or more, on at least half the tries, so a card missed often long ago but answered right since stays quiet. It shows once per card in a drill, not on every later miss, and reads "Missed 4 of 6 tries".
+- With it, the explanation and the topic's Basics open by themselves, instead of waiting behind Explain this more.
+- A memory hook can be written there and saved for the question. It shows after the question each time it is answered, with Edit, whether met in its section or in Math. Hooks travel in Export progress; an import adds the backup's hooks for questions with none, and keeps any written on this device.
+
 ## 61 (November 25)
 - From the third miss of a question on, the feedback suggests coming at it another way: say in your own words why the right answer is right and the picked one is not, make a memory hook, or drill the questions of the topic it belongs to, with a link to that topic's drill.
 

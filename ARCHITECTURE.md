@@ -60,6 +60,7 @@ Progress lives in `localStorage` on the device and nowhere else. Every read and 
 | `prefs` | `showEst`, `showDate`, `haveFRN` |
 | `exams` | The last ten practice exams: `{day, right, missed:[[deck, id, answer given]], secs, est}` |
 | `days` | `{<day>: {d, n, x}}`: for each day touched, the pool reviews due at its first touch, the distinct items answered (never lowered), and whether a practice exam was finished |
+| `hooks` | `{<question id>: text}`, the learner's own memory hooks, at most 280 characters each |
 | `seeded` | Demo mode only: the sample has been created |
 
 A practice exam in progress sits in `sessionStorage` under `<namespace>exam` (ids, answer orders, picks, start time), so a reload comes back to it; Finish and Back clear it.
@@ -68,7 +69,7 @@ Records are checked by `validRecord` on import and the first time a deck is read
 
 Days are whole numbers, local days since 1970 (`dayNum`), so "due today" never depends on the hour.
 
-Export writes the same records to a JSON file, with the badges, the exam date and the practice exams; import merges records card by card, keeping whichever was answered more recently (`mergeSrs`), and takes the exams only when there are none yet.
+Export writes the same records to a JSON file, with the badges, the exam date, the practice exams and the hooks; import merges records card by card, keeping whichever was answered more recently (`mergeSrs`), and takes the exams only when there are none yet, and a hook only for a question with none.
 
 ## Scheduler
 
