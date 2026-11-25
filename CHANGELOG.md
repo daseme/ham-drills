@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 65 (November 25)
+- Twenty more explanations rewritten to show why, ten each in G7 and G4, with a picture or worked numbers. G7: why switchmode parts are small (G7A08), neutralizing as microphone feedback (G7B01), why Class C is efficient (G7B02), an oscillator as a PA squeal with a filter (G7B07), why Class C suits FM (G7B11), the balanced modulator and product detector with frequencies (G7C02, G7C04), a DDS as a crystal-timed counter (G7C05), I and Q as a clock hand's two shadows (G7C09, G7C10). G4: reverse sideband as a window (G4A02), the plate-current dip and the LOAD control (G4A04, G4A08), what a tuner can and can't change (G4A06), meter loading with numbers (G4B05), why the two tones aren't harmonics (G4B07), ground leads as antennas and quarter-wave transformers (G4C05, G4C06), common-mode current and the ferrite choke (G4C08), why a short antenna is narrow (G4E06).
+
 ## 64 (November 25)
 - Ten G8 explanations rewritten to show why, not only what, each with a picture or worked numbers: phase modulation as a metronome nudged early or late (G8A02); where a reactance modulator sits deciding PM or FM (G8A04); the three reasons behind QPSK31 (G8A06); QPSK's phases as a clock hand (G8A12); link budget and margin as a bank balance in decibels, with numbers (G8A13, G8A14); where odd- and even-order products land, with frequencies (G8B05); why faster symbols need more bandwidth (G8B10); forward error correction as phonetics on a noisy band (G8C10); what an FT8 report of +3 measures (G8C15).
 
