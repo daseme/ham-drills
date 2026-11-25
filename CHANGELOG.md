@@ -2,6 +2,10 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 70 (November 25)
+- The plain-language limits now cover every piece of learner-facing text, not only the explanations: each question's short note, the topic primers, the flash cards, the symbols, the math steps and mistake notes, deck intros and the cheat sheets. 55 long sentences were split, most of them in the primers. The figure G7-1 parts, the amplifier classes and the Q signals are now lists. The band chart's notes are three short paragraphs.
+- test/plain-language.test.js checks all of it. test/fixtures/bandchart.svg now ends at the drawing, so it guards the chart and not the notes under it.
+
 ## 69 (November 25)
 - Every explanation, in both exams, now keeps to plain-language limits taken from ASD-STE100 Simplified Technical English and applied under ISO 24495-1: no sentence over 25 words, no paragraph over 6 sentences. 102 long sentences were split, and 33 passive sentences were recast in the active voice where that names who does what. The meaning of each is unchanged. test/plain-language.test.js keeps it that way.
 

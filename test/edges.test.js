@@ -47,6 +47,7 @@ test("each hook's arithmetic holds: 300 divided by a frequency inside the band g
     else assert.ok(Math.abs(got-band)/band<=0.1,`${f.n}: 300/${x} = ${got}`)}
 });
 
+/* The fixture ends at the drawing: the notes under it are text, checked by the plain-language test. */
 test("the full chart is byte for byte what it was before one band could be drawn alone",()=>{
   const fixture=fs.readFileSync(path.join(__dirname,"fixtures","bandchart.svg"),"utf8").replace(/\r\n/g,"\n");
   assert.equal(app.run("EXAM_CONFIG.cheats.bands").slice(0,fixture.length),fixture);
