@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 64 (November 25)
+- Ten G8 explanations rewritten to show why, not only what, each with a picture or worked numbers: phase modulation as a metronome nudged early or late (G8A02); where a reactance modulator sits deciding PM or FM (G8A04); the three reasons behind QPSK31 (G8A06); QPSK's phases as a clock hand (G8A12); link budget and margin as a bank balance in decibels, with numbers (G8A13, G8A14); where odd- and even-order products land, with frequencies (G8B05); why faster symbols need more bandwidth (G8B10); forward error correction as phonetics on a noisy band (G8C10); what an FT8 report of +3 measures (G8C15).
+
 ## 63 (November 25)
 - G8B02 (image response) explains the image from the ground up: the local oscillator as a mirror, a worked example with real frequencies (14.2 MHz wanted, 9 MHz IF, the image at 32.2 MHz), why that is two IFs away, and how a filter before the mixer and a higher IF deal with it. Its short note gives the mirror picture.
 
