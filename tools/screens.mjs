@@ -18,11 +18,18 @@ const CHROME = process.env.CHROME || "C:/Program Files/Google/Chrome/Application
 mkdirSync(out, {recursive: true});
 
 const FROZEN = Date.UTC(2026, 9, 20, 12);
-const port = 9300 + Math.floor(Math.random() * 500), prof = mkdtempSync(join(tmpdir(), "screens-"));
-const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--no-first-run", "--hide-scrollbars", "--force-device-scale-factor=1", "about:blank"], {stdio: "ignore"});
+const prof = mkdtempSync(join(tmpdir(), "screens-"));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-let tabs = [];
-for (let k = 0; k < 50 && !tabs.length; k++) { try { tabs = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).filter(t => t.type === "page") } catch {} if (!tabs.length) await sleep(200) }
+/* Chrome on a busy CI runner can take well over ten seconds to open its debugging port, and a random port can be
+   taken: wait up to 30 seconds, and on failure start again on another port, three tries in all. */
+let chrome, tabs = [];
+for (let attempt = 1; attempt <= 3 && !tabs.length; attempt++) {
+  const port = 9300 + Math.floor(Math.random() * 500);
+  chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${prof}`, "--no-first-run", "--hide-scrollbars", "--force-device-scale-factor=1", "about:blank"], {stdio: "ignore"});
+  for (let k = 0; k < 150 && !tabs.length; k++) { try { tabs = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).filter(t => t.type === "page") } catch {} if (!tabs.length) await sleep(200) }
+  if (!tabs.length) { console.error(`Chrome did not open port ${port} within 30 seconds (try ${attempt} of 3)`); chrome.kill(); await sleep(1000) }
+}
+if (!tabs.length) { console.error("Chrome never started; no screenshots taken"); process.exit(1) }
 const ws = new WebSocket(tabs[0].webSocketDebuggerUrl);
 await new Promise(r => ws.onopen = r);
 let seq = 0; const pending = {};
