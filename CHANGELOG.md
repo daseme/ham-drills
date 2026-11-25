@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 69 (November 25)
+- Every explanation, in both exams, now keeps to plain-language limits taken from ASD-STE100 Simplified Technical English and applied under ISO 24495-1: no sentence over 25 words, no paragraph over 6 sentences. 102 long sentences were split, and 33 passive sentences were recast in the active voice where that names who does what. The meaning of each is unchanged. test/plain-language.test.js keeps it that way.
+
 ## 68 (November 25)
 - Nine G3 and G6 explanations rewritten with a picture or worked numbers: the long-path echo timed by the speed of light (G3B01), the MUF and LUF as a window's two edges, with frequencies, and what happens when it closes (G3B05, G3B11), hop distance as a flashlight on a ceiling (G3B09), the critical frequency and angle as skipping a stone (G3C02, G3C04), a battery's internal resistance with a 20 A example (G6A02), an inductor's self-resonance (G6A11), and why a switching transistor lives at saturation and cutoff (G6A07).
 
