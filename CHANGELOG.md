@@ -2,6 +2,11 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 60 (November 25)
+- Every math question, in both exams, now shows its working the way the Ohm's law drill does: each step said in words, then the formula with the numbers in it, with unit conversions as steps of their own and, where there are two routes, the short way and the long way. After a miss the steps are open; after a right answer they wait behind Show the work.
+- A wrong option that a common mistake produces is named when picked: the current where the power was asked, a ratio upside down, series added where parallel was meant, peak-to-peak taken for peak, a decibel read as the ratio itself, and so on. Options no single slip explains get no note.
+- The formula box now shows wherever a math question comes up, in its pool section (G5, T5 and the rest) as well as the Math deck; before, a G5 drill showed only the one-line note.
+
 ## 59 (November 25)
 - The Ohm's law and power drill names the likely mistake behind a wrong answer when it matches one: multiplying where it should divide, a division upside down, a forgotten square or a doubled one, or the voltage or current given where the power was asked.
 - A missed kind of problem comes back as the third question after the miss, with new numbers and a line saying so; answering it right says "Fixed it."

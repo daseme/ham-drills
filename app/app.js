@@ -13,6 +13,13 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* A deck's cheat sheet: its own text, or one the exam draws (a band chart, say). */
 const cheatOf=d=>d.cheat||(window.EXAM_CONFIG.cheats||{})[d.id]||"";
+/* A math question's formula box, from the deck drilled or, for a math question met in its pool section, from the
+   Math deck: [formula, legend, steps?, mistakes?]. A step is [rule in words, calculation] or a heading string; the
+   mistakes are keyed by the option's index in the pool's order, for the wrong options a common slip produces. */
+const mathF=(d,id)=>(d.F&&d.F[id])||(DECK.math&&DECK.math.F&&DECK.math.F[id])||null;
+/* The worked steps: open after a miss, behind Show the work after a right answer. */
+const workBox=(steps,ok)=>{const h=steps.map(s=>typeof s==="string"?`<p class="shead">${s}</p>`:`<div class="step"><p class="rule">${s[0]}</p>${s[1]?`<p class="calc">${s[1]}</p>`:""}</div>`).join("");
+  return ok?`<details class="work"><summary>Show the work</summary>${h}</details>`:`<div class="work">${h}</div>`};
 /* A page beside the app that a deck points to, from EXAM_CONFIG.extras[deck id]: {href, text}. */
 const extraOf=d=>{const x=(window.EXAM_CONFIG.extras||{})[d.id];return x?`<a href="${x.href}">${esc(x.text)}</a>`:""};
 /* A flash card's drawing, if the exam draws one for that deck (a band's bar, say). */
@@ -662,9 +669,10 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
     if(!ok&&retry()){items.splice(Math.min(i+4,items.length),0,{...items[i],re:1})}
     status();
     loadExplain();
-    const F=d.F&&d.F[id],ex=(window.EXPLAIN||{})[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
+    const F=mathF(d,id),why=!ok&&F&&F[3]&&F[3][oi],ex=(window.EXPLAIN||{})[id],ck=d.CON&&d.CON[id],pr=ck&&d.P[ck];
     $("after").innerHTML=`<p class="note"><strong class="${ok?"ok":"no"}">${ok?"Correct.":missText(lemon)}</strong> ${note}</p>
-      ${F?`<div class="fx"><p class="eq">${F[0]}</p><ul class="leg">${F[1].map(x=>`<li>${x}</li>`).join("")}</ul></div>`:""}
+      ${why?`<p class="why">${why}</p>`:""}
+      ${F?`<div class="fx"><p class="eq">${F[0]}</p><ul class="leg">${F[1].map(x=>`<li>${x}</li>`).join("")}</ul>${F[2]?workBox(F[2],ok):""}</div>`:""}
       <div class="actions"><button class="btn" id="next">${i+1<items.length?"Next question":"See results"}</button>${ex||pr?`<button class="btn ghost" id="more" aria-expanded="false">Explain this more</button>`:""}</div>
       <div class="explain" id="exbox" hidden>${ex?ex.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(""):""}
       ${pr?`<details><summary>Basics: ${pr[0]}</summary>${pr[1]}</details>`:""}</div>`;
