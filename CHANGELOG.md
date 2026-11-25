@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 63 (November 25)
+- G8B02 (image response) explains the image from the ground up: the local oscillator as a mirror, a worked example with real frequencies (14.2 MHz wanted, 9 MHz IF, the image at 32.2 MHz), why that is two IFs away, and how a filter before the mixer and a higher IF deal with it. Its short note gives the mirror picture.
+
 ## 62 (November 25)
 - The box for a question that keeps being missed now shows only for a real struggle: three misses or more, on at least half the tries, so a card missed often long ago but answered right since stays quiet. It shows once per card in a drill, not on every later miss, and reads "Missed 4 of 6 tries".
 - With it, the explanation and the topic's Basics open by themselves, instead of waiting behind Explain this more.
