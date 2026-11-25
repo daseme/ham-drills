@@ -9,7 +9,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | index.html | The splash page at /ham-drills/: a link to each exam's app and to the Technician demo, two facts in the footer (no account, works offline) and links to Resources, HamTube and About |
 | about.html | Who built the site and why, what it is and is not, where progress lives, where to report a problem; off the splash, no script, not cached |
 | resources.html | A page of outward links off the splash: the ARRL, Bay Area clubs, NERT and CERT, the FEMA courses; no script, not cached |
-| sitemap.xml | The five pages, with absolute addresses, for Google Search Console; nothing links to it |
+| sitemap.xml | The six pages, with absolute addresses, for Google Search Console; nothing links to it |
 | app/app.js, app/app.css | The whole app: script and styles, shared by every exam; names no exam |
 | app/sw-core.js | The service worker every exam shares |
 | technician/index.html | The Technician page: preloads the fonts, then loads version.js, its exam.js and data.js, then app.js, all deferred |
@@ -19,6 +19,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | technician/sw.js, technician/manifest.webmanifest | Technician's cache name, then the shared worker; its home-screen install |
 | general/ | The same files for General: its own exam.js (storage `hamgeneral:`, cache `hamdrills-general-v`, figure G7-1, the band chart, no demo) and data.js (G1 to G0, Math, Bands, Edges and Facts, 423 pool questions) |
 | forward/ | The content of the daseme/ham-technicians-drills repository: the old address forwards here, and its last service worker retires the old offline copy |
+| general/ohms-law-drill.html | A standalone Ohm's law and power drill: generated problems, worked solutions, its own tallies in `hamgeneral:ohms`; linked from the Math deck through `EXAM_CONFIG.extras` and precached through `self.EXAM_FILES` in general/sw.js |
 | version.js | `APP_VERSION`, the one version number for the repo; read by the footers and the service workers |
 | icons/, fonts/ | Shared icons and bundled typefaces; icons/og.png is the 1200 by 630 share image every page's Open Graph tags name, not precached |
 | pools/ | A snapshot of each exam's official pool, parsed from the NCVEC .docx with its source recorded (file, SHA-256, link, the page's file list); one question per line |
@@ -33,7 +34,7 @@ One shared app, and a folder per exam holding that exam's settings and questions
 | test/screens/ | The screenshot baselines, made only by the CI runner's Chrome: run the workflow by hand with rebaseline on |
 | .github/workflows/check.yml | Runs the pool check, the layout check and the tests on every push and pull request, and shoots the screens and compares them with the baselines |
 
-Every page's head carries a description, a canonical address and Open Graph tags. Those tags and sitemap.xml are the only places the site names its host (https://daseme.github.io/ham-drills/), so a move is a search and replace across the five HTML files and the sitemap; test/front.test.js keeps each canonical's path matching its page.
+Every page's head carries a description, a canonical address and Open Graph tags. Those tags and sitemap.xml are the only places the site names its host (https://daseme.github.io/ham-drills/), so a move is a search and replace across the six HTML files and the sitemap; test/front.test.js keeps each canonical's path matching its page.
 
 ## Data
 

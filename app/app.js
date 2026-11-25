@@ -13,6 +13,8 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* A deck's cheat sheet: its own text, or one the exam draws (a band chart, say). */
 const cheatOf=d=>d.cheat||(window.EXAM_CONFIG.cheats||{})[d.id]||"";
+/* A page beside the app that a deck points to, from EXAM_CONFIG.extras[deck id]: {href, text}. */
+const extraOf=d=>{const x=(window.EXAM_CONFIG.extras||{})[d.id];return x?`<a href="${x.href}">${esc(x.text)}</a>`:""};
 /* A flash card's drawing, if the exam draws one for that deck (a band's bar, say). */
 const artOf=(d,c)=>{const a=window.EXAM_CONFIG.art;return a&&a[d.id]?a[d.id](c):""};
 const IV=[0,1,3,7,16,35],MASTER=3;
@@ -507,6 +509,7 @@ function studySection(d,{solo}){
     const intro=d.exam?`${d.code} supplies ${d.exam} of the ${C.examQ} exam questions, drawn from ${d.Q.length} in the pool.`:d.intro||`${d.Q.length} questions, with the formulas they rest on.`;
     body=`<p class="sub">${intro}</p>
     ${cheatOf(d)?`<details class="cheat" open><summary>${esc(d.cheatName||"Formulas")}</summary>${cheatOf(d)}</details>`:""}
+    ${extraOf(d)?`<p class="tools">${extraOf(d)}</p>`:""}
     ${Object.keys(d.P||{}).map(k=>{const [t,b]=d.P[k],ids=cov[k]||[];
       return `<h2>${t}</h2><div class="primer">${b}</div>
       <p class="cover">Covers <b>${ids.length===1?ids[0]:`${ids.length} questions, ${ids[0]} to ${ids[ids.length-1]}`}</b>${ids.length?` <a href="#${d.id}/p/${k}">&middot; Drill these</a>`:""}</p>`}).join("")}`;
@@ -574,7 +577,7 @@ function drill({deck,mixed,primer,cards,title:listTitle,sub:listSub}){
   <h1>${title}</h1>${mixed||list?`<p class="sub">${sub}</p>`:""}
   ${primer?`<p class="only">Drilling the ${deck.Q.filter(q=>deck.CON[q[0]]===primer).length} questions under <b>${esc(deck.P[primer][0])}</b>, due or not. <a href="#${deck.id}/study">Back to the ${deck.code} study page</a>.</p>`:""}
   ${deck&&cheatOf(deck)?`<details class="cheat"><summary>${esc(deck.cheatName||"Cheat sheet")}</summary>${cheatOf(deck)}</details>`:""}
-  ${deck&&deck.P&&!primer?`<p class="tools"><a href="#${deck.id}/study">Read the ${deck.code} basics</a></p>`:""}
+  ${deck&&!primer&&(deck.P||extraOf(deck))?`<p class="tools">${deck.P?`<a href="#${deck.id}/study">Read the ${deck.code} basics</a>`:""}${extraOf(deck)}</p>`:""}
   ${chips.length?`<div class="groups" id="groups" role="group" aria-label="Question group">${chips.map(([v,l])=>`<button class="chip" data-v="${v}" aria-pressed="${v===group}">${l}</button>`).join("")}</div>`:""}
   ${mixed||list?"":`<div class="opts"><label><input type="checkbox" id="dueOnly"> Due today</label></div>`}
   <p class="srs" id="srsline"></p>

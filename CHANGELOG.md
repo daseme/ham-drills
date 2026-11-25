@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 58 (November 25)
+- General gains an Ohm's law and power drill, a page of its own beside the app (general/ohms-law-drill.html): endless generated problems in Ohm's law, power, and milliamps and kilohms, each with a worked solution, a note when the digits are right but the decimal point is off, and more of the kinds of problem you miss. The Electronics math deck's drill and study page link to it. It is cached for offline use with the rest of General, and keeps its own tallies on the phone, apart from the review records.
+
 ## 57 (November 5)
 - Once today's reviews are done, home's headline reads what comes back tomorrow, "23 will be back tomorrow", with "That's all for today." on the line under it, instead of a zero due today. That is the number the icon badge already shows at that point. With nothing due tomorrow either, the zero stays.
 

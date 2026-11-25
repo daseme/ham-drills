@@ -128,6 +128,8 @@ return {
   cheats:{bands:bandChart()+BAND_NOTES},bands:BANDS,
   /* Art for a flash-card deck, by deck id: a function from card to markup. */
   art:{edges:bandBar},
+  /* A page beside the app, linked from a deck's drill and study page. */
+  extras:{math:{href:"ohms-law-drill.html",text:"Ohm's law and power drill"}},
   demo:null
 };
 })();

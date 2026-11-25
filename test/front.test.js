@@ -9,7 +9,7 @@ const fs=require("fs"),path=require("path"),vm=require("vm");
 const ROOT=path.join(__dirname,"..");
 const SITE="https://daseme.github.io/ham-drills/";
 /* Path on the site -> file in the repo. */
-const PAGES={"":"index.html","about.html":"about.html","resources.html":"resources.html","technician/":"technician/index.html","general/":"general/index.html"};
+const PAGES={"":"index.html","about.html":"about.html","resources.html":"resources.html","technician/":"technician/index.html","general/":"general/index.html","general/ohms-law-drill.html":"general/ohms-law-drill.html"};
 const read=f=>fs.readFileSync(path.join(ROOT,f),"utf8");
 const meta=(html,attr,name)=>{const m=html.match(new RegExp(`<meta ${attr}="${name}" content="([^"]*)">`));return m&&m[1]};
 const link=(html,rel)=>{const m=html.match(new RegExp(`<link rel="${rel}" href="([^"]*)">`));return m&&m[1]};

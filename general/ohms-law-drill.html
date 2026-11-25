@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ohm’s law and power drill</title>
+<meta name="description" content="Endless worked Ohm's law and power problems for the General exam, with milliamps and kilohms, a step-by-step solution after each answer, and extra practice on what you miss.">
+<link rel="canonical" href="https://daseme.github.io/ham-drills/general/ohms-law-drill.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ohm’s law and power drill">
+<meta property="og:description" content="Endless worked Ohm's law and power problems for the General exam, with milliamps and kilohms, a step-by-step solution after each answer, and extra practice on what you miss.">
+<meta property="og:url" content="https://daseme.github.io/ham-drills/general/ohms-law-drill.html">
+<meta property="og:image" content="https://daseme.github.io/ham-drills/icons/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="License exam drills: free, no account, works offline, spaced review">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#EDF0F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11171D" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="preload" href="../fonts/atkinson-hyperlegible-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/atkinson-hyperlegible-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* A page of its own beside the General app: its own styles in the app's palette and bundled fonts, so it works offline. */
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-style:normal;font-display:swap;src:url(../fonts/atkinson-hyperlegible-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:700;font-style:normal;font-display:swap;src:url(../fonts/atkinson-hyperlegible-latin-700-normal.woff2) format("woff2")}
+:root {
+  --bg: #EDF0F2;
+  --panel: #FFFFFF;
+  --ink: #18232E;
+  --muted: #56636F;
+  --line: #CBD3DA;
+  --amber: #B8730F;
+  --amber-soft: #FBF0DD;
+  --good: #22744A;
+  --good-soft: #E2F2E8;
+  --bad: #A93434;
+  --bad-soft: #F8E3E3;
+  --wire: #3A4756;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #11171D; --panel: #1A222A; --ink: #E3E8ED; --muted: #9AA7B3; --line: #2D3842;
+    --amber: #E9A33E; --amber-soft: #33270F; --good: #5CC48A; --good-soft: #163223;
+    --bad: #EE7B7B; --bad-soft: #3A1B1B; --wire: #A9B6C3; color-scheme: dark;
+  }
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Atkinson Hyperlegible", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px; line-height: 1.5; font-variant-numeric: tabular-nums;
+}
+main { max-width: 560px; margin: 0 auto; padding: 16px 16px 48px; }
+a.back { display: inline-block; font-size: 15px; padding: 6px 0; margin: 0 0 4px; color: var(--muted); text-decoration: none; }
+header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
+.score { color: var(--muted); font-size: 0.95rem; }
+.score b { color: var(--ink); }
+.hint { color: var(--muted); margin: 4px 0 18px; font-size: 0.95rem; }
+.modes { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.modes button {
+  font: inherit; font-size: 0.92rem; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer;
+}
+.modes button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
+svg.circuit { display: block; width: 100%; max-width: 340px; height: auto; margin: 0 auto 6px; }
+svg.circuit .w { stroke: var(--wire); stroke-width: 2.5; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+svg.circuit text { fill: var(--ink); font-family: inherit; font-size: 15px; }
+svg.circuit text.unk { fill: var(--amber); font-weight: 700; }
+.q { font-size: 1.1rem; margin: 8px 0 16px; }
+.row { display: flex; gap: 8px; }
+input {
+  flex: 1; min-width: 0; font: inherit; font-size: 1.2rem; padding: 10px 12px;
+  border: 2px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink);
+}
+input:focus { outline: none; border-color: var(--amber); }
+.unit { align-self: center; color: var(--muted); min-width: 2.5em; }
+button.go {
+  font: inherit; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: none;
+  background: var(--amber); color: #fff; cursor: pointer;
+}
+@media (prefers-color-scheme: dark) { button.go { color: #1B1408; } }
+button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.fb { margin-top: 16px; border-radius: 8px; padding: 12px 14px; display: none; }
+.fb.good { display: block; background: var(--good-soft); }
+.fb.bad { display: block; background: var(--bad-soft); }
+.fb .verdict { font-weight: 700; margin: 0 0 6px; }
+.fb.good .verdict { color: var(--good); }
+.fb.bad .verdict { color: var(--bad); }
+.steps { margin-top: 8px; }
+.step { margin: 0 0 12px; }
+.rule { margin: 0 0 2px; }
+.calc { margin: 0; padding: 4px 0 4px 10px; border-left: 3px solid var(--amber); font-weight: 700; font-size: 1.05rem; overflow-x: auto; }
+.shead { margin: 14px 0 6px; font-weight: 700; color: var(--muted); }
+.note { margin: 4px 0 0; color: var(--muted); }
+details summary { cursor: pointer; color: var(--muted); }
+.msg { color: var(--bad); font-size: 0.95rem; min-height: 1.4em; margin-top: 6px; }
+.prog { margin-top: 28px; }
+.phead { display: flex; justify-content: space-between; align-items: baseline; }
+.prog h2 { font-size: 1.15rem; margin: 0; }
+button.link { font: inherit; font-size: 0.92rem; background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px; }
+#pnote { color: var(--amber); margin: 0 0 6px; font-size: 0.95rem; }
+#progress { list-style: none; margin: 0; padding: 0; }
+.p { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 9px 0; border-top: 1px solid var(--line); }
+.pl { font-weight: 700; }
+.ps { text-align: right; font-size: 0.92rem; }
+.pt { text-align: right; font-size: 0.88rem; color: var(--muted); }
+.dots { min-height: 12px; display: flex; align-items: center; }
+.d { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; }
+.d.y { background: var(--good); }
+.d.x { background: var(--bad); }
+.p.weak .ps { color: var(--bad); font-weight: 700; }
+.p.getting .ps { color: var(--amber); font-weight: 700; }
+.p.solid .ps { color: var(--good); font-weight: 700; }
+.p.new .ps { color: var(--muted); }
+.slipnote { margin: 0 0 10px; }
+.step.hl { background: var(--amber-soft); border-radius: 6px; padding: 6px 8px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">&larr; General drills</a>
+  <header>
+    <h1>Ohm’s law and power</h1>
+    <div class="score" id="score">No answers yet</div>
+  </header>
+  <p class="hint">Type the number. Units are optional.</p>
+
+  <div class="modes" role="group" aria-label="Question set">
+    <button data-mode="mixed" aria-pressed="true">Mixed</button>
+    <button data-mode="weak" aria-pressed="false">Weak spots</button>
+    <button data-mode="ohm" aria-pressed="false">Ohm’s law</button>
+    <button data-mode="power" aria-pressed="false">Power</button>
+    <button data-mode="prefix" aria-pressed="false">mA and kΩ</button>
+  </div>
+
+  <section class="card">
+    <div id="diagram"></div>
+    <p class="q" id="question"></p>
+    <div class="row">
+      <input id="answer" inputmode="decimal" autocomplete="off" aria-label="Your answer">
+      <span class="unit" id="unit"></span>
+      <button class="go" id="action">Check</button>
+    </div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>
+
+  <section class="prog">
+    <div class="phead"><h2>Your progress</h2><button class="link" id="reset">Reset</button></div>
+    <p class="hint">Dots are your last six tries. Types you miss come up more often.</p>
+    <p id="pnote"></p>
+    <p class="hint" id="slipcount"></p>
+    <ul id="progress"></ul>
+  </section>
+</main>
+
+<script>
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const n = x => (+(+x).toFixed(6)).toLocaleString('en-US', { maximumFractionDigits: 6 });
+
+const Is = [0.5, 1, 1.5, 2, 2.5, 3, 4, 5];
+const Rs = [4, 5, 6, 8, 10, 12, 20, 25, 50, 100];
+
+const R_ = (rule, calc) => ({ rule, calc });
+const H_ = head => ({ head });
+const N_ = note => ({ note });
+
+const gens = {
+  ohmV() {
+    const I = pick(Is), R = pick(Rs), V = I * R;
+    return { given: { I: n(I) + ' A', R: n(R) + ' Ω' }, unknown: 'V', unit: 'V', ans: V,
+      q: `${n(I)} A flows through a ${n(R)} Ω resistor. What is the voltage across it?`,
+      steps: [R_('Voltage equals current times resistance.', `V = I × R = ${n(I)} × ${n(R)} = ${n(V)} V`)] };
+  },
+  ohmI() {
+    const I = pick(Is), R = pick(Rs), V = I * R;
+    return { given: { V: n(V) + ' V', R: n(R) + ' Ω' }, unknown: 'I', unit: 'A', ans: I,
+      q: `${n(V)} V is across a ${n(R)} Ω resistor. How much current flows?`,
+      steps: [R_('Current equals voltage divided by resistance.', `I = V ÷ R = ${n(V)} ÷ ${n(R)} = ${n(I)} A`)] };
+  },
+  ohmR() {
+    const I = pick(Is), R = pick(Rs), V = I * R;
+    return { given: { V: n(V) + ' V', I: n(I) + ' A' }, unknown: 'R', unit: 'Ω', ans: R,
+      q: `A resistor draws ${n(I)} A from a ${n(V)} V supply. What is its resistance?`,
+      steps: [R_('Resistance equals voltage divided by current.', `R = V ÷ I = ${n(V)} ÷ ${n(I)} = ${n(R)} Ω`)] };
+  },
+  pVI() {
+    const V = pick([5, 6, 9, 12, 13.8, 24, 48, 120]), I = pick([0.5, 1, 2, 2.5, 3, 4, 5, 10]), P = V * I;
+    return { given: { V: n(V) + ' V', I: n(I) + ' A' }, unknown: 'P', unit: 'W', ans: P,
+      q: `A radio draws ${n(I)} A from a ${n(V)} V supply. How much power does it use?`,
+      steps: [R_('Power equals voltage times current.', `P = V × I = ${n(V)} × ${n(I)} = ${n(P)} W`)] };
+  },
+  pVR() {
+    const I = pick(Is), R = pick(Rs), V = I * R, P = V * V / R;
+    return { given: { V: n(V) + ' V', R: n(R) + ' Ω' }, unknown: 'P', unit: 'W', ans: P,
+      q: `${n(V)} V is across a ${n(R)} Ω resistor. How much power does it dissipate?`,
+      steps: [
+        H_('Short way'),
+        R_('Power equals voltage squared divided by resistance.', `P = V² ÷ R = ${n(V)}² ÷ ${n(R)} = ${n(V * V)} ÷ ${n(R)} = ${n(P)} W`),
+        H_('Long way'),
+        R_('First find the current. Current equals voltage divided by resistance.', `I = V ÷ R = ${n(V)} ÷ ${n(R)} = ${n(I)} A`),
+        R_('Then power equals voltage times current.', `P = V × I = ${n(V)} × ${n(I)} = ${n(P)} W`)] };
+  },
+  pIR() {
+    const I = pick(Is), R = pick(Rs), P = I * I * R, V = I * R;
+    return { given: { I: n(I) + ' A', R: n(R) + ' Ω' }, unknown: 'P', unit: 'W', ans: P,
+      q: `${n(I)} A flows through a ${n(R)} Ω resistor. How much power does it dissipate?`,
+      steps: [
+        H_('Short way'),
+        R_('Power equals current squared times resistance.', `P = I² × R = ${n(I)}² × ${n(R)} = ${n(I * I)} × ${n(R)} = ${n(P)} W`),
+        H_('Long way'),
+        R_('First find the voltage. Voltage equals current times resistance.', `V = I × R = ${n(I)} × ${n(R)} = ${n(V)} V`),
+        R_('Then power equals voltage times current.', `P = V × I = ${n(V)} × ${n(I)} = ${n(P)} W`)] };
+  },
+  iPV() {
+    const V = pick([12, 13.8, 24, 120]), I = pick([0.5, 1, 2, 2.5, 5, 10]), P = V * I;
+    return { given: { V: n(V) + ' V', P: n(P) + ' W' }, unknown: 'I', unit: 'A', ans: I,
+      q: `A ${n(P)} W load runs on ${n(V)} V. How much current does it draw?`,
+      steps: [R_('Power equals voltage times current, so current equals power divided by voltage.', `I = P ÷ V = ${n(P)} ÷ ${n(V)} = ${n(I)} A`)] };
+  },
+  kV() {
+    const mA = pick([1, 2, 4, 5, 10, 20, 25]), k = pick([0.5, 1, 2, 4, 5, 10]), V = mA * k, A = mA / 1000, R = k * 1000;
+    return { given: { I: n(mA) + ' mA', R: n(k) + ' kΩ' }, unknown: 'V', unit: 'V', ans: V,
+      q: `${n(mA)} mA flows through a ${n(k)} kΩ resistor. What is the voltage across it?`,
+      steps: [
+        R_('Convert to amps and ohms first. Divide milliamps by 1,000; multiply kilohms by 1,000.', `${n(mA)} mA = ${n(A)} A, and ${n(k)} kΩ = ${n(R)} Ω`),
+        R_('Voltage equals current times resistance.', `V = I × R = ${n(A)} × ${n(R)} = ${n(V)} V`),
+        N_('Shortcut: milliamps times kilohms gives volts directly, because the thousands cancel.')] };
+  },
+  kI() {
+    const mA = pick([1, 2, 4, 5, 10, 20, 25]), k = pick([0.5, 1, 2, 4, 5, 10]), V = mA * k, A = mA / 1000, R = k * 1000;
+    return { given: { V: n(V) + ' V', R: n(k) + ' kΩ' }, unknown: 'I', unit: 'mA', ans: mA,
+      q: `${n(V)} V is across a ${n(k)} kΩ resistor. How many milliamps flow?`,
+      steps: [
+        R_('Convert to ohms first. Multiply kilohms by 1,000.', `${n(k)} kΩ = ${n(R)} Ω`),
+        R_('Current equals voltage divided by resistance.', `I = V ÷ R = ${n(V)} ÷ ${n(R)} = ${n(A)} A`),
+        R_('Convert to milliamps. Multiply amps by 1,000.', `${n(A)} A = ${n(mA)} mA`),
+        N_('Shortcut: volts divided by kilohms gives milliamps directly.')] };
+  },
+  kP() {
+    const mA = pick([2, 4, 5, 10]), k = pick([0.5, 1, 2, 5]), V = mA * k, R = k * 1000, A = mA / 1000, W = V * V / R;
+    return { given: { V: n(V) + ' V', R: n(k) + ' kΩ' }, unknown: 'P', unit: 'mW', ans: W * 1000,
+      q: `${n(V)} V is across a ${n(k)} kΩ resistor. How many milliwatts does it dissipate?`,
+      steps: [
+        R_('Convert to ohms first. Multiply kilohms by 1,000.', `${n(k)} kΩ = ${n(R)} Ω`),
+        H_('Short way'),
+        R_('Power equals voltage squared divided by resistance.', `P = V² ÷ R = ${n(V)}² ÷ ${n(R)} = ${n(V * V)} ÷ ${n(R)} = ${n(W)} W`),
+        H_('Long way'),
+        R_('First find the current. Current equals voltage divided by resistance.', `I = V ÷ R = ${n(V)} ÷ ${n(R)} = ${n(A)} A`),
+        R_('Then power equals voltage times current.', `P = V × I = ${n(V)} × ${n(A)} = ${n(W)} W`),
+        H_('Finish'),
+        R_('Convert to milliwatts. Multiply watts by 1,000.', `${n(W)} W = ${n(W * 1000)} mW`)] };
+  },
+  mP() {
+    const mA = pick([10, 20, 50]), R = pick([50, 100, 200]), A = mA / 1000, W = A * A * R, V = A * R;
+    return { given: { I: n(mA) + ' mA', R: n(R) + ' Ω' }, unknown: 'P', unit: 'mW', ans: W * 1000,
+      q: `${n(mA)} mA flows through a ${n(R)} Ω resistor. How many milliwatts does it dissipate?`,
+      steps: [
+        R_('Convert to amps first. Divide milliamps by 1,000.', `${n(mA)} mA = ${n(A)} A`),
+        H_('Short way'),
+        R_('Power equals current squared times resistance.', `P = I² × R = ${n(A)}² × ${n(R)} = ${n(A * A)} × ${n(R)} = ${n(W)} W`),
+        H_('Long way'),
+        R_('First find the voltage. Voltage equals current times resistance.', `V = I × R = ${n(A)} × ${n(R)} = ${n(V)} V`),
+        R_('Then power equals voltage times current.', `P = V × I = ${n(V)} × ${n(A)} = ${n(W)} W`),
+        H_('Finish'),
+        R_('Convert to milliwatts. Multiply watts by 1,000.', `${n(W)} W = ${n(W * 1000)} mW`)] };
+  }
+};
+
+const pools = {
+  ohm: ['ohmV', 'ohmI', 'ohmR'],
+  power: ['pVI', 'pVR', 'pIR', 'iPV'],
+  prefix: ['kV', 'kI', 'kP', 'mP']
+};
+pools.mixed = [...pools.ohm, ...pools.power, ...pools.prefix];
+
+const labels = {
+  ohmV: 'Voltage from current and resistance', ohmI: 'Current from voltage and resistance', ohmR: 'Resistance from voltage and current',
+  pVI: 'Power from voltage and current', pVR: 'Power from voltage and resistance (V²)', pIR: 'Power from current and resistance (I²)',
+  iPV: 'Current from power and voltage', kV: 'Volts from mA and kΩ', kI: 'Milliamps from volts and kΩ',
+  kP: 'Milliwatts from volts and kΩ', mP: 'Milliwatts from mA and ohms'
+};
+const order = pools.mixed;
+const statusText = { new: 'New', solid: 'Solid', getting: 'Getting there', weak: 'Needs work' };
+/* Stored under General's namespace: every site on daseme.github.io shares one localStorage. */
+const WINDOW = 6, LS_KEY = 'hamgeneral:ohms';
+let stats = {}, currentType = null, slips = 0;
+
+function mastery(t) {
+  const r = (stats[t] && stats[t].recent) || [];
+  const ok = r.filter(Boolean).length;
+  return { n: r.length, score: (ok + 1) / (r.length + 2) };
+}
+function status(t) {
+  const m = mastery(t);
+  if (m.n < 3) return 'new';
+  if (m.score >= 0.75) return 'solid';
+  if (m.score >= 0.5) return 'getting';
+  return 'weak';
+}
+const isWeak = t => status(t) === 'weak' || status(t) === 'getting';
+function weight(t) {
+  const m = mastery(t);
+  return m.n === 0 ? 1 : 0.15 + (1 - m.score) * 1.5;
+}
+function choose() {
+  let pool = pools[mode === 'weak' ? 'mixed' : mode];
+  if (mode === 'weak') { const w = pool.filter(isWeak); if (w.length) pool = w; }
+  const cands = pool.length > 1 ? pool.filter(t => t !== lastGen) : pool;
+  const ws = cands.map(weight);
+  let r = Math.random() * ws.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < cands.length; i++) { r -= ws[i]; if (r <= 0) return cands[i]; }
+  return cands[cands.length - 1];
+}
+function record(t, ok) {
+  const s = stats[t] || (stats[t] = { right: 0, total: 0, recent: [] });
+  s.total++; if (ok) s.right++;
+  s.recent.push(ok ? 1 : 0);
+  if (s.recent.length > WINDOW) s.recent.shift();
+  renderProgress();
+  save();
+}
+function renderProgress() {
+  document.getElementById('progress').innerHTML = order.map(t => {
+    const s = stats[t], st = status(t);
+    const dots = (s ? s.recent : []).map(v => `<i class="d ${v ? 'y' : 'x'}"></i>`).join('');
+    const tot = s ? `${s.right} of ${s.total} overall` : 'Not tried';
+    return `<li class="p ${st}"><span class="pl">${labels[t]}</span><span class="ps">${statusText[st]}</span><span class="dots">${dots}</span><span class="pt">${tot}</span></li>`;
+  }).join('');
+  document.getElementById('slipcount').textContent = slips
+    ? `Decimal-point slips so far: ${slips}. These count as misses, but they usually mean the formula was right and a conversion or decimal went wrong.` : '';
+  document.getElementById('pnote').textContent =
+    mode === 'weak' && !order.some(isWeak) ? 'No weak spots yet, so this is drawing from everything.' : '';
+}
+function clean(o) {
+  const out = {};
+  if (!o || typeof o !== 'object') return out;
+  for (const t of order) {
+    const s = o[t];
+    if (s && Array.isArray(s.recent)) out[t] = { right: +s.right || 0, total: +s.total || 0, recent: s.recent.map(v => v ? 1 : 0).slice(-WINDOW) };
+  }
+  return out;
+}
+function save() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ stats, slips })); } catch (e) {}
+}
+function load() {
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) { const d = JSON.parse(raw); stats = clean(d.stats); slips = +d.slips || 0; } } catch (e) {}
+}
+
+let mode = 'mixed', current = null, lastGen = null, answered = false, right = 0, total = 0, streak = 0;
+const $ = id => document.getElementById(id);
+
+function diagram(p) {
+  const lab = (k, x, y, anchor) => {
+    const unk = p.unknown === k, val = p.given[k];
+    if (!unk && !val) return '';
+    return `<text x="${x}" y="${y}" text-anchor="${anchor}" class="${unk ? 'unk' : ''}">${k} = ${unk ? '?' : val}</text>`;
+  };
+  return `<svg class="circuit" viewBox="0 0 340 140" role="img" aria-label="Circuit with a battery and a resistor">
+    <path class="w" d="M80 62 V30 H250 V45"/>
+    <path class="w" d="M250 95 V110 H80 V74"/>
+    <path class="w" d="M66 62 H94"/>
+    <path class="w" d="M73 74 H87"/>
+    <polyline class="w" points="250,45 260,50 240,58 260,66 240,74 260,82 240,90 250,95"/>
+    <path d="M162 25 L172 30 L162 35 Z" fill="var(--wire)"/>
+    ${lab('V', 58, 73, 'end')}
+    ${lab('I', 166, 18, 'middle')}
+    ${lab('R', 272, 64, 'start')}
+    ${lab('P', 272, 88, 'start')}
+  </svg>`;
+}
+
+function next() {
+  const g = choose();
+  lastGen = g;
+  currentType = g;
+  current = gens[g]();
+  answered = false;
+  $('diagram').innerHTML = diagram(current);
+  $('question').textContent = current.q;
+  $('unit').textContent = current.unit;
+  $('answer').value = '';
+  $('answer').disabled = false;
+  $('msg').textContent = '';
+  $('fb').className = 'fb';
+  $('fb').innerHTML = '';
+  $('action').textContent = 'Check';
+  $('answer').focus();
+}
+
+function check() {
+  const raw = $('answer').value.replace(/,/g, '').trim();
+  const x = parseFloat(raw);
+  if (raw === '' || isNaN(x)) { $('msg').textContent = 'Enter a number, like 24 or 0.5.'; return; }
+  $('msg').textContent = '';
+  const a = current.ans;
+  const ok = Math.abs(x - a) <= Math.max(0.011, Math.abs(a) * 0.01);
+  total++; if (ok) { right++; streak++; } else { streak = 0; }
+  const p10 = x !== 0 && a !== 0 && Math.sign(x) === Math.sign(a) ? Math.log10(x / a) : NaN;
+  const slip = !ok && isFinite(p10) && Math.round(p10) !== 0 && Math.abs(p10 - Math.round(p10)) < 0.005;
+  if (slip) slips++;
+  record(currentType, ok);
+  answered = true;
+  $('answer').disabled = true;
+  const steps = '<div class="steps">' + current.steps.map(s =>
+    s.head ? `<p class="shead">${s.head}</p>` :
+    s.note ? `<p class="note">${s.note}</p>` :
+    `<div class="step${slip && s.rule.startsWith('Convert') ? ' hl' : ''}"><p class="rule">${s.rule}</p><p class="calc">${s.calc}</p></div>`).join('') + '</div>';
+  const fb = $('fb');
+  if (ok) {
+    fb.className = 'fb good';
+    fb.innerHTML = `<p class="verdict">Correct: ${n(a)} ${current.unit}</p><details><summary>Show the work</summary>${steps}</details>`;
+  } else {
+    fb.className = 'fb bad';
+    const factor = slip ? n(Math.pow(10, Math.abs(Math.round(p10)))) : '';
+    const conv = current.steps.some(s => s.rule && s.rule.startsWith('Convert'));
+    const slipNote = slip ? `<p class="slipnote">Your digits are right, but the decimal point is off by a factor of ${factor}. ${conv ? 'That usually means a unit conversion slipped. The conversion steps are highlighted below.' : 'You likely used the right formula. Recheck where the decimal lands in the arithmetic.'}</p>` : '';
+    fb.innerHTML = `<p class="verdict">Not quite. The answer is ${n(a)} ${current.unit}.</p>${slipNote}${steps}`;
+  }
+  $('score').innerHTML = `<b>${right}</b> of ${total} right` + (streak > 1 ? `, streak ${streak}` : '');
+  $('action').textContent = 'Next question';
+  $('action').focus();
+}
+
+$('action').addEventListener('click', () => answered ? next() : check());
+$('answer').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && answered && document.activeElement !== $('action')) { e.preventDefault(); next(); }
+});
+document.querySelectorAll('.modes button').forEach(b => b.addEventListener('click', () => {
+  mode = b.dataset.mode;
+  document.querySelectorAll('.modes button').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
+  lastGen = null;
+  next();
+}));
+let resetArmed = false;
+$('reset').addEventListener('click', () => {
+  if (!resetArmed) { resetArmed = true; $('reset').textContent = 'Tap again to clear'; setTimeout(() => { resetArmed = false; $('reset').textContent = 'Reset'; }, 4000); return; }
+  resetArmed = false; $('reset').textContent = 'Reset';
+  stats = {}; slips = 0; renderProgress(); save();
+});
+load();
+next();
+renderProgress();
+</script>
+</body>
+</html>
