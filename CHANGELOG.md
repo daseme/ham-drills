@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 68 (November 25)
+- Nine G3 and G6 explanations rewritten with a picture or worked numbers: the long-path echo timed by the speed of light (G3B01), the MUF and LUF as a window's two edges, with frequencies, and what happens when it closes (G3B05, G3B11), hop distance as a flashlight on a ceiling (G3B09), the critical frequency and angle as skipping a stone (G3C02, G3C04), a battery's internal resistance with a 20 A example (G6A02), an inductor's self-resonance (G6A11), and why a switching transistor lives at saturation and cutoff (G6A07).
+
 ## 67 (November 25)
 - Ten G9 and G5 explanations rewritten with a picture or worked numbers: why a tuner leaves the line's SWR alone (G9A08), how a lossy line makes a 3:1 SWR read 1.7:1 (G9A11), the ground as a mirror under a low dipole (G9B05), dBi and dBd as two yardsticks (G9C04), how traps make one wire work two bands (G9D04), why a multiband antenna radiates harmonics (G9D11), series and parallel resonance as a short and an open (G5A01), RMS as the voltage that heats like DC (G5B07), why a step-up transformer's primary is thicker (G5C05), and why the turns ratio is the square root of the impedance ratio (G5C07).
 
