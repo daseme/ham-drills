@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 66 (November 25)
+- Ten Technician explanations rewritten to show why: inductance as a flywheel for current (T5C03), impedance and why reactance depends on frequency (T5C12), a tuned circuit as a pendulum (T6D11), SWR as a wave on a rope (T7C04, T9B12), how a 5/8-wave whip puts its signal toward the horizon (T9A09), why coax loses more at higher frequencies, with numbers (T9B05), why a rubber duck is inefficient (T9A04), a temperature inversion as a duct (T3C08), and why the radio horizon is farther than the visual one (T3C11).
+
 ## 65 (November 25)
 - Twenty more explanations rewritten to show why, ten each in G7 and G4, with a picture or worked numbers. G7: why switchmode parts are small (G7A08), neutralizing as microphone feedback (G7B01), why Class C is efficient (G7B02), an oscillator as a PA squeal with a filter (G7B07), why Class C suits FM (G7B11), the balanced modulator and product detector with frequencies (G7C02, G7C04), a DDS as a crystal-timed counter (G7C05), I and Q as a clock hand's two shadows (G7C09, G7C10). G4: reverse sideband as a window (G4A02), the plate-current dip and the LOAD control (G4A04, G4A08), what a tuner can and can't change (G4A06), meter loading with numbers (G4B05), why the two tones aren't harmonics (G4B07), ground leads as antennas and quarter-wave transformers (G4C05, G4C06), common-mode current and the ferrite choke (G4C08), why a short antenna is narrow (G4E06).
 
