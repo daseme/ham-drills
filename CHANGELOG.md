@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 67 (November 25)
+- Ten G9 and G5 explanations rewritten with a picture or worked numbers: why a tuner leaves the line's SWR alone (G9A08), how a lossy line makes a 3:1 SWR read 1.7:1 (G9A11), the ground as a mirror under a low dipole (G9B05), dBi and dBd as two yardsticks (G9C04), how traps make one wire work two bands (G9D04), why a multiband antenna radiates harmonics (G9D11), series and parallel resonance as a short and an open (G5A01), RMS as the voltage that heats like DC (G5B07), why a step-up transformer's primary is thicker (G5C05), and why the turns ratio is the square root of the impedance ratio (G5C07).
+
 ## 66 (November 25)
 - Ten Technician explanations rewritten to show why: inductance as a flywheel for current (T5C03), impedance and why reactance depends on frequency (T5C12), a tuned circuit as a pendulum (T6D11), SWR as a wave on a rope (T7C04, T9B12), how a 5/8-wave whip puts its signal toward the horizon (T9A09), why coax loses more at higher frequencies, with numbers (T9B05), why a rubber duck is inefficient (T9A04), a temperature inversion as a duct (T3C08), and why the radio horizon is farther than the visual one (T3C11).
 
