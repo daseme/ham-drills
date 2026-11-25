@@ -2,6 +2,10 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 59 (November 25)
+- The Ohm's law and power drill names the likely mistake behind a wrong answer when it matches one: multiplying where it should divide, a division upside down, a forgotten square or a doubled one, or the voltage or current given where the power was asked.
+- A missed kind of problem comes back as the third question after the miss, with new numbers and a line saying so; answering it right says "Fixed it."
+
 ## 58 (November 25)
 - General gains an Ohm's law and power drill, a page of its own beside the app (general/ohms-law-drill.html): endless generated problems in Ohm's law, power, and milliamps and kilohms, each with a worked solution, a note when the digits are right but the decimal point is off, and more of the kinds of problem you miss. The Electronics math deck's drill and study page link to it. It is cached for offline use with the rest of General, and keeps its own tallies on the phone, apart from the review records.
 
