@@ -107,7 +107,7 @@ test("steady on Thursday: three days, one off, today in, four weeks in a row",()
   assert.deepEqual(s.dots.map(d=>d.cls),["done","done","off","done now","","",""]);
   assert.deepEqual(s.dots.map(d=>d.label),["Monday, studied","Tuesday, studied","Wednesday, day off","Thursday, today, studied","Friday","Saturday","Sunday"]);
   assert.equal(s.line,"3 days this week, 1 day off left.");
-  assert.equal(s.small,"4 weeks in a row.");
+  assert.equal(s.small,"4 weeks in a row before this week.");
 });
 
 test("week made on Saturday, with the sixth day as a bonus",()=>{
@@ -157,7 +157,8 @@ test("weeks in a row: a missed week drops it, this week counts once made",()=>{
   const gap=row(3);for(let k=0;k<5;k++)delete gap[MO-7+k];
   assert.equal(at(THU,{storage:{"hamdrill:days":JSON.stringify(gap)}}).run("weeksInARow(dayNum())"),0);
   assert.equal(state(THU,row(1,[MO])).small,"");
-  assert.equal(state(THU,row(2,[MO])).small,"2 weeks in a row.");
+  assert.equal(state(THU,row(2,[MO])).small,"2 weeks in a row before this week.");
+  assert.equal(state(SUN,row(5,[MO,MO+1,MO+2,MO+3,MO+4])).small,"6 weeks in a row including this week.");
   assert.equal(state(THU,row(2)).small,"The cards waited. A missed stretch doesn't undo the spacing.","nothing since last week: the welcome line wins");
 });
 

@@ -178,7 +178,8 @@ function mergeDays(src){const t=dayNum(),s=cleanDays(src);
   for(let k=t-13;k<=t;k++)if(!DAYS[k]){const n=answeredOn(k);if(n>0)DAYS[k]={d:n,n}}
   saveDays()}
 /* The strip: this week's seven dots and the line under them. A week is made by five met days; weeks in a row
-   counts made weeks back from last week, plus this one once made. Days before the log began are neither studied
+   counts made weeks back from last week, plus this one once made; the line says which ("3 weeks in a row before this week.",
+   "4 weeks in a row including this week."). Days before the log began are neither studied
    nor days off, so a learner who starts on a Thursday is not shown three days off they never took; they do use
    up the slack, since the week still needs five days. No line ever names a lost week: an unwinnable week just
    counts its days, and Monday starts fresh. */
@@ -202,7 +203,7 @@ function weekState(t=dayNum()){
     :todayMet?`${sofar}; ${k===1?"the next one makes it.":`the next ${k} make it.`}`
     :k===1?"Today makes this week.":k===2?"Today and tomorrow make this week.":`Today and the next ${k-1} days make this week.`;
   const back=!todayMet&&![1,2,3].some(b=>dayMet(DAYS[t-b]))&&Object.values(DAYS).some(dayMet),w=weeksInARow(t);
-  const small=back?"The cards waited. A missed stretch doesn't undo the spacing.":w>=2?`${w} weeks in a row.`:"";
+  const small=back?"The cards waited. A missed stretch doesn't undo the spacing.":w>=2?(made?`${w} weeks in a row including this week.`:`${w} weeks in a row before this week.`):"";
   return {shown,made,dots,line,small};
 }
 /* The end of the session that filled today's dot says so; a session that began with the day already met says nothing. */

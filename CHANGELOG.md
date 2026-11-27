@@ -2,6 +2,9 @@
 
 The version is `APP_VERSION` in version.js; it shows in the footer, and raising it is what makes installed copies update. All dates are 2026.
 
+## 71 (November 27)
+- The streak line under the week's dots now says whether this week is counted: "3 weeks in a row before this week." while the week is still open, and "4 weeks in a row including this week." once it is made.
+
 ## 70 (November 25)
 - The plain-language limits now cover every piece of learner-facing text, not only the explanations: each question's short note, the topic primers, the flash cards, the symbols, the math steps and mistake notes, deck intros and the cheat sheets. 55 long sentences were split, most of them in the primers. The figure G7-1 parts, the amplifier classes and the Q signals are now lists. The band chart's notes are three short paragraphs.
 - test/plain-language.test.js checks all of it. test/fixtures/bandchart.svg now ends at the drawing, so it guards the chart and not the notes under it.
